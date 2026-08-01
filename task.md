@@ -1,0 +1,10 @@
+- `[x]` Monitor `OPEN_QUESTIONS.md` for resolution of addendums and maintain architectural invariants
+- `[x]` Finish backend skeleton implementation (Transaction, Import, FxRate logic, Audit Log) and ensure RLS/tenant isolation
+- `[x]` Implement `src/lib/api/client.ts` and migrate `/transactions` screen to real API (TanStack Query scaffold)
+- `[x]` Complete FX parsing, CSV parsing, and isolation tests (`test_tenant_isolation.py`)
+- `[x]` Repackage frontend into Monorepo and remove submodule
+- `[x]` Create global `AGENTS.md` and environment templates
+- `[x]` POST `/transactions` + manual entry form modal in UI
+- `[x]` POST `/imports` endpoint for parsing files into DB `ImportBatch`
+- `[x]` Import Wizard mapping screen with CSV column detection
+- `[x]` Empty / Loading / Error states on screens using `@tanstack/react-query`

@@ -1,0 +1,247 @@
+# FinanceIntel — контекст проекта для AI-ассистента
+
+## Что это
+SaaS финансового управления и «финансовой разведки» для медиабаинговых
+компаний и арбитража трафика. Работает ПОВЕРХ трекеров и рекламных
+кабинетов, не заменяет их. Роль продукта — виртуальный CFO: собрать все
+доходы и расходы (реклама, зарплаты, инфраструктура, расходники, налоги)
+и показать реальную картину бизнеса.
+
+Позиционирование:
+- Трекер (Keitaro/Voluum/Binom): «какая реклама приносит деньги?»
+- FinanceIntel: «что происходит с бизнесом, почему и что делать дальше?»
+
+Слоган: «От цифр к решениям».
+
+## Целевые роли пользователей
+owner/CEO, CFO, team_lead, media_buyer, farmer, processor, creative, admin.
+(moderator / compliance появятся только на Stage 4.)
+
+## Текущая стадия: Stage 1 — «Financial Core»
+В скоупе MVP:
+1. Auth + мультитенантность (компания = тенант, жёсткая изоляция по company_id)
+2. Транзакции: ручной ввод + CSV-импорт, мультивалютность, категории
+3. Financial Dashboard: Revenue, Expenses, Profit, Margin, Cash Balance,
+   ROI/ROAS, Cash Runway, Finance Health Score
+4. P&L по периодам и категориям
+5. Cash Flow + партнёрские выплаты (booked → in_hold → scrubbed → paid), скраб
+6. Рекламные аккаунты + расходники (прокси, карты) с попаданием в P&L
+7. Заливы как отдельная сущность campaign_runs (единица работы байера)
+8. Payroll: base_salary + bonus_percent, квоты фармеров, payroll_runs
+9. AI Financial Analyst — только на внутренних данных компании
+10. Alerts (cash runway, ROI) на email + единый Telegram-бот (исходящий)
+11. Audit Log, базовый Data Quality Monitoring
+
+НЕ в MVP (не предлагать и не реализовывать):
+- Market Intelligence в любом виде (парсинг Telegram/форумов, лента сигналов,
+  Impact Briefs, human review queue, роли модератора) — это Stage 4a/4b
+- Полный набор коннекторов Meta/Google/TikTok/Voluum/Binom/Affise — Stage 2
+  (в MVP максимум 1 read-only коннектор, кандидат Keitaro, и то опционально)
+- Forecasting Engine, Scenario Modeling, Recommendation Engine, Team
+  Performance Analytics — Stage 3/5
+- Собственный инференс-сервер / своя модель — отложено
+
+## Роадмап
+Stage 1 Financial Core (сейчас) → Stage 2 Data Connectors →
+Stage 3 AI Analytics & Forecasting → Stage 4a/4b Market Intelligence →
+Stage 5 Decision & Scale. Каждая стадия = продаваемый срез продукта.
+
+## Стек
+- Backend: FastAPI (Python), Celery, Redis
+- БД: PostgreSQL
+- Frontend: Next.js (App Router), React, TailwindCSS, Recharts
+- AI: внешние API (OpenAI/Anthropic), обязательный function calling / tool use
+
+## Жёсткие инварианты (нарушать нельзя)
+1. Деньги ВСЕГДА NUMERIC(20,4). Никогда float. Валюта хранится рядом с суммой.
+2. Время — TIMESTAMPTZ (UTC). Везде created_at/updated_at, soft-delete
+   через deleted_at.
+3. company_id берётся ИЗ СЕССИИ, никогда из тела запроса. Любой endpoint
+   с финансовыми данными проверяет принадлежность тенанту. Иначе — утечка
+   чужих финансов.
+4. CR-1: AI Analyst отвечает ТОЛЬКО через tool use с реальным SQL-запросом
+   к БД (get_pnl, get_cash_flow, get_campaign_performance и т.п.). Прямой
+   вызов модели без данных запрещён даже как временное решение.
+5. В контекст LLM попадают данные только текущего тенанта.
+6. Реквизиты карт/прокси не хранятся. Только маскированный идентификатор
+   (последние 4 цифры / host) — иначе попадаем под PCI DSS.
+7. Секреты и токены шифруются, не логируются, не идут в AI-контекст.
+8. Идемпотентность импорта: UNIQUE (company_id, source, external_id).
+9. ROI/ROAS/margin/EBITDA — вычисляемые, в БД не хранятся.
+
+## Ключевые формулы
+Gross Profit = revenue − ad_spend
+EBITDA       = gross_profit − (salary + infra + other + consumables)
+EBIT         = EBITDA − depreciation
+Net Profit   = EBIT − interest − tax
+ROI          = (revenue − spend) / spend * 100
+ROAS         = revenue / spend
+Cash Runway  = cash_balance / avg_daily_spend
+               (только доступные средства, деньги в холде НЕ считаются)
+
+## Схема БД (MVP)
+companies, users, teams, transactions, ad_accounts, campaigns, campaign_runs,
+consumables, affiliate_networks, partner_payouts, alerts, audit_log,
+compensation_plans, payroll_runs, payroll_line_items,
+decision_recommendations, chat_messages.
+Полное описание полей — 02-product-docs/DB_SCHEMA.md.
+
+## Структура репозитория
+01-design/            прототип UI (.jsx)
+02-product-docs/      PRD.md, MVP.md, ROADMAP.md, DB_SCHEMA.md, OPEN_QUESTIONS.md
+03-database/          ПУСТО (только README-заглушка) — миграции PostgreSQL
+04-backend/           ПУСТО (только README-заглушка) — FastAPI
+05-frontend/          Next.js (git submodule, будет добавлен)
+06-admin-frontend/    админка модерации MI (git submodule, Stage 4a)
+09-reference/         исследования по экономике медиабаинга (HTML)
+корень/               FinanceIntel_PRD_v2.md, аддендумы v2.1 / v2.2 / v2.4 / v2.6,
+                      PROMPT_FOR_GEMINI_*.md, логи чатов с AI
+
+Директорий 06-market-intelligence, 07-integrations, 08-devops в репо
+фактически НЕТ, хотя README их упоминает.
+
+## Правила работы с документацией
+- Иерархия истины: последний аддендум > более ранние аддендумы >
+  декомпозированные файлы (PRD/MVP/ROADMAP/DB_SCHEMA). Актуальный —
+  FinanceIntel_PRD_addendum_v2.6.md.
+- Новые решения сначала фиксируются в OPEN_QUESTIONS.md (блок «Уже решено»),
+  потом разносятся по документам.
+- Перед разработкой обязательно читать 02-product-docs/.
+
+## Порядок реализации внутри MVP
+1. Каркас + БД + миграции + auth + мультитенантность
+2. Транзакции (ручной ввод, CSV, decimal, валюты)
+3. Рекламные аккаунты + расходники
+4. Заливы (campaign_runs)
+5. Расчётный слой: P&L, Cash Flow, Runway, ROI/ROAS, себестоимость аккаунта
+6. Financial Dashboard
+7. Audit Log
+8. Alerts + email
+9. Telegram-бот (привязка, личный статус, алерты)
+10. AI Financial Analyst (обязательный tool use)
+11. Data Quality Monitoring
+12. (stretch) 1 read-only коннектор
+
+## Что ещё не решено
+Монетизация и тарифы, пилотные клиенты, юридика по скрейпингу Telegram
+и по gambling-вертикали, локация/GDPR для финданных, фиксировать fx_rate
+на дату операции или пересчитывать (рекомендация — фиксировать).
+
+# FinanceIntel — фронтенд (репозиторий 05-front)
+
+Отдельный репозиторий flensthamer-stack/05-front, подключён в finint как
+git submodule 05-frontend. Деплой: https://05-front.vercel.app
+
+## Статус
+UI-прототип на моках. Бэкенда нет, реальных запросов нет.
+Все данные — статические объекты из src/lib/mockData.ts.
+
+## Стек (версии важны)
+Next.js 16.2.10 (App Router, dev через --webpack), React 19.2.4,
+TypeScript 5, Tailwind CSS v4 (конфиг через @theme в globals.css, без
+tailwind.config), next-intl 4.13 (locales: en, ru; default en),
+recharts 3.9, lucide-react.
+⚠️ AGENTS.md в корне: «This is NOT the Next.js you know» — версия свежее
+твоих тренировочных данных, перед написанием кода читать
+node_modules/next/dist/docs/.
+
+## Структура
+src/app/layout.tsx                 корневой
+src/app/[locale]/layout.tsx        локаль, шрифт, StaffingProvider
+src/app/[locale]/(main)/           продуктовые страницы (AppShell: Sidebar + Header)
+  page.tsx /pnl /cashflow /campaigns /team /payroll /ai-analyst
+  /market-intel /guides /settings
+src/app/[locale]/(doc)/guides/[slug]/  чтение статей отдельным layout'ом
+src/app/api/chat/route.ts          единственный API-роут, заглушка
+src/components/AppShell|Header|Sidebar.tsx
+src/components/screens/*.tsx       вся логика экранов (клиентские компоненты)
+src/components/ui/                 Card, SectionTitle, TrendTag — весь UI-кит
+src/components/guides/             две длинные статьи, вшитые в JSX (35KB + 23KB)
+src/lib/constants.ts               справочники (вертикали, гео, платформы, роли...)
+src/lib/mockData.ts                все моки
+src/lib/staffData.ts               моки состава команды
+src/lib/staffing.tsx               StaffingProvider + IfRole
+src/lib/formatters.ts              money, moneyCompact, percent, formatDate
+src/lib/types/market-intel.ts      AIGeneratedPost, ImpactBrief
+messages/en.json, messages/ru.json переводы
+
+## Дизайн-система (globals.css, Tailwind @theme)
+Семантические токены поверх CSS-переменных, есть light и .dark:
+  background #f8fafc / surface #ffffff / border #e2e8f0
+  content-primary #0f172a, secondary #475569, tertiary #94a3b8
+  primary (teal): 50 #f0fdfa · 500 #14b8a6 · 600 #0d9488 · 700 #0f766e
+  ai (indigo): 50 #eef2ff · 500 #6366f1 · 600 #4f46e5  ← только для AI-блоков
+  success / warning / danger — тройками bg + text + border
+  font-sans Inter, shadow-card мягкая двойная тень
+Правило: цвета брать из токенов (bg-surface, text-content-secondary,
+border-border), а не хардкодить. Часть экранов это правило нарушает
+(bg-red-50, text-gray-600 напрямую) — при доработке приводить к токенам.
+Тёмная тема описана в CSS, но переключателя в UI нет.
+
+## Экраны
+Dashboard        Health Score + 7 метрик + AreaChart Revenue/Profit +
+                 AI-инсайт + тизер Market Intelligence
+P&L              доходы/расходы по категориям
+Cash Flow        opening/receipts/outflow/closing, runway, BarChart по месяцам
+Campaigns        таблица связок: platform, vertical, geo, spend, revenue,
+                 ROI, ROAS, CPA/CPL/CPM/CTR, conversions
+Team             самый большой экран (24KB): команды, байеры, тимлиды,
+                 фармеры, обработчики, рекламные аккаунты
+Payroll          totalPayroll, payroll-to-revenue, статусы approved/draft/held
+AI Analyst       чат, шлёт POST /api/chat
+Market Intel     лента AIGeneratedPost + ImpactBrief, бейджи риска и модерации
+Guides           две справочные статьи по экономике медиабаинга
+Settings         переключение состава команды (демо), интеграции
+
+## Адаптивный UI по составу команды
+staffing.tsx: StaffingProvider держит Record<StaffRole, boolean> в
+localStorage (ключ financeintel.staffing.v1). Хелперы has(role) и
+компонент <IfRole role="farmer">. Если роли в компании нет — раздел под
+неё не рендерится. На реальном бэкенде источник = COUNT(*) по users,
+группировка по staff_role внутри company_id.
+Роли: media_buyer (обязательная), team_lead, farmer, processor, creative.
+Это производственная роль (staffRole), она НЕ равна role в users
+(права доступа: owner/cfo/team_lead/...).
+
+## Справочники (constants.ts)
+VERTICALS (с marketShare), HIGH_RISK_VERTICALS = igaming/crypto/nutra,
+GEOS (с tier), PLATFORMS, PAYOUT_MODELS, PAYMENT_TERMS, STAFF_ROLES
+(с моделью компенсации), AD_ACCOUNT_STATUSES, LEAD_STATUSES,
+CONSUMABLE_TYPES + хелперы *Label(). Гео и источники трафика помечены
+как «требует подтверждения».
+
+## /api/chat — намеренная заглушка
+Роут НЕ генерирует фейковые AI-ответы: возвращает текст «бэкенд не
+подключен» на нужной локали. Это соблюдение инварианта CR-1. Не
+заменять на моковую генерацию ответов ни при каких условиях. Правильная
+доработка — проксировать на FastAPI /api/v1/chat с tool use.
+
+## Что НЕ сделано (не путать с «сломано»)
+- Нет авторизации, сессий, мультитенантности на фронте
+- Нет ввода транзакций и CSV-импорта — а это пункт 2 порядка реализации MVP
+- Нет слоя данных: ни fetch-обёртки, ни react-query, ни api-клиента
+- Нет тестов, нет Storybook
+- Метки в mockData захардкожены по-английски (в файле TODO: заменить
+  на ключи переводов вида metrics.revenue)
+- Header дергает /api/user/preferences, которого не существует
+- Нет loading/error/empty состояний
+
+## Расхождения с продуктовой документацией (учитывать!)
+1. Экран Market Intelligence уже сверстан, хотя по MVP.md модуль
+   отложен целиком до Stage 4a. Считать его опережающим прототипом,
+   а не частью Stage 1.
+2. Комментарий в mockData ссылается на «Аддендум v2.7, A.2»
+   (привязка байера к тимлиду), но такого файла в docs-репо нет.
+   Актуальным там числится v2.6.
+3. ImpactBrief реализован на фронте, хотя аддендумом v2.6 убран из MVP.
+
+## Правила доработки
+- Экраны — клиентские компоненты в components/screens/, страницы в
+  app/[locale]/(main)/ только импортируют их (файлы страниц по ~130 байт)
+- Навигация только через Link/usePathname из @/i18n/routing, не из next/link
+- Любой новый текст — в messages/en.json и messages/ru.json, без
+  хардкода строк в JSX
+- Деньги форматировать через lib/formatters (money, moneyCompact)
+- Иконки только lucide-react, графики только recharts
+- Индиго-палитра (ai-*) зарезервирована под AI-блоки, не использовать
+  как декоративный акцент

@@ -1,0 +1,29 @@
+[project]
+name = "financeintel-backend"
+version = "0.1.0"
+description = "Backend for FinanceIntel"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy>=2.0",
+    "alembic",
+    "asyncpg",
+    "pydantic-settings",
+    "python-jose[cryptography]",
+    "passlib[argon2]",
+    "celery",
+    "redis"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx"
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"

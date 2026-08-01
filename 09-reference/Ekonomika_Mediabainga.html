@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Экономика и финансовый менеджмент в медиабаинге</title>
+<style>
+  :root{
+    --navy:#0B1220; --navy-2:#131E30;
+    --paper:#F8FAF9; --paper-2:#FFFFFF;
+    --ink:#1A2333; --ink-soft:#4B5768; --ink-faint:#8792A0;
+    --teal:#0F766E; --teal-light:#E6F4F2;
+    --red:#C0392B; --red-light:#FBEAE8;
+    --green:#0E9F6E; --green-light:#E7F8F1;
+    --amber:#B9770E; --amber-light:#FBF0DD;
+    --line:#E4E8EA;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;line-height:1.6;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* ---------- HERO ---------- */
+  .hero{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);color:#E8EDEC;padding:64px 24px 40px;}
+  .hero-inner{max-width:980px;margin:0 auto;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#7FD9CC;font-weight:700;margin-bottom:18px;}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:#7FD9CC;}
+  h1.title{font-size:clamp(30px,4.4vw,50px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;margin:0 0 20px;max-width:820px;}
+  .lede{font-size:18px;color:#B9C4CE;max-width:640px;margin:0 0 36px;}
+  .hero-chart-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:var(--radius);padding:22px 22px 12px;backdrop-filter:blur(2px);}
+  .hero-chart-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  .hero-chart-head h3{margin:0;font-size:15px;font-weight:700;color:#fff;}
+  .hero-chart-head p{margin:2px 0 0;font-size:13px;color:#8A96A3;}
+  .legend-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#C6D0D8;margin-left:14px;}
+  .legend-dot{width:9px;height:9px;border-radius:2px;}
+  .chart-wrap{position:relative;height:290px;margin-top:10px;}
+  .zone-callout{display:flex;gap:10px;align-items:flex-start;background:rgba(192,57,43,0.14);border:1px solid rgba(192,57,43,0.35);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px;color:#F3D8D4;}
+
+  /* ---------- LAYOUT ---------- */
+  .layout{max-width:980px;margin:0 auto;padding:0 24px;}
+  .grid{display:grid;grid-template-columns:200px 1fr;gap:56px;padding-top:48px;}
+  @media (max-width:800px){.grid{grid-template-columns:1fr;}.toc{display:none;}}
+
+  .toc{position:sticky;top:28px;align-self:start;}
+  .toc-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);font-weight:700;margin-bottom:14px;}
+  .toc a{display:block;font-size:13.5px;color:var(--ink-soft);text-decoration:none;padding:7px 0;border-left:2px solid var(--line);padding-left:14px;transition:.15s;}
+  .toc a:hover{color:var(--teal);border-left-color:var(--teal);}
+
+  article{padding-bottom:90px;}
+  section{margin-bottom:64px;scroll-margin-top:24px;}
+  .kicker{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;}
+  .kicker .n{font-size:13px;font-weight:800;color:var(--teal);font-variant-numeric:tabular-nums;}
+  h2{font-size:26px;font-weight:800;letter-spacing:-0.01em;margin:0 0 18px;}
+  h3{font-size:17px;font-weight:700;margin:28px 0 10px;}
+  p{color:var(--ink-soft);font-size:15.5px;margin:0 0 16px;max-width:680px;}
+  strong{color:var(--ink);}
+
+  .pull{border-left:3px solid var(--teal);background:var(--teal-light);border-radius:0 10px 10px 0;padding:16px 20px;margin:24px 0;font-size:16px;color:#0B4A44;font-weight:600;max-width:680px;}
+
+  .formula{display:inline-block;background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:14.5px;font-weight:600;color:var(--ink);margin:6px 0 18px;}
+
+  table{width:100%;border-collapse:collapse;margin:12px 0 8px;font-size:14px;background:var(--paper-2);border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--line);}
+  th{background:#F1F4F3;text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:11px 14px;font-weight:700;}
+  td{padding:12px 14px;border-top:1px solid var(--line);color:var(--ink-soft);}
+  td.strong{color:var(--ink);font-weight:600;}
+  tr:hover td{background:#FBFCFC;}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;}
+  .tag-red{background:var(--red-light);color:var(--red);}
+  .tag-amber{background:var(--amber-light);color:var(--amber);}
+  .tag-green{background:var(--green-light);color:var(--green);}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 8px;}
+  .stat-card{background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:16px;}
+  .stat-card .v{font-size:22px;font-weight:800;color:var(--ink);}
+  .stat-card .l{font-size:12.5px;color:var(--ink-faint);margin-top:2px;}
+
+  .chart-card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);padding:20px 20px 8px;margin:20px 0;}
+  .chart-card h4{margin:0 0 2px;font-size:14.5px;font-weight:700;}
+  .chart-card .sub{font-size:12.5px;color:var(--ink-faint);margin-bottom:12px;}
+  .chart-card .chart-wrap{height:260px;}
+
+  .foot{border-top:1px solid var(--line);padding-top:24px;font-size:13px;color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">FinanceIntel · справочный материал</div>
+    <h1 class="title">Почему на бумаге вы в плюсе, а денег на счету нет</h1>
+    <p class="lede">Экономика медиабаинга устроена так, что расход — ежедневный и мгновенный, а доход — отложенный, урезанный и неопределённый. Разрыв между этими двумя фактами и есть главная финансовая опасность отрасли.</p>
+
+    <div class="hero-chart-card">
+      <div class="hero-chart-head">
+        <div>
+          <h3>Кассовый разрыв: 45 дней одной связки</h3>
+          <p>Потрачено vs заработано «на бумаге» vs реально получено на счёт</p>
+        </div>
+        <div>
+          <span class="legend-pill"><span class="legend-dot" style="background:#C0392B"></span>Расход (кумулятивно)</span>
+          <span class="legend-pill"><span class="legend-dot" style="background:#7FD9CC"></span>Заработано (booked)</span>
+          <span class="legend-pill"><span class="legend-dot" style="background:#0E9F6E"></span>Получено на счёт</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <svg viewBox="0 0 860 270" style="width:100%;height:100%">
+          <line x1="40" y1="230" x2="840" y2="230" stroke="rgba(255,255,255,0.12)"/>
+          <line x1="40" y1="159" x2="840" y2="159" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="40" y1="88" x2="840" y2="88" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="40" y1="17" x2="840" y2="17" stroke="rgba(255,255,255,0.06)"/>
+          <text x="8" y="234" font-size="10" fill="#7A8794">$0</text>
+          <text x="4" y="163" font-size="10" fill="#7A8794">$20k</text>
+          <text x="4" y="92" font-size="10" fill="#7A8794">$40k</text>
+          <text x="4" y="21" font-size="10" fill="#7A8794">$60k</text>
+          <text x="40" y="252" font-size="10" fill="#7A8794">День 1</text>
+          <text x="500" y="252" font-size="10" fill="#7A8794">День 28</text>
+          <text x="815" y="252" font-size="10" fill="#7A8794">День 45</text>
+
+          <polygon points="40,230 538,230 556,230 556,115 698,115 716,115 716,79 840,79 840,230" fill="rgba(14,159,110,0.15)"/>
+          <polyline points="40,230 538,230 556,230 556,115 698,115 716,115 716,79 840,79" fill="none" stroke="#0E9F6E" stroke-width="2.5"/>
+          <polyline points="40,230 200,187 360,144 520,101 680,58 840,15" fill="none" stroke="#7FD9CC" stroke-width="2" stroke-dasharray="5,4"/>
+          <polyline points="40,230 200,197 360,165 520,132 680,100 840,67" fill="none" stroke="#C0392B" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <div class="zone-callout">⚠ С 1 по 29 день расход уже реален и растёт каждый день, а на счёт не пришло ни цента — все 29 дней компания финансирует рекламу из собственного кармана, даже если связка прибыльна «на бумаге».</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+<div class="grid">
+  <nav class="toc">
+    <div class="toc-label">Содержание</div>
+    <a href="#s1">01 · Юнит-экономика связки</a>
+    <a href="#s2">02 · Кассовый разрыв</a>
+    <a href="#s3">03 · Структура расходов</a>
+    <a href="#s4">04 · Вертикали: в чём разница</a>
+    <a href="#s5">05 · Компенсация команды</a>
+    <a href="#s6">06 · Жизненный цикл связки</a>
+    <a href="#s7">07 · Метрики для управления</a>
+    <a href="#s8">08 · Почему обычный учёт не подходит</a>
+  </nav>
+
+  <article>
+
+    <section id="s1">
+      <div class="kicker"><span class="n">01</span></div>
+      <h2>Юнит-экономика связки</h2>
+      <p>«Связка» (bundle) — это оффер + гео + креатив + источник трафика, самая мелкая единица, на которой можно посчитать прибыльность. Базовая механика простая: покупаем клики/показы на источнике трафика, часть посетителей конвертируется в целевое действие (депозит, лид, покупка), партнёрская сеть платит за это действие.</p>
+
+      <div class="pull">Потратили $15 000 на трафик → получили 5 конверсий по $4 000 каждая → заработали $20 000 → чистая прибыль $5 000, ROI 33%.</div>
+
+      <h3>Базовые формулы</h3>
+      <div class="formula">ROI = (Revenue − Spend) / Spend × 100%</div><br>
+      <div class="formula">ROAS = Revenue / Spend</div><br>
+      <div class="formula">CPA = Spend / Число конверсий</div>
+      <p>Условно прибыльной связка считается уже при ROI от 15–20% — но это «бумажная» прибыльность в момент клика. Реальная прибыльность становится известна только после того, как партнёрская сеть подтвердит и оплатит конверсии — а это отдельная история (раздел 02).</p>
+    </section>
+
+    <section id="s2">
+      <div class="kicker"><span class="n">02</span></div>
+      <h2>Кассовый разрыв — главный финансовый риск отрасли</h2>
+      <p>Партнёрские сети не платят мгновенно. Между «конверсия произошла» и «деньги на счету» стоит hold period — окно, в течение которого сеть проверяет трафик на фрод, дубликаты и чарджбеки. Дальше — цикл выплат (Net-7/15/30/60), который определяет, как часто вообще происходит расчёт.</p>
+
+      <table>
+        <thead><tr><th>Тип цикла</th><th>Типичный срок</th><th>Hold на первый цикл</th><th>Комментарий</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Net-30 (стандарт)</td><td>30 дней</td><td>30 дней</td><td>Дефолтные условия у большинства сетей</td></tr>
+          <tr><td class="strong">Net-15</td><td>15 дней</td><td>30 дней на старте</td><td>Доступен при устойчивом объёме</td></tr>
+          <tr><td class="strong">Net-7</td><td>7 дней</td><td>30 дней на старте</td><td>Обычно есть минимальный порог за период (от $500)</td></tr>
+          <tr><td class="strong">Weekly / Net-5</td><td>Еженедельно</td><td>30 дней на старте</td><td>Топ-уровень, доступен проверенным аккаунтам</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Хуже, чем задержка: сумма приходит меньше, чем казалось</h3>
+      <p>Есть два механизма, которые режут «бумажную» цифру до того, как она станет реальными деньгами:</p>
+      <table>
+        <thead><tr><th>Механизм</th><th>Что происходит</th><th>Типичный масштаб</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Scrub</td><td>Рекламодатель частично дисквалифицирует засчитанные конверсии, не всегда объясняя, какие именно</td><td>10–30% в iGaming и nutra</td></tr>
+          <tr><td class="strong">Clawback / чарджбек</td><td>Полный откат уже показанной выплаты — из-за возврата, фрод-флага или дубля</td><td>Индивидуально, но регулярно</td></tr>
+        </tbody>
+      </table>
+      <p>Отсюда практическое правило отрасли: значение имеет не то, что показывает дашборд партнёрки в моменте, а число «booked минус reversed» через 30 дней. Это ровно то число, ради которого в FinanceIntel считается Cash Flow и Cash Runway отдельно от P&L.</p>
+    </section>
+
+    <section id="s3">
+      <div class="kicker"><span class="n">03</span></div>
+      <h2>Структура расходов команды</h2>
+      <p>Рекламный бюджет — крупнейшая статья, но далеко не единственная. Полная структура расходов медиабаинговой команды:</p>
+      <div class="cards">
+        <div class="stat-card"><div class="v">~70–85%</div><div class="l">Рекламный расход (spend)</div></div>
+        <div class="stat-card"><div class="v">~8–15%</div><div class="l">Зарплаты и бонусы команды</div></div>
+        <div class="stat-card"><div class="v">~3–6%</div><div class="l">Инфраструктура: трекеры, антидетект, прокси</div></div>
+        <div class="stat-card"><div class="v">~2–5%</div><div class="l">Аккаунты: фарм, покупка, прогрев</div></div>
+      </div>
+      <p style="margin-top:14px">Инфраструктурная статья включает трекеры (Keitaro, Binom, Voluum), антидетект-браузеры для управления множеством аккаунтов, прокси (mobile/residential/datacenter) и системы клоакинга для прохождения модерации рекламных площадок — это не «опционально», а необходимая часть стека для работы в высокорисковых вертикалях.</p>
+    </section>
+
+    <section id="s4">
+      <div class="kicker"><span class="n">04</span></div>
+      <h2>Вертикали: в чём разница</h2>
+      <p>Gambling, Crypto и Nutra объединяет статус «высокорисковых» у рекламных платформ — но экономически это три разных бизнеса.</p>
+
+      <div class="chart-card">
+        <h4>Типичный hold period по вертикали</h4>
+        <div class="sub">Дней от конверсии до подтверждения выплаты</div>
+        <div class="chart-wrap">
+          <svg viewBox="0 0 700 180" style="width:100%;height:100%">
+            <line x1="140" y1="10" x2="140" y2="160" stroke="#E4E8EA"/>
+            <line x1="244" y1="10" x2="244" y2="160" stroke="#EEF1F1"/>
+            <line x1="348" y1="10" x2="348" y2="160" stroke="#EEF1F1"/>
+            <line x1="452" y1="10" x2="452" y2="160" stroke="#EEF1F1"/>
+            <line x1="556" y1="10" x2="556" y2="160" stroke="#EEF1F1"/>
+            <line x1="660" y1="10" x2="660" y2="160" stroke="#EEF1F1"/>
+            <text x="130" y="176" font-size="10" fill="#8792A0" text-anchor="middle">0д</text>
+            <text x="452" y="176" font-size="10" fill="#8792A0" text-anchor="middle">30д</text>
+            <text x="660" y="176" font-size="10" fill="#8792A0" text-anchor="middle">50д</text>
+
+            <text x="0" y="38" font-size="13" font-weight="600" fill="#1A2333">Gambling</text>
+            <rect x="452" y="24" width="156" height="26" rx="6" fill="#0F766E"/>
+            <text x="618" y="41" font-size="12" fill="#8792A0">30–45 дней</text>
+
+            <text x="0" y="88" font-size="13" font-weight="600" fill="#1A2333">Nutra</text>
+            <rect x="400" y="74" width="104" height="26" rx="6" fill="#0F766E"/>
+            <text x="514" y="91" font-size="12" fill="#8792A0">25–35 дней</text>
+
+            <text x="0" y="138" font-size="13" font-weight="600" fill="#1A2333">Crypto</text>
+            <rect x="286" y="124" width="166" height="26" rx="6" fill="#0F766E"/>
+            <text x="462" y="141" font-size="12" fill="#8792A0">14–30 дней</text>
+          </svg>
+        </div>
+      </div>
+
+      <table>
+        <thead><tr><th></th><th>Gambling</th><th>Crypto</th><th>Nutra</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Модель</td><td>RevShare от депозита</td><td>CPA / RevShare</td><td>CPA / гибрид</td></tr>
+          <tr><td class="strong">Горизонт LTV</td><td>Месяцы-годы, повторные депозиты</td><td>Разово-средне</td><td>В основном разово</td></tr>
+          <tr><td class="strong">Scrub/чарджбек</td><td><span class="tag tag-red">Высокий</span></td><td><span class="tag tag-amber">Средний</span></td><td><span class="tag tag-red">Высокий</span></td></tr>
+          <tr><td class="strong">Прохождение модерации креативов с 1-й попытки</td><td>Низкое, нужен клоакинг</td><td>Среднее</td><td>10–30%</td></tr>
+        </tbody>
+      </table>
+      <p>Важное следствие для команды: RevShare в гемблинге означает, что прибыль от одного и того же игрока может поступать месяцами — это тянет за собой отдельную задачу атрибуции («какой байер и какая кампания привели этого игрока изначально»), которой нет в nutra с его разовыми покупками.</p>
+    </section>
+
+    <section id="s5">
+      <div class="kicker"><span class="n">05</span></div>
+      <h2>Компенсация команды</h2>
+      <p>Экономика ролей внутри команды устроена так, что почти вся переменная часть завязана на реальную (а не бумажную) прибыль — именно поэтому кассовый разрыв из раздела 02 напрямую влияет на то, когда команда физически может получить зарплату.</p>
+      <table>
+        <thead><tr><th>Роль</th><th>Модель</th><th>На чём завязана переменная часть</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Медиабайер</td><td>Оклад + % от прибыли</td><td>Net Campaign Profit его связок</td></tr>
+          <tr><td class="strong">Тимлид</td><td>Оклад + % (override)</td><td>Прибыль всей команды</td></tr>
+          <tr><td class="strong">Фармер</td><td>Фикс + квота</td><td>Число подготовленных аккаунтов/месяц</td></tr>
+          <tr><td class="strong">Креатив/монтаж</td><td>Фикс или сдельно</td><td>Объём и утверждённые единицы</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s6">
+      <div class="kicker"><span class="n">06</span></div>
+      <h2>Жизненный цикл связки</h2>
+      <p>Прибыль связки не растёт линейно вслед за бюджетом — у каждой связки есть фаза теста, масштабирования и выгорания, и решение «когда убивать» — одно из самых дорогих в отрасли.</p>
+      <div class="chart-card">
+        <div class="hero-chart-head" style="margin-bottom:0">
+          <div>
+            <h4>Расход и прибыль связки по неделям</h4>
+            <div class="sub" style="margin-bottom:0">Test → Scale → Decline на условном примере</div>
+          </div>
+          <div>
+            <span class="legend-pill" style="color:#4B5768;margin-left:0"><span class="legend-dot" style="background:#C0392B"></span>Расход</span>
+            <span class="legend-pill" style="color:#4B5768"><span class="legend-dot" style="background:#0E9F6E"></span>Прибыль</span>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <svg viewBox="0 0 820 250" style="width:100%;height:100%">
+            <line x1="50" y1="10" x2="50" y2="230" stroke="#E4E8EA"/>
+            <line x1="50" y1="220" x2="800" y2="220" stroke="#E4E8EA" stroke-dasharray="3,3"/>
+            <text x="4" y="24" font-size="10" fill="#8792A0">$21k</text>
+            <text x="4" y="224" font-size="10" fill="#8792A0">$0</text>
+            <text x="50" y="244" font-size="10" fill="#8792A0">Нед 1</text>
+            <text x="478" y="244" font-size="10" fill="#8792A0">Нед 5</text>
+            <text x="799" y="244" font-size="10" fill="#8792A0" text-anchor="end">Нед 8</text>
+
+            <polygon points="50,220 50,222 157,217 264,199 371,175 478,158 585,190 692,212 799,226 799,220" fill="rgba(14,159,110,0.15)"/>
+            <polyline points="50,222 157,217 264,199 371,175 478,158 585,190 692,212 799,226" fill="none" stroke="#0E9F6E" stroke-width="2.5"/>
+            <polyline points="50,187 157,180 264,134 371,77 478,20 585,20 692,48 799,106" fill="none" stroke="#C0392B" stroke-width="2.5"/>
+          </svg>
+        </div>
+      </div>
+      <p>На неделях 3–5 бюджет и прибыль растут вместе — это окно масштабирования. С недели 6 прибыль начинает падать быстрее, чем расход: креатив «выгорает» (CTR падает, CPM растёт), но команда часто продолжает лить бюджет по инерции ещё 1–2 недели после точки, где сигнал уже был очевиден. Это ровно то место, где Decision Recommendation Engine должен подавать сигнал раньше человека.</p>
+    </section>
+
+    <section id="s7">
+      <div class="kicker"><span class="n">07</span></div>
+      <h2>Метрики для управления</h2>
+      <table>
+        <thead><tr><th>Метрика</th><th>Формула</th><th>Что показывает</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">ROI</td><td>(Revenue−Spend)/Spend</td><td>Прибыльность относительно вложений</td></tr>
+          <tr><td class="strong">ROAS</td><td>Revenue/Spend</td><td>Возврат на каждый потраченный доллар</td></tr>
+          <tr><td class="strong">CPA</td><td>Spend/Конверсии</td><td>Цена одного целевого действия</td></tr>
+          <tr><td class="strong">EPC</td><td>Revenue/Клики</td><td>Доход с одного клика</td></tr>
+          <tr><td class="strong">Cash Runway</td><td>Баланс/Средний дневной расход</td><td>Сколько дней компания протянет без новых поступлений</td></tr>
+          <tr><td class="strong">Payroll-to-Revenue</td><td>Выплаты/Revenue</td><td>Доля выручки, уходящая на команду</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s8">
+      <div class="kicker"><span class="n">08</span></div>
+      <h2>Почему обычный учёт не подходит</h2>
+      <p>Классический бухгалтерский P&L признаёт доход в момент начисления, а не в момент поступления денег — для большинства бизнесов эта разница некритична. В медиабаинге эти два момента могут быть разнесены на 30–60 дней и отличаться по сумме на 10–30% из-за scrub — то есть сам P&L систематически лжёт о состоянии бизнеса, если его не дополнить отдельным взглядом на реальное движение денег.</p>
+      <p>Отсюда прямая связь с архитектурой FinanceIntel: P&L и Cash Flow — не два представления одних данных, а два разных, оба обязательных вопроса — «прибыльны ли мы на бумаге» и «хватит ли денег дожить до момента, когда бумажная прибыль станет настоящей». Payroll привязан к прибыли по кампаниям, а не к обороту, ровно потому что оборот в этой индустрии — это цифра, которой нельзя доверять до конца hold-периода.</p>
+    </section>
+
+    <div class="foot">FinanceIntel · справочный материал · составлено на основе открытых источников по CPA-индустрии, 2026</div>
+  </article>
+</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1004 @@
+# FinanceIntel: актуальный контекст проекта
+
+## 1. Назначение проекта
+
+FinanceIntel — SaaS-платформа финансового управления для медиабаинговых
+компаний, performance-маркетинга и арбитража трафика.
+
+Платформа работает поверх рекламных кабинетов, трекеров и партнёрских
+сетей. Она не заменяет Keitaro, Binom, Voluum, Meta Ads, Google Ads или
+TikTok Ads, а объединяет данные из этих систем с прочими расходами бизнеса.
+
+Главная роль продукта — виртуальный CFO:
+
+- показать реальную прибыль компании, а не только оборот;
+- объединить доходы, рекламные расходы, зарплаты, инфраструктуру,
+  налоги и расходники;
+- контролировать P&L и Cash Flow;
+- считать доступный денежный резерв и Cash Runway;
+- анализировать кампании, рекламные аккаунты, команды и байеров;
+- объяснять через AI, почему изменились финансовые показатели;
+- в будущих стадиях предупреждать о внешних рыночных рисках и рекомендовать
+  управленческие действия.
+
+Позиционирование:
+
+- Трекер отвечает: «Какая кампания приносит деньги?»
+- FinanceIntel отвечает: «Что происходит с бизнесом, почему это происходит
+  и что нужно делать дальше?»
+
+Текущий приоритет проекта — надёжное финансовое ядро. Market Intelligence,
+сложные AI-функции и массовые интеграции отложены до завершения MVP.
+
+---
+
+## 2. Текущий статус
+
+Проект находится на Stage 1: Financial Core.
+
+На данный момент:
+
+- репозиторий переведён в формат монорепозитория;
+- фронтенд втянут внутрь основного репозитория как обычная директория;
+- старый frontend submodule удалён;
+- пустые и неготовые директории Market Intelligence, Admin Frontend,
+  Integrations и DevOps удалены или отложены;
+- исторические AI-логи перенесены в `archive/ai-logs/`;
+- добавлен корневой `AGENTS.md` с архитектурными инвариантами;
+- настроены Docker-конфигурация и инициализация базы;
+- PostgreSQL подключён через Supabase;
+- создана отдельная роль `app_user` без `BYPASSRLS`;
+- миграции Alembic включают Row-Level Security;
+- реализован отдельный tenant database engine;
+- добавлен базовый контур регистрации, авторизации и tenant context;
+- создан API-клиент фронтенда;
+- реализованы транзакции и CSV-import flow;
+- добавлены `import_batches` и `import_rows`;
+- реализован парсинг денежных значений через `Decimal`;
+- добавлена идемпотентность CSV-импорта;
+- реализован базовый audit log;
+- создан экран транзакций с ручным вводом и CSV wizard;
+- фронтенд использует TanStack Query;
+- добавлены loading, error и empty states;
+- базовый тест tenant isolation проходит на живой базе;
+- тест полноты RLS проходит;
+- тесты парсинга и запрета float проходят.
+
+Важно: тестовая очистка/teardown ещё требует отдельного исправления, если при
+rollback между разными SQLAlchemy engines появляется
+`OperationalError: server closed the connection unexpectedly`.
+
+Нельзя считать проект полностью production-ready, пока эта проблема не
+устранена или явно изолирована в тестовой инфраструктуре.
+
+---
+
+## 3. Монорепозиторий
+
+Актуальная логическая структура:
+
+```text
+finint/
+├── 01-design/
+├── 02-product-docs/
+│   ├── PRD.md
+│   ├── MVP.md
+│   ├── ROADMAP.md
+│   ├── DB_SCHEMA.md
+│   └── OPEN_QUESTIONS.md
+├── 03-database/
+├── 04-backend/
+│   ├── app/
+│   ├── alembic/
+│   ├── tests/
+│   ├── requirements/
+│   └── .env.example
+├── 05-frontend/
+│   ├── src/
+│   ├── messages/
+│   ├── package.json
+│   └── next.config.ts
+├── 08-devops/
+│   ├── docker-compose.yml
+│   └── init-db.sql
+├── 09-reference/
+├── archive/
+│   └── ai-logs/
+├── AGENTS.md
+└── README.md
+
+
+Фронтенд и бэкенд находятся в одном репозитории и должны развиваться
+
+согласованно. Изменения API, схем БД и frontend-типы должны рассматриваться
+
+как одна задача.
+
+
+
+4. Backend
+
+
+Стек
+
+
+Python
+FastAPI
+SQLAlchemy 2.x
+Alembic
+PostgreSQL
+asyncpg или psycopg в зависимости от конкретного слоя
+Pydantic / pydantic-settings
+Argon2 для хеширования паролей
+JWT для access-токенов
+Celery + Redis для будущих фоновых задач
+
+
+Рекомендуемая структура
+
+
+04-backend/
+├── app/
+│   ├── main.py
+│   ├── core/
+│   │   ├── config.py
+│   │   ├── security.py
+│   │   └── money.py
+│   ├── db/
+│   │   ├── session.py
+│   │   └── models/
+│   ├── api/v1/
+│   │   ├── auth.py
+│   │   ├── transactions.py
+│   │   ├── imports.py
+│   │   ├── audit.py
+│   │   └── users.py
+│   └── services/
+│       ├── audit.py
+│       ├── imports.py
+│       ├── parsing.py
+│       └── fx.py
+├── alembic/
+└── tests/
+
+
+Бизнес-логика должна находиться в services/, а FastAPI-роуты должны
+
+оставаться тонкими.
+
+
+
+5. Database engines и Supabase
+
+
+Для базы используются два разных SQLAlchemy engine.
+
+
+
+5.1. Системный engine
+
+
+engine подключается через DATABASE_URL, обычно под системной ролью
+
+PostgreSQL.
+
+
+
+Он используется для:
+
+
+
+миграций;
+системных операций;
+безопасного pre-auth lookup пользователя при логине;
+операций, которые не должны выполняться под tenant RLS.
+
+
+Этот engine может обходить RLS, поэтому нельзя использовать его для обычной
+
+выдачи финансовых данных авторизованному пользователю.
+
+
+
+5.2. Tenant engine
+
+
+tenant_engine подключается через отдельный
+
+APP_USER_DATABASE_URL под ролью app_user.
+
+
+
+Роль app_user:
+
+
+
+имеет LOGIN;
+не имеет BYPASSRLS;
+используется для всех обычных tenant-запросов;
+не должна быть владельцем таблиц;
+не должна использоваться для миграций.
+
+
+Обычные запросы к данным компании выполняются только через tenant engine.
+
+
+
+5.3. Tenant context
+
+
+Перед запросами к tenant engine в рамках транзакции устанавливается:
+
+
+
+SELECT set_config('app.company_id', :company_id, true);
+
+
+Параметр true означает, что настройка действует только внутри текущей
+
+транзакции.
+
+
+
+company_id берётся только из проверенного JWT-контекста. Он не должен
+
+приходить из:
+
+
+
+тела запроса;
+query-параметра;
+URL path;
+frontend localStorage;
+аргументов AI-модели.
+
+
+Нельзя использовать постоянный SET, который может оставить tenant context
+
+на соединении пула. Используется только transaction-local context.
+
+
+
+6. Авторизация
+
+
+Регистрация
+
+
+POST /api/v1/auth/register:
+
+
+
+заранее создаёт UUID компании;
+создаёт компанию;
+создаёт первого пользователя с ролью owner;
+хеширует пароль через Argon2;
+возвращает результат регистрации.
+
+
+Если вставка выполняется через tenant engine, перед вставкой должен быть
+
+установлен соответствующий app.company_id.
+
+
+
+Логин
+
+
+POST /api/v1/auth/login:
+
+
+
+принимает email и пароль;
+выполняет lookup пользователя через системный auth engine либо другой
+специально разрешённый pre-auth слой;
+проверяет пароль;
+создаёт JWT.
+
+
+JWT должен содержать минимум:
+
+
+
+{
+  "sub": "user_uuid",
+  "cid": "company_uuid",
+  "role": "owner",
+  "exp": 1234567890
+}
+
+
+cid нельзя принимать от клиента. Он берётся из найденного пользователя.
+
+
+
+После выдачи JWT все обычные запросы выполняются через tenant engine.
+
+
+
+Основные auth endpoints
+
+
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+POST /api/v1/auth/refresh
+POST /api/v1/auth/logout
+GET  /api/v1/auth/me
+
+
+Access token короткоживущий. Refresh token должен храниться в
+
+httpOnly-cookie или другом защищённом механизме.
+
+
+
+7. Row-Level Security
+
+
+RLS включён для всех доменных таблиц:
+
+
+
+companies
+users
+teams
+transactions
+import_batches
+import_rows
+ad_accounts
+campaigns
+campaign_runs
+consumables
+affiliate_networks
+partner_payouts
+alerts
+audit_log
+compensation_plans
+payroll_runs
+payroll_line_items
+chat_messages
+
+
+Для tenant-таблиц должны использоваться:
+
+
+
+ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
+ALTER TABLE table_name FORCE ROW LEVEL SECURITY;
+
+
+Политика должна защищать как чтение, так и запись:
+
+
+
+USING (
+  company_id =
+  nullif(current_setting('app.company_id', true), '')::uuid
+)
+WITH CHECK (
+  company_id =
+  nullif(current_setting('app.company_id', true), '')::uuid
+)
+
+
+USING предотвращает чтение чужих строк.
+
+
+
+WITH CHECK предотвращает вставку или изменение строки с чужим
+
+company_id.
+
+
+
+Роль владельца таблицы не должна использоваться приложением для обычных
+
+tenant-запросов, иначе RLS может быть обойдён.
+
+8. Тесты безопасности
+
+
+Обязательные проверки:
+
+
+
+Проверка роли
+
+
+Проверить, что обычное приложение подключается как app_user:
+
+
+
+SELECT current_user;
+SELECT rolbypassrls
+FROM pg_roles
+WHERE rolname = current_user;
+
+
+Ожидаемый результат:
+
+
+
+current_user = app_user
+rolbypassrls = false
+
+
+Проверка полноты RLS
+
+
+Тест должен проверять pg_class.relrowsecurity и
+
+pg_class.relforcerowsecurity для всех доменных таблиц.
+
+
+
+Любая новая финансовая таблица без RLS должна ломать тесты.
+
+
+
+Tenant isolation
+
+
+Должны существовать минимум две компании:
+
+
+
+Company A;
+Company B.
+
+
+Пользователь Company A не должен:
+
+
+
+читать транзакции Company B;
+читать пользователей Company B;
+получать отдельную транзакцию Company B;
+изменять строку Company B;
+удалять строку Company B;
+создавать запись с company_id Company B.
+
+
+Тест test_every_route_is_tenant_scoped проверяет доступ через JWT
+
+пользователя Company A к ресурсам Company B.
+
+
+
+Важно: автопроверка всех роутов не заменяет явные CRUD-тесты.
+
+
+
+Мутационный тест
+
+
+Временно отключение RLS на тестовой таблице должно приводить к падению
+
+tenant-isolation теста. Если тест остаётся зелёным, он не проверяет реальную
+
+изоляцию.
+
+
+
+Teardown
+
+
+Тесты не должны оставлять незакрытые транзакции, соединения или tenant
+
+context. Очистка должна корректно работать с отдельными системным и tenant
+
+engine.
+
+
+
+9. Money policy
+
+
+Все финансовые значения используют Decimal.
+
+
+
+В PostgreSQL:
+
+
+
+NUMERIC(20,4)
+
+
+В Python:
+
+
+
+Decimal
+
+
+Запрещено использовать float:
+
+
+
+в финансовой бизнес-логике;
+в SQLAlchemy-моделях финансовых полей;
+в API-схемах финансовых значений;
+в расчётах P&L;
+в CSV-парсере;
+в FX-конвертации.
+
+
+Денежное округление выполняется централизованно через money.py:
+
+
+
+4 знака после запятой;
+ROUND_HALF_UP;
+одинаковая политика во всех сервисах.
+
+
+Базовая валюта
+
+
+Если валюта транзакции совпадает с company.base_currency:
+
+
+
+FX-запрос не нужен;
+fx_rate_to_base может быть NULL;
+сумма считается равной базовой сумме;
+операция не должна попадать в ошибку Missing FX rate.
+
+
+Если валюта отличается:
+
+
+
+нужен курс на дату операции;
+курс фиксируется в транзакции;
+при отсутствии курса строка отклоняется с ошибкой;
+нельзя молча подставлять курс 1.0.
+
+
+10. Транзакции
+
+
+Основная таблица:
+
+
+
+transactions
+
+
+Ключевые поля:
+
+
+
+id
+company_id
+type
+category
+amount
+currency
+fx_rate_to_base
+occurred_on
+team_id
+description
+source
+external_id
+created_by
+created_at
+updated_at
+deleted_at
+
+
+Типы транзакций:
+
+
+
+income
+expense
+
+
+Основные категории:
+
+
+
+ad_spend
+salary
+infra
+tax
+payout
+consumables
+depreciation
+interest
+other
+
+
+CRUD endpoints
+
+
+POST   /api/v1/transactions
+GET    /api/v1/transactions
+GET    /api/v1/transactions/{id}
+PATCH  /api/v1/transactions/{id}
+DELETE /api/v1/transactions/{id}
+
+
+Требования:
+
+
+
+company_id не принимается от клиента;
+created_by берётся из JWT;
+все записи автоматически привязываются к текущему tenant;
+удаление финансовых записей является soft-delete;
+мутации пишутся в audit log;
+GET поддерживает пагинацию и фильтры;
+поиск не должен обходить tenant RLS;
+суммы возвращаются как точные значения, а не float.
+
+11. CSV import
+
+
+CSV-import реализован как двухэтапный процесс.
+
+
+
+Шаг 1: upload
+
+
+POST /api/v1/imports/upload
+
+
+Система:
+
+
+
+принимает CSV;
+создаёт import_batch;
+определяет колонки;
+парсит строки;
+сохраняет import_rows;
+возвращает первые строки для preview;
+возвращает ошибки по строкам;
+не записывает ошибочные данные в P&L.
+
+
+Шаг 2: mapping и commit
+
+
+POST /api/v1/imports/{id}/commit
+
+
+Клиент передаёт mapping CSV-колонок к полям FinanceIntel:
+
+
+
+amount
+currency
+type
+category
+occurred_on
+description
+external_id
+
+
+Commit должен:
+
+
+
+повторно валидировать данные;
+использовать Decimal;
+проверять базовую валюту;
+получать FX rate только для отличающихся валют;
+помечать невалидные строки как error;
+не создавать дубли;
+возвращать inserted/skipped/error counts;
+создавать audit log на commit batch.
+
+
+Для импорта используется идемпотентность:
+
+
+
+UNIQUE(company_id, source, external_id)
+WHERE external_id IS NOT NULL
+
+
+При ON CONFLICT DO NOTHING необходимо указывать условия,
+
+соответствующие partial unique index.
+
+
+
+Повторная загрузка одного файла не должна создавать дубликаты.
+
+12. Audit Log
+
+
+Любые изменения финансовых данных должны фиксироваться:
+
+
+
+create;
+update;
+delete;
+CSV batch commit.
+
+
+Минимальные поля:
+
+
+
+company_id
+actor_user_id
+entity_type
+entity_id
+action
+diff
+created_at
+
+
+Для ручной CRUD-операции создаётся запись с изменениями.
+
+
+
+Для CSV допускается одна агрегированная запись на batch вместо отдельной
+
+записи на каждую строку, если в ней указаны:
+
+
+
+batch id;
+количество вставленных строк;
+количество пропущенных строк;
+количество ошибочных строк;
+пользователь;
+время операции.
+
+
+Audit log не должен использоваться как способ получить данные транзакций.
+
+Для него нужен отдельный endpoint:
+
+
+
+GET /api/v1/audit
+
+
+GET /transactions возвращает только транзакции.
+
+13. Frontend
+
+
+Стек
+
+
+Next.js 16.2.10
+React 19.2.4
+TypeScript
+App Router
+Tailwind CSS v4
+next-intl
+TanStack Query
+Recharts
+lucide-react
+
+
+Основные экраны
+
+
+Dashboard
+Transactions
+P&L
+Cash Flow
+Campaigns
+Team
+Payroll
+AI Analyst
+Market Intelligence
+Guides
+Settings
+
+
+Реализованные элементы
+
+
+Sidebar;
+Header;
+переключение EN/RU;
+Dashboard на моках;
+P&L экран;
+Cash Flow экран;
+Campaigns экран;
+Team экран;
+Payroll экран;
+AI Analyst экран;
+Market Intelligence прототип;
+Guides;
+Settings;
+Transactions screen;
+ручной ввод транзакции;
+CSV import wizard;
+loading/error/empty states;
+TanStack Query cache;
+typed API client.
+
+
+Текущее состояние фронтенда
+
+
+Dashboard, P&L, Cash Flow и другие старые экраны всё ещё частично используют
+
+mockData.ts.
+
+
+
+Следующая задача фронтенда:
+
+
+
+подключить Transactions к реальному API;
+проверить manual entry;
+проверить CSV upload и commit;
+подключить Dashboard к /reports или соответствующим финансовым endpoint;
+удалить моки с Dashboard;
+добавить реальный P&L и Cash Flow;
+синхронизировать TypeScript-типы с OpenAPI.
+
+
+Каждый API-экран должен иметь:
+
+
+
+loading;
+error;
+empty;
+success;
+retry;
+понятное сообщение об отсутствии данных.
+
+14. API client
+
+
+Фронтенд не должен делать произвольные fetch по всему проекту.
+
+
+
+Все запросы должны проходить через единый API client:
+
+
+
+src/lib/api/client.ts
+
+
+API client отвечает за:
+
+
+
+base URL;
+Authorization;
+обработку 401;
+refresh token;
+JSON decoding;
+единый формат API errors;
+типы запросов и ответов.
+
+
+Типы должны генерироваться из FastAPI OpenAPI, например через
+
+openapi-typescript, а не поддерживаться вручную в нескольких местах.
+
+
+
+TanStack Query используется для:
+
+
+
+кеширования;
+refetch;
+invalidation после mutation;
+loading state;
+error state;
+optimistic update, если он безопасен для финансовых данных.
+
+
+15. AI Analyst
+
+
+AI Analyst находится в MVP только как аналитик внутренних данных компании.
+
+
+
+Он не должен отвечать на финансовые вопросы на основе общей генерации модели.
+
+
+
+Обязательная цепочка:
+
+
+
+user question
+→ LLM выбирает tool
+→ backend проверяет права и tenant
+→ tool выполняет запрос к PostgreSQL
+→ реальные данные возвращаются модели
+→ модель формирует ответ
+
+
+Минимальные tools:
+
+
+
+get_pnl
+get_cash_flow
+get_runway
+get_campaign_performance
+get_team_performance
+get_account_costs
+
+
+Критическое правило:
+
+
+
+company_id берётся из JWT;
+AI-модель не может передать произвольный company_id;
+tool выполняется через tenant engine;
+данные других компаний не попадают в prompt;
+ответ без вызова нужного инструмента не должен выдаваться как финансовый
+факт;
+вызванные tools записываются в chat_messages.tool_calls_used.
+
+
+Текущий frontend /api/chat является прокси/заглушкой и не должен
+
+самостоятельно генерировать финансовые ответы.
+
+16. Расчётный слой
+
+
+После стабилизации транзакционного контура реализуются:
+
+
+
+P&L
+Cash Flow
+Cash Runway
+ROI
+ROAS
+Margin
+EBITDA
+EBIT
+Net Profit
+Finance Health Score
+
+
+Формулы:
+
+
+
+Gross Profit = revenue - ad_spend
+
+EBITDA = gross_profit - salary - infra - other - consumables
+
+EBIT = EBITDA - depreciation
+
+EBT = EBIT - interest
+
+Net Profit = EBT - tax
+
+ROI = (revenue - spend) / spend * 100
+
+ROAS = revenue / spend
+
+Cash Runway = available_cash / average_daily_spend
+
+
+Cash Runway не учитывает деньги, находящиеся в hold.
+
+
+
+Finance Health Score должен иметь явно зафиксированную версионируемую
+
+формулу. Нельзя показывать число вроде 84, если невозможно объяснить,
+
+как оно рассчитано.
+

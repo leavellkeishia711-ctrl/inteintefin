@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surfaceHover: var(--surface-hover);
+  --color-border: var(--border);
+  
+  --color-content-primary: var(--content-primary);
+  --color-content-secondary: var(--content-secondary);
+  --color-content-tertiary: var(--content-tertiary);
+  
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-900: #134e4a;
+  
+  --color-ai-50: #eef2ff;
+  --color-ai-100: #e0e7ff;
+  --color-ai-500: #6366f1;
+  --color-ai-600: #4f46e5;
+  
+  --color-success-bg: var(--success-bg);
+  --color-success-text: var(--success-text);
+  --color-success-border: var(--success-border);
+
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-text: var(--warning-text);
+  --color-warning-border: var(--warning-border);
+
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-text: var(--danger-text);
+  --color-danger-border: var(--danger-border);
+
+  --font-sans: 'Inter', sans-serif;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.025);
+}
+
+:root {
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --border: #e2e8f0;
+  
+  --content-primary: #0f172a;
+  --content-secondary: #475569;
+  --content-tertiary: #94a3b8;
+  
+  --success-bg: #f0fdf4;
+  --success-text: #15803d;
+  --success-border: #bbf7d0;
+  
+  --warning-bg: #fffbeb;
+  --warning-text: #b45309;
+  --warning-border: #fef08a;
+  
+  --danger-bg: #fef2f2;
+  --danger-text: #b91c1c;
+  --danger-border: #fecaca;
+}
+
+.dark {
+  --background: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --border: #334155;
+  
+  --content-primary: #f8fafc;
+  --content-secondary: #cbd5e1;
+  --content-tertiary: #64748b;
+  
+  --success-bg: rgba(21, 128, 61, 0.2);
+  --success-text: #4ade80;
+  --success-border: #15803d;
+  
+  --warning-bg: rgba(180, 83, 9, 0.2);
+  --warning-text: #fde047;
+  --warning-border: #b45309;
+  
+  --danger-bg: rgba(185, 28, 28, 0.2);
+  --danger-text: #f87171;
+  --danger-border: #b91c1c;
+}
+
+body {
+  background: var(--background);
+  color: var(--content-primary);
+  font-family: var(--font-sans);
+}
