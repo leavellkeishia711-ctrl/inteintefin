@@ -53,7 +53,7 @@ jobs:
         # Dump logs from all containers
         docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
         # Check for secrets
-        if [ -f all_containers.log ] && grep -iE "generate_a_strong_secret_key_here|dummy_key_for_ci|dummy_bot_token|redis://redis" all_containers.log; then
+        if [ -f all_containers.log ] && grep -iE "generate_a_strong_secret_key_here|dummy_key_for_ci|dummy_bot_token|12345|test_token" all_containers.log; then
           echo "Found secrets in logs!"
           exit 1
         else
