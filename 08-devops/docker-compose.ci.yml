@@ -22,6 +22,21 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    build:
+      context: ../04-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://fi:fi@db:5432/financeintel
+      - DATABASE_URL_MIGRATIONS=postgresql+asyncpg://fi:fi@db:5432/financeintel
+      - APP_USER_DATABASE_URL=postgresql+asyncpg://app_user:app@db:5432/financeintel
+      - DB_SSLMODE=prefer
+    env_file:
+      - ../08-devops/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+
   api:
     build:
       context: ../04-backend
@@ -34,15 +49,17 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DB_SSLMODE=prefer
     env_file:
-      - ../08-devops/.env.example
+      - ../08-devops/.env
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -57,7 +74,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DB_SSLMODE=prefer
     env_file:
-      - ../08-devops/.env.example
+      - ../08-devops/.env
     depends_on:
       db:
         condition: service_healthy
@@ -74,7 +91,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DB_SSLMODE=prefer
     env_file:
-      - ../08-devops/.env.example
+      - ../08-devops/.env
     depends_on:
       db:
         condition: service_healthy
