@@ -39,5 +39,9 @@
 **STAGING ACCEPTED** 🟢
 Тестирование логики и изоляции пройдено в рамках доступного окружения (Windows).
 
-**PRODUCTION READY** 🟢
-Производственные врата (prod-gate.yml) внедрены в CI. Отчет включает проверку нагрузочного пула (SQLAlchemy/asyncpg), Celery Worker/Beat smoke-тестирование, и симуляцию Redis Outage на Linux/Docker Compose окружении.
+**PRODUCTION BLOCKED** 🔴
+Причина: упавшие CI-джобы
+- `Production Gate` (Run ID: 31216615005, 31216476017) упал из-за ошибки старта docker-compose стека.
+- `Frontend CI` (Run ID: 31216614993, 31216475943) упал на шаге установки зависимостей (npm install).
+
+Необходимо дождаться зелёных CI-пайплайнов.
