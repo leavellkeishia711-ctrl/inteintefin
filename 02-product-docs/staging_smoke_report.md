@@ -39,8 +39,8 @@
 Тестирование логики и изоляции пройдено в рамках доступного окружения (Windows).
 
 **PRODUCTION READY** 🟢
-Производственные врата успешно пройдены в GitHub Actions для коммита 570f952c.
+Производственные врата успешно пройдены в GitHub Actions для коммита 34031d19.
 Успешные прогоны:
-- Production Gate (Run ID: 31219535224)
-- Frontend CI (Run ID: 31219535224)
-- Backend CI (Run ID: 31219535544)
+- Production Gate (Run ID: 31220636317)
+- Frontend CI (Run ID: 31220636307)
+- Backend CI (Run ID: 31220636313)

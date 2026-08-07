@@ -28,6 +28,6 @@
 **Статус**: **PRODUCTION READY** 🟢
 
 Все проверки успешно пройдены как локально, так и в CI (Linux/Docker):
-- Frontend CI (Run ID: 31219535224) - success
-- Backend CI (Run ID: 31219535544) - success
-- Production Gate (Run ID: 31219535224) - success
+- Frontend CI (Run ID: 31220636307) - success
+- Backend CI (Run ID: 31220636313) - success
+- Production Gate (Run ID: 31220636317) - success
