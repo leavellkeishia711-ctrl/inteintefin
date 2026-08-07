@@ -5,6 +5,8 @@
 ![Production Gate](https://github.com/leavellkeishia711-ctrl/inteintefin/actions/workflows/prod-gate.yml/badge.svg)
 SaaS финансового учёта для медиабаинговых команд. Виртуальный CFO поверх трекеров.
 
+👉 **[Текущий статус готовности MVP (Stage 1)](02-product-docs/MVP_STATUS.md)** 👈
+
 ## Структура проекта
 
 - `02-product-docs/`: Документация (PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS)
