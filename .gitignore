@@ -1,4 +1,4 @@
-﻿postgres.zip
+postgres.zip
 **/nw.dll
 04-backend/postgres.zip
 04-backend/pgsql/
@@ -10,3 +10,10 @@ pgsql/
 .venv/
 venv/
 04-backend/data/
+
+04-backend/venv/
+04-backend/data/
+*.log
+temp_versions/
+openapi_check.json
+
