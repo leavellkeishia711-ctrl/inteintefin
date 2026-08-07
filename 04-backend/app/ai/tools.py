@@ -130,7 +130,10 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
             return False, f"Error: Unknown tool {tool_name}"
             
     except Exception as e:
-        return False, f"Tool Execution Error: {str(e)}"
+        # Do not expose internal exceptions to the LLM (security requirement)
+        import logging
+        logging.getLogger(__name__).error(f"Tool Execution Error ({tool_name}): {str(e)}")
+        return False, "Internal error during tool execution."
 
 # Define the tools spec for Anthropic
 def get_tools_spec() -> List[Dict[str, Any]]:

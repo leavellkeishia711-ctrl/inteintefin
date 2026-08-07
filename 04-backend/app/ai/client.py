@@ -39,7 +39,22 @@ class AnthropicClient:
                 if msg["role"] == "system":
                     system_prompt += msg["content"] + "\n"
                 else:
-                    anthropic_messages.append(msg)
+                    anthropic_msg = {"role": msg["role"]}
+                    if msg["role"] == "assistant" and msg.get("tool_calls"):
+                        content_blocks = []
+                        if msg.get("content"):
+                            content_blocks.append({"type": "text", "text": msg["content"]})
+                        for tc in msg["tool_calls"]:
+                            content_blocks.append({
+                                "type": "tool_use",
+                                "id": tc["id"],
+                                "name": tc["name"],
+                                "input": tc["arguments"]
+                            })
+                        anthropic_msg["content"] = content_blocks
+                    else:
+                        anthropic_msg["content"] = msg["content"]
+                    anthropic_messages.append(anthropic_msg)
                     
             response = await self.client.messages.create(
                 model=self.model,
