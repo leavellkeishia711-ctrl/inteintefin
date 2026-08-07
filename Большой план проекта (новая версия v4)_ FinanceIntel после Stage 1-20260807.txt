@@ -1,0 +1,120 @@
+# Большой план проекта (новая версия v4) — FinanceIntel после Stage 1
+
+## 1. Краткое описание проекта
+FinanceIntel — SaaS финансового управления и аналитики для медиабаинговых команд. Продукт выступает в роли виртуального CFO поверх трекеров (Keitaro, Binom и др.), агрегируя доходы, расходы, выплаты партнерам, зарплаты и ключевые метрики в едином интерфейсе.
+
+## 2. Ценность продукта
+Автоматизация и централизация финансов для команд арбитража трафика. Вместо ручного сведения таблиц FinanceIntel предоставляет P&L, Cash Flow, расчет Margin/ROI в реальном времени, а также AI-ассистента для аналитики.
+
+## 3. Архитектура и структура репозитория
+Стек технологий:
+- **Backend**: FastAPI, Python 3.11, SQLAlchemy 2.0, Alembic, Celery, PostgreSQL 16, Redis 7.
+- **Frontend**: Next.js 16.2.10, React 19, Tailwind v4, next-intl, TanStack Query.
+- **Инфраструктура**: Docker Compose, GitHub Actions.
+
+Структура репозитория:
+- `01-design/`: Дизайн-материалы, макеты.
+- `02-product-docs/`: Источник правды по требованиям (PRD, MVP, DB_SCHEMA, ROADMAP).
+- `03-database/`: Инициализационные скрипты базы данных.
+- `04-backend/`: Код backend-сервера.
+- `05-frontend/`: Код frontend-клиента.
+- `06-admin-frontend/` (опционально): Админ-панель (пока вне скоупа).
+- `08-devops/`: Конфигурации развертывания, Docker Compose, CI/CD скрипты.
+- `09-reference/`: Справочные материалы и документация по технологиям.
+- `archive/`: Устаревшие материалы, черновики, логи (НЕ использовать как источник правды).
+- `scripts/`: Вспомогательные скрипты.
+- `scratch/`: Временная директория для промежуточных файлов агентов.
+
+## 4. Stage 1: что реализовано
+- **Ядро**: auth/JWT, мультитенантность (RLS, tenant session context), транзакции, CSV import, FX rates.
+- **Финансы**: Decimal/NUMERIC, P&L, Cash Flow, payroll (runs, items, rate, bonus, quota), consumables, ad accounts, campaign runs.
+- **Уведомления**: Telegram link/status, alerts (cooldown, dedup_key), Celery Beat background execution.
+- **ИИ**: AI Analyst с обязательным tool use (neutral error для LLM, защита от IDOR, tenant isolation).
+- **Инфраструктура**: Docker Compose, Backend CI, Frontend CI, Production Gate.
+- **Фронтенд**: next-intl (i18n), live data layer.
+
+## 5. Stage 1: что подтверждено тестами и CI
+- **Backend CI**: 48 passed, 0 failed.
+- **check_floats.py**: passed.
+- **Alembic migrations**: passed (upgrade head).
+- **Frontend CI**: lint (0 errors, 0 warnings), build passed.
+- **Production Gate**: success (celery smoke, redis outage test, async load test, secret audit).
+- **Tenant Isolation**: подтверждена как локально, так и в CI (Linux/Docker).
+
+## 6. Stage 1: что является partial или missing
+- **MISSING**: Полноценные коннекторы к рекламным API (Facebook, Google Ads и др.).
+- **MISSING**: Интеграция с трекерами напрямую.
+- **MISSING**: Подробные дашборды (UI) для части финансовых метрик (сделан только фундамент данных).
+- **PARTIAL**: Интеграционные E2E-тесты фронтенда (написаны базовые Cypress/Playwright).
+
+## 7. Definition of Done MVP
+| Requirement | Status | Доказательство |
+| --- | --- | --- |
+| FastAPI + SQLAlchemy 2.0 + Alembic | DONE | Код в 04-backend/, успешный Backend CI |
+| PostgreSQL 16 + Redis 7 + Celery | DONE | Запуск в Docker Compose Production Gate |
+| Мультитенантность (RLS) | DONE | Тесты изоляции в Backend CI |
+| P&L, Cash Flow, Payroll, Consumables | DONE | Код моделей и сервисов, миграции БД |
+| Telegram Alerts | DONE | Код в `api/v1/telegram.py`, тесты Celery/Redis Outage |
+| AI Analyst Tool Use | DONE | `tools.py`, обработка `tool_use` и `tool_result` |
+| Next.js 16 + Tailwind v4 + i18n | DONE | Код в 05-frontend/, успешный Frontend CI |
+| Отсутствие float в финансах | VERIFIED | `check_floats.py` (0 violations) |
+| Отсутствие секретов в логах | VERIFIED | Production Gate (Log Audit for Secrets: No secrets found) |
+| Идемпотентность Telegram-линка | VERIFIED | Успешный Redis Outage load test (код 503) |
+| E2E интеграция API рекламных сетей | DEFERRED | Перенесено на следующие этапы |
+
+## 8. Инфраструктура и деплой
+- **Локальная разработка**: Windows (uvicorn/npm run dev) или `docker compose -f 08-devops/docker-compose.yml up`.
+- **CI**: GitHub Actions (Ubuntu Linux).
+- Деплой осуществляется через валидацию Docker Compose стека в пайплайне `Production Gate`.
+
+## 9. Безопасность и инварианты
+- Только Decimal / NUMERIC(20,4) для денег.
+- `company_id` только из JWT-сессии. RLS обязателен.
+- AI Analyst отвечает только через реальный tool use с базой данных (никакого мока).
+- PCI: Полные карты и пароли не хранятся.
+- Секреты не логируются и не попадают в контекст LLM.
+- Везде TIMESTAMPTZ в UTC и soft delete (`deleted_at`).
+- Уникальность при импорте: `(company_id, source, external_id)`.
+
+## 10. Текущий Production Gate
+**Статус**: PRODUCTION READY 🟢
+- Frontend CI (Run ID: 31220636307)
+- Backend CI (Run ID: 31220636313)
+- Production Gate (Run ID: 31220636317)
+- Инфраструктурный коммит `34031d19`. Документация в `1fe267ae`.
+
+## 11. Проблемы и технический долг
+- Windows-specific ограничения (например, особенности asyncio loop, отсутствие curl в slim-образах) требовали обходных путей.
+- Отсутствие длительных soak-тестов и capacity planning.
+- Graceful degradation Redis сделан для `/status`, но не для всех путей.
+
+## 12. Приоритетный backlog
+**P0**:
+- Деплой на реальный production-сервер (пока успешно только в CI-контейнерах).
+- Интеграция SSL/HTTPS на production.
+
+**P1**:
+- Полноценные E2E-тесты (Playwright).
+- Graceful degradation Redis для остальных путей.
+- Наблюдаемость (Prometheus/Grafana) и health-check инфраструктура.
+- Backup/restore процессы для PostgreSQL.
+
+**P2**:
+- Подключение реальных трекеров и рекламных сетей.
+- Team Performance Analytics.
+- Market Intelligence.
+
+## 13. Что делать дальше, по шагам
+1. Переход к деплою на staging/production сервер.
+2. Реализация базовых API коннекторов (Stage 2).
+3. Добавление UI-экранов для дашбордов.
+
+## 14. Что не входит в текущий scope
+- Market Intelligence (парсинг Telegram, сбор публичных метрик).
+- 06-admin-frontend.
+- Коннекторы к рекламным API (Facebook, Google Ads).
+- Forecasting & Scenario Modeling.
+- Собственный инференс AI моделей.
+
+## 15. Критерии готовности следующего этапа
+Успешный деплой на production-сервере с работающей БД, изоляцией, Redis и Celery. Подтверждение работоспособности всех систем под рабочей нагрузкой реальных пользователей, а не только в CI-среде.
