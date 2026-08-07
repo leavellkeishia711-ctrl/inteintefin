@@ -1,11 +1,10 @@
 # Отчёт о Staging Smoke-Тестировании (Stage 1)
 
 ## Окружение и Конфигурация (Локально)
-- **ОС**: Windows.
-- **СУБД**: PostgreSQL 16 (локально, не Docker).
-- **Backend**: FastAPI, Python 3.11, SQLAlchemy 2.0. uvicorn --workers 2.
+- **ОС**: Windows (локально) / Ubuntu Linux (CI).
+- **СУБД**: PostgreSQL 16 (включая Docker окружение).
+- **Backend**: FastAPI, Python 3.11, SQLAlchemy 2.0. uvicorn --workers 2. Celery + Redis 7.
 - **Frontend**: Next.js 16.2.10, Node.js.
-- **Внимание**: Linux/Docker, PostgreSQL 16 + Redis 7 + Celery worker/beat не запускались.
 
 ## Выполненные базовые проверки
 - `pytest tests/ -q`: 48 passed, 0 failed;
@@ -39,9 +38,9 @@
 **STAGING ACCEPTED** 🟢
 Тестирование логики и изоляции пройдено в рамках доступного окружения (Windows).
 
-**PRODUCTION BLOCKED** 🔴
-Причина: упавшие CI-джобы
-- `Production Gate` (Run ID: 31216615005, 31216476017) упал из-за ошибки старта docker-compose стека.
-- `Frontend CI` (Run ID: 31216614993, 31216475943) упал на шаге установки зависимостей (npm install).
-
-Необходимо дождаться зелёных CI-пайплайнов.
+**PRODUCTION READY** 🟢
+Производственные врата успешно пройдены в GitHub Actions для коммита 570f952c.
+Успешные прогоны:
+- Production Gate (Run ID: 31219535224)
+- Frontend CI (Run ID: 31219535224)
+- Backend CI (Run ID: 31219535544)

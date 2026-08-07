@@ -25,9 +25,9 @@
 - Утечек секретов в логах не зафиксировано.
 
 ## Вердикт по деплою
-**Статус**: **STAGING ACCEPTED / PRODUCTION BLOCKED** 🔴
-Причина блокировки:
-- Упавший `Production Gate` (Run ID: 31216615005, 31216476017)
-- Упавший `Frontend CI` (Run ID: 31216614993, 31216475943)
+**Статус**: **PRODUCTION READY** 🟢
 
-Производственные врата внедрены в репозиторий, но их успешное прохождение пока не достигнуто.
+Все проверки успешно пройдены как локально, так и в CI (Linux/Docker):
+- Frontend CI (Run ID: 31219535224) - success
+- Backend CI (Run ID: 31219535544) - success
+- Production Gate (Run ID: 31219535224) - success
