@@ -1,5 +1,8 @@
 # FinanceIntel
 
+![Backend CI](https://github.com/leavellkeishia711-ctrl/inteintefin/actions/workflows/backend.yml/badge.svg)
+![Frontend CI](https://github.com/leavellkeishia711-ctrl/inteintefin/actions/workflows/frontend.yml/badge.svg)
+![Production Gate](https://github.com/leavellkeishia711-ctrl/inteintefin/actions/workflows/prod-gate.yml/badge.svg)
 SaaS финансового учёта для медиабаинговых команд. Виртуальный CFO поверх трекеров.
 
 ## Структура проекта
