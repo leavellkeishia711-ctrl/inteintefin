@@ -9,3 +9,4 @@ node_modules/
 pgsql/
 .venv/
 venv/
+04-backend/data/

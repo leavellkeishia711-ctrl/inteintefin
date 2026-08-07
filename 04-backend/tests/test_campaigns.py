@@ -30,7 +30,7 @@ async def test_get_ad_account_cost(app, client_a):
             db.add_all([c1, c2])
             
     async with tenant_session(str(company_id)) as db:
-        cost = await get_ad_account_cost(db, ad_account_id)
+        cost = await get_ad_account_cost(db, company_id, ad_account_id)
         # 10.00 * 1.0 + 5.00 * 1.1 = 15.50
         assert cost == Decimal("15.5000")
 

@@ -7,6 +7,40 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 @pytest.mark.asyncio
+async def test_ai_analyst_successful_tool_call():
+    company_id = uuid.uuid4()
+    
+    class MockClient:
+        def __init__(self):
+            self.calls = 0
+            
+        async def complete_with_tools(self, messages, tools):
+            self.calls += 1
+            if self.calls == 1:
+                return {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [{"id": "t1", "name": "get_pnl", "arguments": {"date_from": "2026-01-01", "date_to": "2026-01-31"}}]
+                }
+            else:
+                return {
+                    "role": "assistant",
+                    "content": "Final AI analysis answer",
+                    "tool_calls": []
+                }
+                
+    import app.ai.analyst
+    original_get_client = app.ai.analyst.get_llm_client
+    app.ai.analyst.get_llm_client = lambda: MockClient()
+    
+    try:
+        async with system_session() as db_session:
+            response = await ask_financial_analyst(db_session, company_id, "What is my revenue?")
+            assert "Final AI analysis answer" in response
+    finally:
+        app.ai.analyst.get_llm_client = original_get_client
+
+@pytest.mark.asyncio
 async def test_ai_analyst_tool_enforcement():
     company_id = uuid.uuid4()
     

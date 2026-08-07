@@ -61,7 +61,8 @@ async def test_telegram_link_token(monkeypatch):
     token = "testtoken123"
     await mock_redis.set(f"telegram_link:{token}", str(user_id))
     
-    chat_id = 123456789
+    import random
+    chat_id = random.randint(1000000, 999999999)
     
     async with system_session() as db:
         res = await handle_telegram_message(db, chat_id, f"/link {token}")

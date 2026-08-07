@@ -112,4 +112,4 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
             f"ROI: {roi}%\n"
             f"Runway: {cf.runway_days} days\n"
         )
-
+        return message
