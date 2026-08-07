@@ -32,18 +32,26 @@
 
 ### Преддеплойный аудит Stage 1 (Hardening)
 - [x] Очистка Git-индекса от запрещённых файлов (`.env`, `__pycache__`, `pgsql`, `node_modules`)
-- [x] Telegram rate limiter: внедрён Bounded In-Memory Limiter (TTL 60s, asyncio.Lock(), max 10000 записей) как fallback при `ConnectionError`/`TimeoutError`
+- [x] Telegram rate limiter: внедрён режим fail-closed (503/429) для `/link` при недоступном Redis. Для некритичных команд оставлен Bounded In-Memory Limiter
 - [x] Негативные тесты на Tenant Isolation: подтверждены HTTP, Celery (утечки контекста) и повторное использование `/link` токена.
 - [x] AI Analyst (IDOR/Утечки): LLM получает только общую заглушку `Internal error during tool execution.`, payload полностью очищен от ORM-полей и ID.
-- [x] Успешный запуск `pytest -q` (48 passed)
-- [x] Успешный запуск `alembic upgrade head`
-- [x] Успешный запуск `npm run lint` (0 ошибок, 0 предупреждений)
-- [x] Успешный запуск `npm run build`
-- [x] Успешный запуск `check_floats.py`
+- [x] `pytest tests/ -q`: 48 passed, 0 failed;
+- [x] `alembic upgrade head`: passed;
+- [x] `npm run lint`: 0 errors, 0 warnings;
+- [x] `npm run build`: passed;
+- [x] `check_floats.py`: passed;
+- [x] Вердикт по деплою: **STAGING ACCEPTED**, **PRODUCTION BLOCKED** (причина: отсутствует подтверждённый Linux/Docker-прогон с двумя worker’ами, Celery и нагрузкой asyncpg/SQLAlchemy).
 
 ## Текущий Backlog (Вне скоупа Stage 1)
 
-### Ожидает реализации (Stage 2+)
+### Ожидают проверки (Блокируют Production)
+- [ ] Linux/Docker Compose production-gate;
+- [ ] PostgreSQL/asyncpg нагрузочный прогон;
+- [ ] Redis outage при двух worker’ах;
+- [ ] Celery worker/beat smoke;
+- [ ] повторная проверка логов и tenant isolation.
+
+### Ожидают реализации (Stage 2+)
 - [ ] Market Intelligence (Сбор данных о рынке и бенчмарках)
 - [ ] Парсинг Telegram (Чтение сообщений из партнёрок/чатов для автоматизации)
 - [ ] `06-admin-frontend` (Панель суперадмина)

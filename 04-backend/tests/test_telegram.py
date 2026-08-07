@@ -108,11 +108,14 @@ async def test_telegram_redis_unavailable(monkeypatch):
     res_6 = await app.services.telegram_bot.check_rate_limit(12345)
     assert res_6 is False
     
+    from fastapi import HTTPException
     from app.db.session import system_session
     async with system_session() as db:
-        # Should not crash on link
-        res = await handle_telegram_message(db, 12345, "/link some_token")
-        assert res == "Our systems are temporarily overloaded. Please try linking again later."
+        # Should raise HTTPException 503 on link
+        with pytest.raises(HTTPException) as excinfo:
+            await handle_telegram_message(db, 12345, "/link some_token")
+        assert excinfo.value.status_code == 503
+        assert excinfo.value.detail == "Our systems are temporarily overloaded."
 
 @pytest.mark.asyncio
 async def test_telegram_link_success_and_reuse(monkeypatch):

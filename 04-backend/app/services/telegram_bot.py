@@ -61,7 +61,7 @@ async def check_rate_limit(chat_id: int) -> bool:
         if current > 5:
             return False
     except (ConnectionError, TimeoutError):
-        logger.warning("Redis is unavailable. Using local rate limiter.")
+        logger.warning("Redis is unavailable. Local rate limiter used for non-critical fallback.")
         return await check_local_rate_limit(chat_id)
         
     return True
@@ -73,22 +73,29 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
     if not text_str.startswith('/'):
         return None
         
-    if not await check_rate_limit(chat_id):
-        return "Too many requests. Please wait a minute."
-
-    try:
-        r = await get_redis()
-    except (ConnectionError, TimeoutError):
-        logger.warning("Redis is unavailable. Telegram linking disabled.")
-        return "Our systems are temporarily overloaded. Please try linking again later."
-    
-    # Handle /link <token>
+    # /link commands fail closed if rate limited
     if text_str.startswith('/link '):
+        try:
+            r = await get_redis()
+            key = f"rate_limit:telegram:{chat_id}"
+            current = await r.incr(key)
+            if current == 1:
+                await r.expire(key, 60)
+            if current > 5:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=429, detail="Too many requests.")
+        except (ConnectionError, TimeoutError):
+            from fastapi import HTTPException
+            logger.warning("Redis is unavailable. Telegram linking disabled (fail-closed).")
+            raise HTTPException(status_code=503, detail="Our systems are temporarily overloaded.")
+            
         token = text_str.split(' ')[1].strip()
         try:
             user_id_bytes = await r.get(f"telegram_link:{token}")
         except (ConnectionError, TimeoutError):
-            return "Our systems are temporarily overloaded. Please try linking again later."
+            from fastapi import HTTPException
+            logger.warning("Redis is unavailable. Telegram linking disabled (fail-closed).")
+            raise HTTPException(status_code=503, detail="Our systems are temporarily overloaded.")
             
         if not user_id_bytes:
             return "Invalid or expired link token."
@@ -106,6 +113,12 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
         await r.delete(f"telegram_link:{token}")
         
         return "Your Telegram account has been successfully linked!"
+        
+    # For other commands like /status, use standard rate limit check with local fallback
+    if not await check_rate_limit(chat_id):
+        return "Too many requests. Please wait a minute."
+
+
 
     if not text_str.startswith('/status'):
         return None

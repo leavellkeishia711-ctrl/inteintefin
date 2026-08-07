@@ -1,0 +1,172 @@
+# Большой план проекта (новая версия v3) — FinanceIntel после Stage 1
+
+## 1. Executive Summary
+FinanceIntel — SaaS финансового управления и аналитики для медиабаинговых команд. Stage 1 (Financial Core) полностью реализован и прошел Staging тестирование. Продукт находится в статусе PRODUCTION BLOCKED по причине отсутствия валидного интеграционного тестирования инфраструктуры Linux/Docker с параллельной нагрузкой. Переход к Stage 2 возможен после прохождения production-gate.
+
+## 2. Product Vision
+Создание "виртуального CFO", способного поверх трекеров автоматически агрегировать доходы, расходы, выплаты партнерам, рассчитывать payroll, отслеживать метрики ROI/ROAS и Margin, а также предоставлять AI Analyst для финансового анализа данных.
+
+## 3. Current State
+- Разработка ядра (Stage 1) завершена.
+- STAGING ACCEPTED.
+- PRODUCTION BLOCKED.
+
+## 4. Completed Stage 1 scope
+1. Financial Core:
+   - auth и cookie-сессии;
+   - мультитенантность;
+   - RLS;
+   - tenant session context;
+   - транзакции;
+   - CSV import;
+   - FX rates;
+   - P&L;
+   - Cash Flow;
+   - Liquidity;
+   - Cash Runway;
+   - EBITDA и Finance Health Score;
+   - audit log;
+   - consumables;
+   - ad accounts;
+   - campaign runs;
+   - campaign run stats;
+   - partner payout domain;
+   - payroll (payroll runs, payroll line items, base rate, bonus percent, quota, processor piece-rate, held status, включение payroll в P&L/net profit);
+   - alerts (Cash Runway threshold, ROI threshold, stalled data monitoring, dedup_key, cooldown_until, Celery Beat scheduling, tenant-isolated background execution);
+   - data quality monitoring;
+   - i18n;
+   - frontend live data layer через TanStack Query;
+   - OpenAPI TypeScript-типы;
+   - production frontend build.
+
+2. Media Buying Domain:
+   - `ad_accounts`;
+   - `consumables`;
+   - `campaign_runs`;
+   - `campaign_run_stats`;
+   - безопасные ROI/ROAS/Margin calculations;
+   - tenant-safe cost aggregation.
+
+3. Repository hygiene:
+   - `.env`, `pgsql`, `node_modules`, `__pycache__` и бинарные артефакты добавлены в ignore/удалены из индекса.
+
+## 5. Architecture
+- FastAPI, Python, SQLAlchemy 2.0, PostgreSQL 16, Alembic, RLS, Redis, Celery, Next.js 16, React 19, TypeScript, Tailwind, next-intl, TanStack Query.
+
+## 6. Data model and invariants
+- Деньги хранятся через Decimal/NUMERIC, float в финансовых расчётах запрещён.
+- Финансовые таблицы используют soft delete там, где это предусмотрено схемой.
+
+## 7. Security model
+- company_id не должен приниматься из body, query или аргументов LLM, а берётся из JWT/session context.
+- PostgreSQL RLS и tenant context являются обязательными слоями изоляции.
+- Сырые секреты, токены, полные данные карт и пароли не хранятся и не попадают в LLM-контекст.
+
+## 8. AI Analyst policy
+- обязательный tool use;
+- успешный tool call обязателен перед финальным ответом;
+- корректный Anthropic `tool_use`/`tool_result` flow;
+- продолжение цикла после успешного инструмента;
+- neutral error для LLM;
+- отсутствие traceback, SQL и внутренних деталей в LLM;
+- whitelist payload;
+- защита от IDOR через ad_account_id/campaign_run_id;
+- tenant isolation.
+
+## 9. Alerts and Telegram
+- webhook secret validation;
+- one-time link token;
+- expiry and reuse protection;
+- user and tenant scoping;
+- `/link`;
+- `/status`;
+- Redis rate limiting;
+- fail-closed для `/link` при Redis outage;
+- best-effort in-memory fallback только для некритичных операций.
+
+## 10. Validation results
+- `pytest tests/ -q`: 48 passed, 0 failed;
+- `python scripts/check_floats.py`: passed;
+- `alembic upgrade head`: passed;
+- `npm run lint`: 0 errors, 0 warnings;
+- `npm run build`: passed;
+- локальный Uvicorn запуск с двумя worker-процессами на Windows;
+- 100 параллельных `/link` при отключённом Redis: контролируемый 503;
+- link-токены при Redis outage не становятся использованными;
+- `/status` использует best-effort in-memory limiter;
+- секреты не обнаружены в логах по выполненной локальной проверке.
+
+## 11. Deployment gates
+STAGING ACCEPTED.
+
+## 12. Production blockers
+PRODUCTION BLOCKED.
+Причины:
+1. Не выполнен обязательный Linux/Docker Compose прогон.
+2. Не подтверждён запуск PostgreSQL 16, Redis 7, двух backend workers, Celery worker и Celery Beat в Linux/Docker.
+3. Не выполнен целевой Linux-нагрузочный тест asyncpg/SQLAlchemy pool.
+4. Локальный Windows-тест не является заменой Linux production-gate.
+
+## 13. P0/P1/P2 backlog
+
+**P0, обязательно до Production:**
+- Linux/Docker Compose production-gate;
+- чистая PostgreSQL 16;
+- Redis 7;
+- два backend worker-процесса;
+- Celery worker;
+- Celery Beat;
+- нагрузочный тест asyncpg/SQLAlchemy;
+- Redis outage при нескольких worker’ах;
+- tenant isolation под реальной конкурентной нагрузкой;
+- проверка отсутствия утечек секретов;
+- финальный smoke-тест auth, reports, transactions, payroll, alerts, Telegram и AI Analyst.
+
+**P1, после прохождения production-gate:**
+- graceful degradation Redis для некритичных Telegram-команд;
+- полноценные интеграционные тесты на реальной БД;
+- устранение Windows-specific зависаний или документирование ограничений;
+- наблюдаемость, метрики, алерты инфраструктуры;
+- backup/restore;
+- health checks;
+- deployment rollback;
+- rate-limit monitoring;
+- проверка миграций на чистой и существующей БД.
+
+**P2, будущие продуктовые этапы:**
+- расширение рекламных и tracker integrations;
+- Team Performance Analytics;
+- Forecasting;
+- Scenario Modeling;
+- Recommendation Engine;
+- Market Intelligence;
+- Telegram ingestion/parsing;
+- Human Review Queue;
+- public API;
+- mobile;
+- multi-company/agency mode;
+- white-label;
+- enterprise security certifications.
+
+## 14. Stage 2 roadmap
+- Team Performance Analytics;
+- расширение рекламных и tracker integrations.
+
+## 15. Market Intelligence roadmap
+- Выделен в самостоятельный трек (P2). Не является частью текущего MVP.
+
+## 16. Definition of Done for Production
+Успешное прохождение интеграционных и нагрузочных тестов (asyncpg/SQLAlchemy, Redis outage) на нативной среде Linux/Docker Compose с минимум двумя воркерами Uvicorn и чистой базой данных, без утечек секретов и дедлоков event loop.
+
+## 17. Risks and assumptions
+- Запуск PostgreSQL/asyncpg под реальной конкурентной нагрузкой не подтверждён в целевой ОС.
+- Деградация Redis outage при нескольких worker’ах в Linux не протестирована.
+
+## 18. Next implementation sequence
+1. Подготовка стенда с Linux/Docker Compose.
+2. Проведение P0 проверок (нагрузочные тесты, тесты отключения Redis).
+3. При успешных результатах — снятие блокировки Production и деплой.
+4. Переход к P1 инфраструктурным задачам.
+5. Старт Stage 2.
+
+Документ создан как новая версия на основе предыдущих версий и текущего состояния репозитория. Исторические документы сохранены без изменений.

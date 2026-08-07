@@ -1,7 +1,7 @@
 # Финальный отчет по аудиту и проверкам
 
 ## Исправленные блокеры и улучшения
-- **Telegram Rate Limiter**: Внедрен локальный `bounded in-memory limiter` с TTL 60с, ограничением в 10 000 записей и блокировками `asyncio.Lock()`. При падении Redis бот корректно переходит в локальный режим, предотвращая переполнение памяти.
+- **Telegram Rate Limiter**: Для команды `/link` при недоступном Redis внедрен fail-closed (возврат 503/429). In-memory fallback (best-effort) используется только для некритичных команд, таких как `/status`.
 - **Tenant Isolation**: 
   - Написаны негативные тесты Celery на попытки кросс-тенантного `INSERT` — подтверждено, что `tenant_task_session()` очищает контекст.
   - Написаны тесты HTTP, подтверждающие, что параметры не могут переопределить тенант из JWT.
@@ -12,16 +12,30 @@
   - Payload инструментов очищен от ORM-полей и секретов.
 - **Инструментарий**: Исправлено предупреждение в `check_floats.py` (заменен `60.0` на целое `60`).
 
-## Подтверждённые проверки (Smoke Tests)
-- **`pytest tests/ -q`**: 48 passed;
-- **`check_floats.py`**: passed;
-- **`alembic upgrade head`**: passed;
-- **`npm run lint`**: 0 errors, 0 warnings;
-- **`npm run build`**: passed.
+## Подтверждённые локальные проверки (Windows)
+- `pytest tests/ -q`: 48 passed, 0 failed;
+- `check_floats.py`: passed;
+- `alembic upgrade head`: passed;
+- `npm run lint`: 0 errors, 0 warnings;
+- `npm run build`: passed.
+
+## Локальный нагрузочный тест (Windows, uvicorn --workers 2)
+- 100 параллельных `/link` при Redis outage: возвращён код 503, токены не использованы.
+- `/status`: корректно использует best-effort in-memory limiter.
+- Утечек секретов в логах не зафиксировано.
 
 ## Вердикт по деплою
-**Статус**: **STAGING READY** (Ограниченно Production).
-Деплой на Staging полностью одобрен для QA-команды.
-Перенос на Production возможен, однако стоит учесть остаточные риски:
-- Ограниченная локальная БД: Тесты проводились локально; для Production требуются интеграционные тесты на реальной реплике.
-- Graceful degradation Redis: при недоступности Redis бот переходит на in-memory limiter. Это безопасно с точки зрения OOM, но если воркеров несколько, лимиты будут "размазаны" (срабатывать позже).
+**Статус**: **STAGING ACCEPTED** 🟢
+Тестирование логики и изоляции пройдено успешно в локальном Windows-окружении.
+
+**Статус**: **PRODUCTION BLOCKED** 🔴
+Переход в Production временно заблокирован по инфраструктурным причинам:
+- Linux/Docker, PostgreSQL 16 + Redis 7 + Celery worker/beat не запускались.
+- Отсутствует подтверждённый Linux/Docker-прогон с двумя worker'ами, Celery и нагрузкой asyncpg/SQLAlchemy.
+
+## Backlog (Ожидают проверки / Блокируют Production)
+- Linux/Docker Compose production-gate;
+- PostgreSQL/asyncpg нагрузочный прогон;
+- Redis outage при двух worker’ах;
+- Celery worker/beat smoke;
+- повторная проверка логов и tenant isolation.
