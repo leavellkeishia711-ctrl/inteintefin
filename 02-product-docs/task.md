@@ -1,41 +1,7 @@
-# Project Tasks
+# Финальные задачи стабилизации
 
-- `[ ]` **Sprint: Media Buying Domain + Payroll + Live Dashboard**
-  - `[x]` **Step 0: Pre-requisites & Revisions**
-    - `[x]` Read product docs and model files
-    - `[x]` Build DB_SCHEMA vs models discrepancy table
-    - `[x]` Formulate implementation plan for user review
-  - `[x]` **Step 1: DB Schema Alignment & Migrations**
-    - `[x]` Search codebase for enum/status usages before changing them (Frontend + Backend + Tests)
-    - `[x]` Fix discrepancies in ENUMs and constraints in `app/db/models` to match `DB_SCHEMA.md`
-    - `[x]` Run `alembic check` or diff to ensure we only generate necessary migrations
-    - `[x]` Generate `alembic` migration to apply updated constraints
-    - `[x]` Verify RLS is enabled on all tables
-    - `[x]` Verify `EXCLUDE USING gist` constraint exists on `compensation_plans`
-  - `[x]` **Step 2: Backend - Ad Accounts & Consumables**
-    - `[x]` Implement Pydantic Schemas for Ad Accounts & Consumables
-    - `[x]` CRUD for `/api/v1/ad-accounts`
-    - `[x]` CRUD for `/api/v1/consumables`
-    - `[x]` PAN masking validator (raise 422 on full card number in Consumable schema)
-    - `[x]` Service logic: `account_cost(id, period)` fetching consumables + ad spend via `fx_rate_to_base`
-  - `[x]` **Step 3: Backend - Campaign Runs & Stats**
-    - `[x]` CRUD for `/api/v1/campaign-runs`
-    - `[x]` Upsert for `/api/v1/campaign-runs/{id}/stats` (on conflict do update)
-    - `[x]` Service logic: Safe `ROI`/`ROAS`/`Margin` calculations in `services/metrics.py`
-  - `[x]` **Step 4: Backend - Payroll**
-    - `[x]` Endpoint: `POST /api/v1/payroll/runs` (idempotent calculation)
-    - `[x]` Endpoint: `GET /api/v1/payroll/runs/{id}` (with line items)
-    - `[x]` Service logic: base rate + bonus (percent/quota) + processor piece rate
-    - `[x]` P&L Integration: Ensure payroll impacts `net_profit` in `services/pnl.py`
-  - `[x]` **Step 5: Tenant Isolation & Tests**
-    - `[x]` Add isolation tests to `test_tenant_isolation.py` for new routes
-    - `[x]` Add unit tests for payroll logic
-    - `[x]` Add unit tests for PAN masking
-  - `[x]` **Step 6: Frontend - Real Data Integration**
-    - `[x]` Delete `05-frontend/src/app/api/chat/route.ts`
-    - `[x]` Generate OpenAPI types to `src/types`
-    - `[x]` Replace mockData with TanStack Query on Dashboard, PnL, CashFlow
-    - `[x]` Implement Cash Runway, EBITDA, Finance Health Score calculations on Dashboard
-    - `[x]` Add Loading/Error/Empty states
-    - `[x]` Extract hardcoded strings to `messages/en.json` and `messages/ru.json`
-    - `[x]` Ensure navigation uses `@/i18n/routing`
+- [x] Финальная проверка `04-backend/app/ai/client.py` (маппинг `tool_use`/`tool_result` проверен)
+- [x] Финальная проверка `04-backend/app/ai/analyst.py` (добавлен тест на успешный ответ LLM)
+- [x] Финальная проверка `04-backend/app/ai/tools.py` (исключения не уходят в LLM, tenant_id проверен)
+- [x] Очистка Git-индекса от запрещённых файлов (`.env`, `__pycache__`, `pgsql`, `node_modules`)
+- [x] Запуск тестов, линтеров, сборки фронтенда, `alembic` (ошибки исправлены)
