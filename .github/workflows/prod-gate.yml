@@ -1,0 +1,76 @@
+name: Production Gate
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  prod-gate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+        
+    - name: Install test tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install httpx asyncio pytest
+        
+    - name: Setup env variables
+      run: cp 08-devops/.env.example 08-devops/.env
+      
+    - name: Start docker-compose stack
+      run: make prod-gate
+      
+    - name: Wait for API to be ready
+      run: |
+        timeout 30s bash -c 'until curl -s http://localhost:8000/api/v1/health > /dev/null; do sleep 2; done'
+        
+    - name: Run Celery Smoke Test
+      run: |
+        python scripts/celery_smoke_ci.py 2>&1 | tee celery_smoke.log
+        
+    - name: Run Redis Outage Test
+      run: |
+        # Turn off Redis
+        docker compose -f 08-devops/docker-compose.ci.yml stop redis
+        python scripts/redis_outage_ci.py 2>&1 | tee redis_outage.log
+        # Turn it back on for subsequent tests
+        docker compose -f 08-devops/docker-compose.ci.yml start redis
+        # Wait for redis
+        sleep 5
+        
+    - name: Run Load Test (Asyncpg/SQLAlchemy pool)
+      run: |
+        python scripts/load_test_ci.py 2>&1 | tee load_test.log
+        
+    - name: Log Audit for Secrets
+      run: |
+        # Dump logs from all containers
+        docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
+        # Check for secrets
+        if grep -iE "change-me|your-api-key|your-webhook-secret" all_containers.log; then
+          echo "Found secrets in logs!"
+          exit 1
+        else
+          echo "No secrets found in logs."
+        fi
+        
+    - name: Upload Logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: prod-gate-logs
+        path: |
+          celery_smoke.log
+          redis_outage.log
+          load_test.log
+          all_containers.log

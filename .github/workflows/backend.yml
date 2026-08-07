@@ -66,5 +66,11 @@ jobs:
         
     - name: Run Pytest
       run: |
-        pytest -v --tb=short 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+        pytest -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY
 
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pytest-results
+        path: 04-backend/pytest-results.xml
