@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 from uuid import UUID
 from app.ai.client import get_llm_client
-from app.ai.tools import get_tools_spec, execute_tool
+from app.ai.tools import get_tools_spec, execute_tool, make_json, truncate_response
 
 logger = logging.getLogger(__name__)
 
@@ -46,17 +46,34 @@ async def ask_financial_analyst(db: AsyncSession, company_id: UUID | str, prompt
                     logger.warning("AI Violation: Model refused to use tools after explicit instruction.")
                     return "I am unable to answer this question without accessing the database, which I failed to do. Please try rephrasing."
             else:
-                # Normal completion after having used tools
+                # Normal completion after having used tools successfully
                 return response.get("content") or "No response provided."
                 
-        has_used_tool = True
-        
         # Execute tools
+        tool_results = []
+        any_success = False
+        
         for tool_call in response["tool_calls"]:
-            result = await execute_tool(tool_call["name"], tool_call["arguments"], db, company_id)
-            messages.append({
-                "role": "user",
-                "content": f"Tool '{tool_call['name']}' returned: {result}"
+            ok, payload = await execute_tool(tool_call["name"], tool_call["arguments"], db, company_id)
+            if ok:
+                any_success = True
+                content = truncate_response(make_json(payload))
+            else:
+                content = str(payload)
+                
+            tool_results.append({
+                "type": "tool_result",
+                "tool_use_id": tool_call["id"],
+                "content": content,
+                "is_error": not ok
             })
+            
+        if any_success:
+            has_used_tool = True
+            
+        messages.append({
+            "role": "user",
+            "content": tool_results
+        })
             
     return "Failed to analyze data after multiple attempts (iteration limit reached)."

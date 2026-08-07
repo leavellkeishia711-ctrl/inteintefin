@@ -59,7 +59,7 @@ def make_json(data: Any) -> str:
     # Use default string cast for Decimals and UUIDs
     return json.dumps(data, default=str)
 
-async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, company_id: UUID | str) -> str:
+async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, company_id: UUID | str) -> tuple[bool, Any]:
     try:
         c_id = UUID(company_id) if isinstance(company_id, str) else company_id
 
@@ -67,20 +67,20 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
             args = GetPnLArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             pnl = await calculate_pnl(db, c_id, args.date_from, args.date_to)
-            return truncate_response(make_json({"pnl": pnl}))
+            return True, {"pnl": pnl}
             
         elif tool_name == "get_cashflow":
             args = GetCashflowArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             cf = await calculate_cashflow(db, c_id, args.date_to)
-            return truncate_response(make_json({"cash_flow": cf}))
+            return True, {"cash_flow": cf}
             
         elif tool_name == "get_metrics":
             args = GetMetricsArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             hs = await get_health_score(db, c_id, as_of_date=args.date_to)
             discrepancy = await get_spend_discrepancy(db, c_id, args.date_from, args.date_to)
-            return truncate_response(make_json({"health_score": hs, "spend_discrepancy": discrepancy}))
+            return True, {"health_score": hs, "spend_discrepancy": discrepancy}
             
         elif tool_name == "get_campaign_stats":
             args = GetCampaignStatsArgs(**arguments)
@@ -91,7 +91,15 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
                 ad_account_id=args.ad_account_id, 
                 limit=args.limit
             )
-            return truncate_response(make_json([r.__dict__ for r in stats]))
+            return True, [
+                {
+                    "stat_date": s.stat_date,
+                    "spend": s.spend,
+                    "revenue": s.revenue,
+                    "currency": s.currency,
+                    "source": s.source
+                } for s in stats
+            ]
             
         elif tool_name == "get_transactions":
             args = GetTransactionsArgs(**arguments)
@@ -100,19 +108,29 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
                 db, c_id, args.date_from, args.date_to,
                 category=args.category, type_=args.type, limit=args.limit
             )
-            return truncate_response(make_json([r.__dict__ for r in txs]))
+            return True, [
+                {
+                    "amount": t.amount,
+                    "currency": t.currency,
+                    "date": t.date,
+                    "category": t.category,
+                    "type": t.type,
+                    "status": t.status,
+                    "description": t.description
+                } for t in txs
+            ]
             
         elif tool_name == "get_consumables_cost":
             args = GetConsumablesCostArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
-            cost = await get_ad_account_cost(db, args.ad_account_id)
-            return truncate_response(make_json({"consumables_cost": cost}))
+            cost = await get_ad_account_cost(db, c_id, args.ad_account_id, args.date_from, args.date_to)
+            return True, {"consumables_cost": cost}
             
         else:
-            return f"Error: Unknown tool {tool_name}"
+            return False, f"Error: Unknown tool {tool_name}"
             
     except Exception as e:
-        return f"Tool Execution Error: {str(e)}"
+        return False, f"Tool Execution Error: {str(e)}"
 
 # Define the tools spec for Anthropic
 def get_tools_spec() -> List[Dict[str, Any]]:

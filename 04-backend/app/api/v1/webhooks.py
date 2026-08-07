@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Request, Header, HTTPException, Depends
+from fastapi import APIRouter, Request, Header, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import system_session
 from app.core.config import settings
@@ -15,7 +15,7 @@ async def telegram_webhook(
         raise HTTPException(status_code=500, detail="Telegram integration not configured")
         
     if x_telegram_bot_api_secret_token != settings.TELEGRAM_WEBHOOK_SECRET:
-        raise HTTPException(status_code=403, detail="Invalid secret token")
+        raise HTTPException(status_code=401, detail="Invalid secret token")
         
     update = await request.json()
     

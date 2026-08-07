@@ -6,14 +6,16 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import AdAccount, Consumable, CampaignRun, CampaignRunStat
 
-async def get_ad_account_cost(db: AsyncSession, ad_account_id: uuid.UUID, date_from: Optional[date] = None, date_to: Optional[date] = None) -> Decimal:
+async def get_ad_account_cost(db: AsyncSession, company_id: uuid.UUID, ad_account_id: uuid.UUID, date_from: Optional[date] = None, date_to: Optional[date] = None) -> Decimal:
     """
     Calculate the total cost of all consumables associated with an ad_account, PLUS the ad spend.
     Returns value in the base currency of the company (using fx_rate_to_base).
+    Explicitly checks company_id to enforce tenant isolation independently of RLS.
     """
     # 1. Consumables cost
     consumables_stmt = sa.select(sa.func.sum(Consumable.cost * Consumable.fx_rate_to_base)).where(
         Consumable.ad_account_id == ad_account_id,
+        Consumable.company_id == company_id,
         Consumable.deleted_at.is_(None)
     )
     if date_from:
@@ -29,6 +31,8 @@ async def get_ad_account_cost(db: AsyncSession, ad_account_id: uuid.UUID, date_f
         CampaignRun, CampaignRunStat.campaign_run_id == CampaignRun.id
     ).where(
         CampaignRun.ad_account_id == ad_account_id,
+        CampaignRun.company_id == company_id,
+        CampaignRunStat.company_id == company_id,
         CampaignRun.deleted_at.is_(None)
     )
     if date_from:
@@ -117,7 +121,10 @@ async def get_campaign_stats(
     if ad_account_id:
         # Join with CampaignRun to filter by ad_account_id
         stmt = stmt.join(CampaignRun, CampaignRunStat.campaign_run_id == CampaignRun.id)
-        stmt = stmt.where(CampaignRun.ad_account_id == ad_account_id)
+        stmt = stmt.where(
+            CampaignRun.ad_account_id == ad_account_id,
+            CampaignRun.company_id == company_id
+        )
         
     stmt = stmt.order_by(CampaignRunStat.stat_date.desc()).limit(limit)
     result = await db.execute(stmt)

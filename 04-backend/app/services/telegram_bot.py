@@ -39,17 +39,43 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
     """
     Handle incoming Telegram message and return a response string, or None if no response is needed.
     """
-    if not text_str.startswith('/status'):
+    if not text_str.startswith('/'):
         return None
         
     if not await check_rate_limit(chat_id):
         return "Too many requests. Please wait a minute."
 
+    r = await get_redis()
+    
+    # Handle /link <token>
+    if text_str.startswith('/link '):
+        token = text_str.split(' ')[1].strip()
+        user_id_bytes = await r.get(f"telegram_link:{token}")
+        if not user_id_bytes:
+            return "Invalid or expired link token."
+            
+        user_id = user_id_bytes.decode('utf-8')
+        
+        # We need to fetch the user by user_id and update their chat_id
+        from uuid import UUID
+        user = await db.get(User, UUID(user_id))
+        if not user:
+            return "User not found."
+            
+        user.telegram_chat_id = chat_id
+        await db.commit()
+        await r.delete(f"telegram_link:{token}")
+        
+        return "Your Telegram account has been successfully linked!"
+
+    if not text_str.startswith('/status'):
+        return None
+
     result = await db.execute(select(User).where(User.telegram_chat_id == chat_id))
     user = result.scalars().first()
 
     if not user:
-        return "I'm sorry, I don't recognize you. Please link your Telegram account in the FinanceIntel web app."
+        return "I'm sorry, I don't recognize you. Please link your Telegram account using the /link command with a token from the web app."
 
     company = await db.get(Company, user.company_id)
     if not company:
@@ -65,9 +91,9 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
         start_date = datetime.utcnow().date() - timedelta(days=30)
         
         # Scoping logic: Only user-specific metrics
-        user_id = user.id
+        user_id_obj = user.id
                 
-        pnl = await calculate_pnl(tenant_db, company.id, start_date=start_date, team_id=None, user_id=user_id)
+        pnl = await calculate_pnl(tenant_db, company.id, start_date=start_date, team_id=None, user_id=user_id_obj)
         cf = await calculate_cashflow(tenant_db, company.id)
         
         roi = "0"
@@ -80,11 +106,10 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
         status_title = translate("alert_30_day_status", lang) if translate("alert_30_day_status", lang) != "alert_30_day_status" else "30-Day Status"
         
         message = (
-            f"рџ“Љ *{status_title}*\n\n"
+            f"📊 *{status_title}*\n\n"
             f"Revenue: {pnl.revenue}\n"
             f"Spend: {pnl.ad_spend}\n"
             f"ROI: {roi}%\n"
             f"Runway: {cf.runway_days} days\n"
         )
-        return message
 
