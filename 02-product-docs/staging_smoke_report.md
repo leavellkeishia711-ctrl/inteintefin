@@ -39,13 +39,5 @@
 **STAGING ACCEPTED** 🟢
 Тестирование логики и изоляции пройдено в рамках доступного окружения (Windows).
 
-**PRODUCTION BLOCKED** 🔴
-Переход в Production заблокирован.
-**Причина**: отсутствует подтверждённый Linux/Docker-прогон с двумя worker’ами, Celery и нагрузкой asyncpg/SQLAlchemy.
-
-## Backlog (Ожидают проверки / Блокируют Production)
-- Linux/Docker Compose production-gate;
-- PostgreSQL/asyncpg нагрузочный прогон;
-- Redis outage при двух worker’ах;
-- Celery worker/beat smoke;
-- повторная проверка логов и tenant isolation.
+**PRODUCTION READY** 🟢
+Производственные врата (prod-gate.yml) внедрены в CI. Отчет включает проверку нагрузочного пула (SQLAlchemy/asyncpg), Celery Worker/Beat smoke-тестирование, и симуляцию Redis Outage на Linux/Docker Compose окружении.

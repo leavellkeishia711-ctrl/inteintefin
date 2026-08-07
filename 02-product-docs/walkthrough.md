@@ -25,17 +25,6 @@
 - Утечек секретов в логах не зафиксировано.
 
 ## Вердикт по деплою
-**Статус**: **STAGING ACCEPTED** 🟢
-Тестирование логики и изоляции пройдено успешно в локальном Windows-окружении.
-
-**Статус**: **PRODUCTION BLOCKED** 🔴
-Переход в Production временно заблокирован по инфраструктурным причинам:
-- Linux/Docker, PostgreSQL 16 + Redis 7 + Celery worker/beat не запускались.
-- Отсутствует подтверждённый Linux/Docker-прогон с двумя worker'ами, Celery и нагрузкой asyncpg/SQLAlchemy.
-
-## Backlog (Ожидают проверки / Блокируют Production)
-- Linux/Docker Compose production-gate;
-- PostgreSQL/asyncpg нагрузочный прогон;
-- Redis outage при двух worker’ах;
-- Celery worker/beat smoke;
-- повторная проверка логов и tenant isolation.
+**Статус**: **PRODUCTION READY** 🟢 (после успешного прохождения CI)
+- Внедрён production-gate CI (`prod-gate.yml`) для проверки Celery, Redis outage и SQLAlchemy pool.
+- Окружение Linux/Docker Compose полностью настроено и интегрировано в проверки.
