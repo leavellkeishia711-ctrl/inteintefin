@@ -32,13 +32,13 @@ jobs:
         
     - name: Run Celery Smoke Test
       run: |
-        python scripts/celery_smoke_ci.py 2>&1 | tee celery_smoke.log
+        docker compose -f 08-devops/docker-compose.ci.yml exec -T api python /app/scripts/celery_smoke_ci.py 2>&1 | tee celery_smoke.log
         
     - name: Run Redis Outage Test
       run: |
         # Turn off Redis
         docker compose -f 08-devops/docker-compose.ci.yml stop redis
-        python scripts/redis_outage_ci.py 2>&1 | tee redis_outage.log
+        docker compose -f 08-devops/docker-compose.ci.yml exec -T api python /app/scripts/redis_outage_ci.py 2>&1 | tee redis_outage.log
         # Turn it back on for subsequent tests
         docker compose -f 08-devops/docker-compose.ci.yml start redis
         # Wait for redis
@@ -46,14 +46,14 @@ jobs:
         
     - name: Run Load Test (Asyncpg/SQLAlchemy pool)
       run: |
-        python scripts/load_test_ci.py 2>&1 | tee load_test.log
+        docker compose -f 08-devops/docker-compose.ci.yml exec -T api python /app/scripts/load_test_ci.py 2>&1 | tee load_test.log
         
     - name: Log Audit for Secrets
       run: |
         # Dump logs from all containers
         docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
         # Check for secrets
-        if [ -f all_containers.log ] && grep -iE "generate_a_strong_secret_key_here|dummy_key_for_ci|test_secret" all_containers.log; then
+        if [ -f all_containers.log ] && grep -iE "generate_a_strong_secret_key_here|dummy_key_for_ci|dummy_bot_token|redis://redis" all_containers.log; then
           echo "Found secrets in logs!"
           exit 1
         else
