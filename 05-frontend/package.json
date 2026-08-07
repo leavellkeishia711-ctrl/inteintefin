@@ -10,6 +10,7 @@
     "generate-api": "openapi-typescript ../04-backend/openapi.json -o src/lib/api-types.ts"
   },
   "dependencies": {
+    "@swc/helpers": "^0.5.23",
     "@tanstack/react-query": "^5.101.4",
     "lucide-react": "^1.24.0",
     "next": "16.2.10",
