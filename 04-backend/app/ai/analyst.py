@@ -59,7 +59,8 @@ async def ask_financial_analyst(db: AsyncSession, company_id: UUID | str, prompt
                 any_success = True
                 content = truncate_response(make_json(payload))
             else:
-                content = str(payload)
+                logger.error(f"Internal error during tool execution: {payload}")
+                content = "Internal error during tool execution."
                 
             tool_results.append({
                 "type": "tool_result",

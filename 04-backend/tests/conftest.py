@@ -47,7 +47,7 @@ async def client_a(app):
             company = Company(id=company_a_id, name="Company A", base_currency="USD")
             db.add(company)
             user = User(
-                id=user_a_id, email="a@example.com", password_hash="hash123",
+                id=user_a_id, email="a_b306c510@example.com", password_hash="hash123",
                 name="A", role="owner", company_id=company_a_id
             )
             db.add(user)
@@ -93,7 +93,7 @@ async def company_b_fixtures():
             company = Company(id=company_b_id, name="Company B", base_currency="USD")
             db.add(company)
             user = User(
-                id=user_b_id, email="b@example.com", password_hash="hash",
+                id=user_b_id, email="b_d55e974b@example.com", password_hash="hash",
                 name="B", role="owner", company_id=company_b_id
             )
             db.add(user)

@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import Image from 'next/image';
 import React from 'react';
 import { Link, usePathname } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+
 import {
-  LayoutDashboard, LineChart, Wallet, Megaphone, Users, BrainCircuit, Globe, Settings, Banknote, BookOpen, Handshake, Receipt
+  LayoutDashboard, LineChart, Wallet, Megaphone, BrainCircuit, Settings, Banknote, BookOpen, Handshake, Receipt
 } from 'lucide-react';
 
 const NAV_ITEMS = [

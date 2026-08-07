@@ -1,4 +1,4 @@
-﻿// Formatters for FinanceIntel
+// Formatters for FinanceIntel
 // ESLint rules below strictly forbid float coercion to protect string-based Decimal precision.
  
 
@@ -15,7 +15,7 @@ export const money = (value: string | null | undefined, currency: string = 'USD'
   let intBig: bigint;
   try {
     intBig = BigInt(isNegative ? '-' + integerPart : integerPart);
-  } catch(e) {
+  } catch {
     intBig = BigInt(0);
   }
 
@@ -40,7 +40,7 @@ export const moneyCompact = (value: string | null | undefined, currency: string 
   let intBig: bigint;
   try {
     intBig = BigInt(isNegative ? '-' + integerPart : integerPart);
-  } catch(e) {
+  } catch {
     intBig = BigInt(0);
   }
 
@@ -68,7 +68,7 @@ export const percent = (value: string | null | undefined, decimals: number = 2, 
   let intBig: bigint;
   try {
     intBig = BigInt(isNegative ? '-' + integerPart : integerPart);
-  } catch(e) {
+  } catch {
     intBig = BigInt(0);
   }
   

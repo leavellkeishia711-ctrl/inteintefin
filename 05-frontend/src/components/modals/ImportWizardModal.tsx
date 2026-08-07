@@ -1,5 +1,5 @@
-﻿import { useState, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useState, useRef } from 'react';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadCsv, commitImport } from '@/lib/api/client';
 import { X, Loader2, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function ImportWizardModal({ onClose }: Props) {
-  const t = useTranslations('transactions');
+
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   

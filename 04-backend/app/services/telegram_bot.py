@@ -8,12 +8,39 @@ from app.services.cashflow import calculate_cashflow
 from typing import Optional
 from decimal import Decimal
 import redis.asyncio as redis
+from redis.exceptions import ConnectionError, TimeoutError
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 # Global redis client (initialized lazily)
 _redis_client = None
+
+import time
+import asyncio
+from collections import defaultdict
+
+_local_limits = defaultdict(list)
+_local_limits_lock = asyncio.Lock()
+LOCAL_LIMIT_MAX_KEYS = 10000
+
+async def check_local_rate_limit(chat_id: int) -> bool:
+    now = time.monotonic()
+    async with _local_limits_lock:
+        if chat_id not in _local_limits and len(_local_limits) >= LOCAL_LIMIT_MAX_KEYS:
+            logger.warning("Local rate limiter at max capacity, denying new chat_id.")
+            return False
+            
+        history = _local_limits.get(chat_id, [])
+        history = [ts for ts in history if now - ts < 60]
+        
+        if len(history) >= 5:
+            _local_limits[chat_id] = history
+            return False
+            
+        history.append(now)
+        _local_limits[chat_id] = history
+        return True
 
 async def get_redis():
     global _redis_client
@@ -23,15 +50,19 @@ async def get_redis():
 
 async def check_rate_limit(chat_id: int) -> bool:
     """Returns True if allowed, False if rate limited"""
-    r = await get_redis()
-    key = f"rate_limit:telegram:{chat_id}"
-    
-    current = await r.incr(key)
-    if current == 1:
-        await r.expire(key, 60)
+    try:
+        r = await get_redis()
+        key = f"rate_limit:telegram:{chat_id}"
         
-    if current > 5:
-        return False
+        current = await r.incr(key)
+        if current == 1:
+            await r.expire(key, 60)
+            
+        if current > 5:
+            return False
+    except (ConnectionError, TimeoutError):
+        logger.warning("Redis is unavailable. Using local rate limiter.")
+        return await check_local_rate_limit(chat_id)
         
     return True
 
@@ -45,12 +76,20 @@ async def handle_telegram_message(db: AsyncSession, chat_id: int, text_str: str)
     if not await check_rate_limit(chat_id):
         return "Too many requests. Please wait a minute."
 
-    r = await get_redis()
+    try:
+        r = await get_redis()
+    except (ConnectionError, TimeoutError):
+        logger.warning("Redis is unavailable. Telegram linking disabled.")
+        return "Our systems are temporarily overloaded. Please try linking again later."
     
     # Handle /link <token>
     if text_str.startswith('/link '):
         token = text_str.split(' ')[1].strip()
-        user_id_bytes = await r.get(f"telegram_link:{token}")
+        try:
+            user_id_bytes = await r.get(f"telegram_link:{token}")
+        except (ConnectionError, TimeoutError):
+            return "Our systems are temporarily overloaded. Please try linking again later."
+            
         if not user_id_bytes:
             return "Invalid or expired link token."
             
