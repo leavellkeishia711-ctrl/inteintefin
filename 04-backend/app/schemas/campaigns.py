@@ -66,3 +66,42 @@ class CampaignRunStatOut(CampaignRunStatBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     company_id: uuid.UUID
+
+from pydantic import field_validator
+import re
+
+class ConsumableBase(BaseModel):
+    type: str
+    ad_account_id: Optional[uuid.UUID] = None
+    identifier: Optional[str] = None
+    cost: Money = "0.00"
+    currency: str
+    fx_rate_to_base: Rate
+    purchased_on: date
+    expires_on: Optional[date] = None
+    status: str = "active"
+    transaction_id: Optional[uuid.UUID] = None
+
+    @field_validator('identifier')
+    @classmethod
+    def prevent_pan_storage(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            digits_only = re.sub(r'\D', '', v)
+            if 13 <= len(digits_only) <= 19:
+                raise ValueError("PAN cannot be stored unmasked")
+        return v
+
+class ConsumableCreate(ConsumableBase):
+    pass
+
+class ConsumableUpdate(ConsumableBase):
+    type: Optional[str] = None
+    currency: Optional[str] = None
+    fx_rate_to_base: Optional[Rate] = None
+    purchased_on: Optional[date] = None
+
+class ConsumableOut(ConsumableBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    company_id: uuid.UUID
+

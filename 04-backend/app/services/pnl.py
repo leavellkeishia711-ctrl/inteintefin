@@ -1,4 +1,4 @@
-﻿from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, Any, Optional
 from datetime import date
 import sqlalchemy as sa
@@ -76,7 +76,23 @@ async def calculate_pnl(
     
     raw_cons = data.get('consumables', Decimal(0))
     consumables = round_money(raw_cons)
-    raw_opex = data.get('salary', Decimal(0)) + data.get('infra', Decimal(0)) + data.get('other', Decimal(0)) + data.get('payout_outgoing', Decimal(0))
+    
+    # Integrate Payroll Runs into salary
+    from app.db.models import PayrollRun
+    payroll_query = sa.select(sa.func.sum(PayrollRun.total_amount)).where(
+        PayrollRun.company_id == company_id,
+        PayrollRun.status.in_(['approved', 'paid']),
+        PayrollRun.deleted_at.is_(None)
+    )
+    if start_date:
+        payroll_query = payroll_query.where(PayrollRun.period_end >= start_date)
+    if end_date:
+        payroll_query = payroll_query.where(PayrollRun.period_end <= end_date)
+        
+    payroll_res = await db.execute(payroll_query)
+    payroll_total = payroll_res.scalar() or Decimal('0')
+    
+    raw_opex = data.get('salary', Decimal(0)) + payroll_total + data.get('infra', Decimal(0)) + data.get('other', Decimal(0)) + data.get('payout_outgoing', Decimal(0))
     operating_expenses = round_money(raw_opex)
     
     raw_ebitda = raw_gp - raw_cons - raw_opex

@@ -60,6 +60,20 @@ async def client_a(app):
         client.headers.update({"Authorization": f"Bearer {token}"})
         yield client
 
+@pytest_asyncio.fixture
+async def client_b(app, company_b_fixtures):
+    import httpx
+    from app.core.security import create_access_token
+    token = create_access_token(
+        subject=company_b_fixtures.ids["user_id"], 
+        company_id=company_b_fixtures.ids["company_id"], 
+        role="owner"
+    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        client.headers.update({"Authorization": f"Bearer {token}"})
+        yield client
+
 class CompanyBFixtures:
     def __init__(self, ids: dict):
         self.ids = ids

@@ -1,67 +1,77 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, validator
-from app.db.session import get_db_session
-from app.core.deps import get_tenant_session, get_current_user
-from app.db.models import Consumable, User
+from sqlalchemy import select
 import uuid
+from typing import List
 
-router = APIRouter()
+from app.core.deps import get_tenant_session, get_current_user_company_id, get_current_user, UserCtx
+from app.db.models.campaigns import Consumable
+from app.schemas.campaigns import ConsumableCreate, ConsumableUpdate, ConsumableOut
+from app.services.audit import record_user_audit
+from datetime import date
 
-def luhn_check(card_number: str) -> bool:
-    digits = [int(x) for x in str(card_number) if x.isdigit()]
-    if not digits:
-        return False
-    odd_digits = digits[-1::-2]
-    even_digits = [sum(divmod(2 * d, 10)) for d in digits[-2::-2]]
-    return (sum(odd_digits) + sum(even_digits)) % 10 == 0
-
-from app.schemas.types import Money
-
-from pydantic import BaseModel, field_validator
-
-class ConsumableCreate(BaseModel):
-    type: str
-    identifier: str | None = None
-    cost: Money
-    currency: str
-    
-    @field_validator("identifier")
-    @classmethod
-    def validate_identifier(cls, v: str | None) -> str | None:
-        if v:
-            # 1. Reject PAN (Luhn check) if it looks like a card number
-            digits_only = ''.join(filter(str.isdigit, v))
-            if len(digits_only) >= 13 and luhn_check(digits_only):
-                raise ValueError("PCI violation: PAN-like strings are prohibited. Use only masked identifiers.")
-            
-            # 2. Cut anything longer than 8 chars (we only need last 4 or bin+last4)
-            if len(v) > 8:
-                v = v[-8:]
-        return v
-
-class ConsumableOut(BaseModel):
-    status: str
-    identifier: str | None = None
+router = APIRouter(prefix="/consumables", tags=["consumables"])
 
 @router.post("/", response_model=ConsumableOut)
 async def create_consumable(
-    item: ConsumableCreate,
+    request: Request,
+    consumable_in: ConsumableCreate,
     db: AsyncSession = Depends(get_tenant_session),
-    current_user: User = Depends(get_current_user)
+    user: UserCtx = Depends(get_current_user)
 ):
-    from app.core.deps import UserCtx
-    from app.services.audit import record_user_audit
-    
-    # In a real app we'd fetch fx rate and insert to db
-    # For now we'll just log the attempt as a mutation
-    
-    user_ctx = UserCtx(user_id=str(current_user.id), company_id=str(current_user.company_id))
+    consumable = Consumable(
+        **consumable_in.model_dump(),
+        company_id=uuid.UUID(user.company_id)
+    )
+    db.add(consumable)
+    await db.flush()
     
     await record_user_audit(
-        session=db, user=user_ctx, entity_type="consumable", entity_id=None, action="create", 
-        old_state=None, new_state=item.model_dump()
+        session=db, user=user, entity_type="consumable", entity_id=consumable.id, action="create", 
+        old_state=None, new_state=consumable_in.model_dump(mode="json"), request_id=request.headers.get("x-request-id"), ip_address=request.client.host if request.client else None
     )
-    await db.commit()
+    return consumable
+
+@router.get("/", response_model=List[ConsumableOut])
+async def list_consumables(
+    db: AsyncSession = Depends(get_tenant_session),
+    company_id: str = Depends(get_current_user_company_id)
+):
+    result = await db.execute(select(Consumable))
+    return result.scalars().all()
+
+@router.get("/{consumable_id}", response_model=ConsumableOut)
+async def get_consumable(
+    consumable_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_session),
+    company_id: str = Depends(get_current_user_company_id)
+):
+    consumable = await db.get(Consumable, consumable_id)
+    if not consumable:
+        raise HTTPException(status_code=404, detail="Consumable not found")
+    return consumable
+
+@router.patch("/{consumable_id}", response_model=ConsumableOut)
+async def update_consumable(
+    request: Request,
+    consumable_id: uuid.UUID,
+    consumable_in: ConsumableUpdate,
+    db: AsyncSession = Depends(get_tenant_session),
+    user: UserCtx = Depends(get_current_user)
+):
+    consumable = await db.get(Consumable, consumable_id)
+    if not consumable:
+        raise HTTPException(status_code=404, detail="Consumable not found")
+        
+    update_data = consumable_in.model_dump(exclude_unset=True)
+    old_state = {k: getattr(consumable, k) for k in update_data.keys()}
     
-    return {"status": "ok", "identifier": item.identifier}
+    for field, value in update_data.items():
+        setattr(consumable, field, value)
+        
+    await db.flush()
+    await record_user_audit(
+        session=db, user=user, entity_type="consumable", entity_id=consumable.id, action="update", 
+        old_state=old_state, new_state=update_data, request_id=request.headers.get("x-request-id"), ip_address=request.client.host if request.client else None
+    )
+    return consumable

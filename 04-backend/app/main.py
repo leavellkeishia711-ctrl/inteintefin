@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks
@@ -19,9 +19,9 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(imports.router, prefix=f"{settings.API_V1_STR}/imports", tags=["imports"])
-app.include_router(consumables.router, prefix=f"{settings.API_V1_STR}/consumables", tags=["consumables"])
+app.include_router(consumables.router, prefix=f"{settings.API_V1_STR}")
 app.include_router(transactions.router, prefix=f"{settings.API_V1_STR}/transactions", tags=["transactions"])
-app.include_router(reports.router, prefix=f"{settings.API_V1_STR}", tags=["reports"])
+app.include_router(reports.router, prefix=f"{settings.API_V1_STR}")
 app.include_router(ad_accounts.router, prefix=f"{settings.API_V1_STR}")
 app.include_router(campaign_runs.router, prefix=f"{settings.API_V1_STR}")
 app.include_router(campaign_run_stats.router, prefix=f"{settings.API_V1_STR}")

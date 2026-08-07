@@ -25,7 +25,7 @@ async def test_get_ad_account_cost(app, client_a):
             await db.flush()
             
             c1 = Consumable(company_id=company_id, type="proxy", ad_account_id=ad_account_id, cost=Decimal("10.00"), currency="USD", fx_rate_to_base=Decimal("1.0"), purchased_on=date.today())
-            c2 = Consumable(company_id=company_id, type="domain", ad_account_id=ad_account_id, cost=Decimal("5.00"), currency="EUR", fx_rate_to_base=Decimal("1.1"), purchased_on=date.today())
+            c2 = Consumable(company_id=company_id, type="other", ad_account_id=ad_account_id, cost=Decimal("5.00"), currency="EUR", fx_rate_to_base=Decimal("1.1"), purchased_on=date.today())
             
             db.add_all([c1, c2])
             

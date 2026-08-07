@@ -44,7 +44,7 @@ class PartnerPayout(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     note: Mapped[str | None] = mapped_column(String, nullable=True)
 
     __table_args__ = (
-        CheckConstraint("status IN ('booked', 'in_hold', 'scrubbed', 'paid', 'cancelled')", name="check_partner_payout_status"),
+        CheckConstraint("status IN ('booked', 'in_hold', 'scrubbed', 'paid')", name="check_partner_payout_status"),
         Index("ix_partner_payouts_company_status_hold", "company_id", "status", "hold_until"),
     )
 
@@ -126,7 +126,7 @@ class PayrollRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     fx_rate_to_base: Mapped[Decimal] = mapped_column(Numeric(20, 8, asdecimal=True), nullable=False)
 
     __table_args__ = (
-        CheckConstraint("status IN ('draft', 'calculated', 'approved', 'paid')", name="check_payroll_run_status"),
+        CheckConstraint("status IN ('draft', 'approved', 'paid')", name="check_payroll_run_status"),
         CheckConstraint("period_start <= period_end", name="check_payroll_run_dates"),
     )
 
@@ -144,7 +144,7 @@ class PayrollLineItem(Base, TimestampMixin, CompanyScoped):
     status: Mapped[str] = mapped_column(String, default='draft', nullable=False)
 
     __table_args__ = (
-        CheckConstraint("status IN ('draft', 'approved', 'paid')", name="check_payroll_line_item_status"),
+        CheckConstraint("status IN ('draft', 'approved', 'paid', 'held')", name="check_payroll_line_item_status"),
     )
 
 class DecisionRecommendation(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
@@ -165,7 +165,7 @@ class DecisionRecommendation(Base, TimestampMixin, SoftDeleteMixin, CompanyScope
     created_by: Mapped[str | None] = mapped_column(String, nullable=True)
 
     __table_args__ = (
-        CheckConstraint("status IN ('recommended', 'applied', 'dismissed')", name="check_decision_status"),
+        CheckConstraint("status IN ('recommended', 'approved', 'executed', 'rejected')", name="check_decision_status"),
         CheckConstraint("type IN ('budget_shift', 'stop_loss', 'scale_up', 'payout_discrepancy')", name="check_decision_type"),
     )
 

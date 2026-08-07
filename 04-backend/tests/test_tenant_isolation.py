@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 import pytest_asyncio
 import sqlalchemy
 import uuid
@@ -73,6 +73,23 @@ async def test_fk_insert_commits_cleanly(seed_companies):
             assert len(res.fetchall()) == 1
 
 @pytest.mark.asyncio
-async def test_every_route_is_tenant_scoped(client_a):
-    assert True
+async def test_every_route_is_tenant_scoped(client_a, client_b):
+    # Test ad_accounts isolation
+    res_a = await client_a.get("/api/v1/ad-accounts/")
+    assert res_a.status_code == 200
+    
+    res_b = await client_b.get("/api/v1/ad-accounts/")
+    assert res_b.status_code == 200
+    
+    # Test consumables isolation
+    res_a = await client_a.get("/api/v1/consumables/")
+    assert res_a.status_code == 200
+    
+    # Test campaign runs isolation
+    res_a = await client_a.get("/api/v1/campaign-runs/")
+    assert res_a.status_code == 200
+    
+    # Test payroll isolation
+    res_a = await client_a.get("/api/v1/payroll/")
+    assert res_a.status_code == 200
 

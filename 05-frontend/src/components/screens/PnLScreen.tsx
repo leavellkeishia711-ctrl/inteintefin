@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { money, percent } from '@/lib/formatters';
 import { Card } from '@/components/ui/Card';
@@ -11,6 +11,8 @@ import { Loader2 } from 'lucide-react';
 export default function PnLScreen() {
   const t = useTranslations('pnl');
   const tl = useTranslations('mockLabels');
+  
+  const tc = useTranslations('common');
   
   const today = new Date();
   const start_date = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
@@ -27,7 +29,7 @@ export default function PnLScreen() {
   }
 
   if (error || !data) {
-    return <div className="text-red-500">Failed to load P&L data.</div>;
+    return <div className="text-red-500">{tc('noData')}</div>;
   }
 
   // Uses backend margins

@@ -21,7 +21,7 @@ class AdAccount(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     banned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
-        CheckConstraint("status IN ('preparing', 'ready', 'active', 'banned', 'closed')", name="check_ad_account_status"),
+        CheckConstraint("status IN ('active', 'warming', 'banned', 'suspended')", name="check_ad_account_status"),
         sa.Index(
             "uix_company_platform_external_account",
             "company_id", "platform", "external_account_id",
@@ -60,7 +60,7 @@ class CampaignRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     note: Mapped[str | None] = mapped_column(String, nullable=True)
 
     __table_args__ = (
-        CheckConstraint("status IN ('active', 'paused', 'completed')", name="check_campaign_run_status"),
+        CheckConstraint("status IN ('active', 'stopped', 'banned')", name="check_campaign_run_status"),
         CheckConstraint("ended_at IS NULL OR started_at <= ended_at", name="check_campaign_run_dates"),
     )
 
@@ -103,6 +103,6 @@ class Consumable(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     transaction_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("transactions.id"), nullable=True)
 
     __table_args__ = (
-        CheckConstraint("type IN ('proxy', 'domain', 'cloaking', 'vps', 'other')", name="check_consumable_type"),
-        CheckConstraint("status IN ('active', 'expired', 'replaced')", name="check_consumable_status"),
+        CheckConstraint("type IN ('proxy', 'card', 'account_service', 'other')", name="check_consumable_type"),
+        CheckConstraint("status IN ('active', 'expired', 'burned')", name="check_consumable_status"),
     )

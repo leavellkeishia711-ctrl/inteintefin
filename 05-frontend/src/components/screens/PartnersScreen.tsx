@@ -1,57 +1,37 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { usePartners } from '@/lib/queries';
 import { useTranslations } from 'next-intl';
-import { networksData, payoutsData, partnersSummary } from '@/lib/partnersData';
 import { money } from '@/lib/formatters';
 import { Card } from '@/components/ui/Card';
 import { SectionTitle } from '@/components/ui/SectionTitle';
-import { payoutStatusLabel, networkLabel, PAYOUT_STATUSES } from '@/lib/constants';
-import { AlertCircle, CheckCircle2, Clock, Ban, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
-import type { PayoutRecord, AffiliateNetworkInfo } from '@/lib/partnersData';
+import { PAYOUT_STATUSES } from '@/lib/constants';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-
-type SortKey = keyof PayoutRecord;
-
-const getToneColor = (status: string) => {
-  const tone = PAYOUT_STATUSES.find(s => s.value === status)?.tone;
-  switch (tone) {
-    case 'ok': return 'text-green-600 bg-green-50 border-green-200';
-    case 'warning': return 'text-amber-600 bg-amber-50 border-amber-200';
-    case 'danger': return 'text-red-600 bg-red-50 border-red-200';
-    case 'neutral': return 'text-gray-600 bg-gray-50 border-gray-200';
-    default: return 'text-gray-600 bg-gray-50 border-gray-200';
-  }
-};
-
-const getToneIcon = (status: string) => {
-  const tone = PAYOUT_STATUSES.find(s => s.value === status)?.tone;
-  switch (tone) {
-    case 'ok': return <CheckCircle2 size={14} />;
-    case 'warning': return <Clock size={14} />;
-    case 'danger': return <AlertTriangle size={14} />;
-    case 'neutral': return <Ban size={14} />;
-    default: return null;
-  }
-};
 
 export default function PartnersScreen() {
   const { data, isLoading } = usePartners();
   const t = useTranslations('partners');
   const tc = useTranslations('common');
-  const tl = useTranslations('mockLabels');
 
   const [networkFilter, setNetworkFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   
-  const [sortKey, setSortKey] = useState<SortKey | ''>('bookedOn');
+  const [sortKey, setSortKey] = useState<string>('booked_on');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
-  const handleSort = (key: SortKey) => {
+  if (isLoading) {
+    return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-teal-600" /></div>;
+  }
+
+  if (!data) {
+    return <div className="text-red-500">Failed to load partners data.</div>;
+  }
+
+  const handleSort = (key: string) => {
     if (sortKey === key) {
       setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -60,11 +40,10 @@ export default function PartnersScreen() {
     }
   };
 
-  const filteredPayouts = payoutsData
-    .filter(p => !networkFilter || p.networkId === networkFilter)
-    .filter(p => !statusFilter || p.status === statusFilter)
-    .sort((a, b) => {
-      if (!sortKey) return 0;
+  const filteredPayouts = (data.payouts || [])
+    .filter((p: any) => !networkFilter || p.network_id === networkFilter)
+    .filter((p: any) => !statusFilter || p.status === statusFilter)
+    .sort((a: any, b: any) => {
       const valA = a[sortKey];
       const valB = b[sortKey];
       if (valA === undefined || valB === undefined || valA === null || valB === null) return 0;
@@ -73,13 +52,10 @@ export default function PartnersScreen() {
       return 0;
     });
 
-  const renderSortIcon = (col: SortKey) => {
+  const renderSortIcon = (col: string) => {
     if (sortKey !== col) return null;
     return sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
   };
-
-  // Mock data for chart: aggregate pending payouts by week of holdUntil
-  const expectedCashData: any[] = [];
 
   return (
     <div className="space-y-6">
@@ -88,19 +64,33 @@ export default function PartnersScreen() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <p className="text-sm text-gray-500">{t('kpiBooked')}</p>
-          <p className="mt-2 text-2xl font-bold">{money(String(partnersSummary.totalBooked))}</p>
+          <p className="mt-2 text-2xl font-bold">{money(data.kpi_total_booked)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-amber-500">
           <p className="text-sm text-gray-500">{t('kpiInHold')}</p>
-          <p className="mt-2 text-2xl font-bold text-amber-600">{money(String(partnersSummary.totalInHold))}</p>
+          <p className="mt-2 text-2xl font-bold text-amber-600">{money(data.kpi_in_hold)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-green-500">
           <p className="text-sm text-gray-500">{t('kpiNetConfirmed')}</p>
-          <p className="mt-2 text-2xl font-bold text-green-600">{money(String(partnersSummary.totalNetConfirmed))}</p>
+          <p className="mt-2 text-2xl font-bold text-green-600">{money(data.kpi_net_confirmed)}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-500">{t('kpiScrubRate')}</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900">{partnersSummary.blendedScrubRate.toFixed(1)}%</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900">
+            {data.kpi_avg_scrub ? 
+              (() => {
+                const parts = data.kpi_avg_scrub.split('.');
+                const int = parts[0] || '0';
+                const frac = (parts[1] || '0000').padEnd(4, '0');
+                const val = BigInt(int + frac);
+                // val is now scaled by 10000 (4 decimals). e.g., 0.1250 -> 1250
+                // To get percentage with 1 decimal (e.g. 12.5), we need (val / 1000n).toString() and then add decimal point.
+                const scaled = val / BigInt(10); // scaled by 1000. 1250 / 10 = 125. Which is 12.5%.
+                const str = scaled.toString();
+                return (str.slice(0, -1) || '0') + '.' + str.slice(-1) + '%';
+              })()
+              : '0.0%'}
+          </p>
         </Card>
       </div>
 
@@ -119,7 +109,18 @@ export default function PartnersScreen() {
                 </tr>
               </thead>
               <tbody>
-                <tr><td colSpan={6} className="py-8 text-center text-gray-500">No payouts found.</td></tr>
+                {(data.networks || []).map((n: any) => (
+                  <tr key={n.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
+                    <td className="py-3 px-2 font-medium">{n.name}</td>
+                    <td className="py-3 px-2 text-right">{money("0")}</td>
+                    <td className="py-3 px-2 text-right">{money("0")}</td>
+                    <td className="py-3 px-2 text-right">0%</td>
+                    <td className="py-3 px-2 text-right">{money("0")}</td>
+                  </tr>
+                ))}
+                {(!data.networks || data.networks.length === 0) && (
+                  <tr><td colSpan={5} className="py-8 text-center text-gray-500">No networks found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -129,7 +130,7 @@ export default function PartnersScreen() {
           <h3 className="mb-4 text-lg font-semibold">{t('expectedArrivals')}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data?.expected_cash || []}>
+              <BarChart data={data.expected_cash || []}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} tickFormatter={(val) => `$${val/1000}k`} />
@@ -154,7 +155,7 @@ export default function PartnersScreen() {
                 className="flex items-center gap-1 text-sm text-gray-500 border border-gray-200 rounded-md px-2.5 py-1 bg-white"
               >
                 <option value="">{t('network')} ({tc('total')})</option>
-                {(data?.networks || []).map((n: any) => (
+                {(data.networks || []).map((n: any) => (
                   <option key={n.id} value={n.id}>{n.name}</option>
                 ))}
               </select>
@@ -199,8 +200,20 @@ export default function PartnersScreen() {
               </tr>
             </thead>
             <tbody>
+              {filteredPayouts.map((p: any) => (
+                <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="py-3 px-2">{p.network_id}</td>
+                  <td className="py-3 px-2">{p.campaign_run_id}</td>
+                  <td className="py-3 px-2">{p.status}</td>
+                  <td className="py-3 px-2 text-right">{money(p.amount)}</td>
+                  <td className="py-3 px-2">{p.booked_on}</td>
+                  <td className="py-3 px-2">{p.hold_until || '-'}</td>
+                </tr>
+              ))}
+              {filteredPayouts.length === 0 && (
                 <tr><td colSpan={6} className="py-8 text-center text-gray-500">No payouts found.</td></tr>
-              </tbody>
+              )}
+            </tbody>
           </table>
         </div>
       </Card>

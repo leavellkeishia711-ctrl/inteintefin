@@ -46,15 +46,15 @@ export const StaffingProvider = ({ children }: { children: React.ReactNode }) =>
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<Record<StaffRole, boolean>>;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setStaffing({ ...DEFAULT_STAFFING, ...parsed });
       }
     } catch {
       // повреждённое значение игнорируем, остаётся дефолт
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
+     
     setReady(true);
   }, []);
 

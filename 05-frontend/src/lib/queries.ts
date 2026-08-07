@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api, unwrap } from './api-client';
 
 export const usePnL = (params: { start_date: string; end_date: string; team_id?: string; user_id?: string }) => {
@@ -39,25 +39,13 @@ export const useCampaignRuns = (params?: { skip?: number; limit?: number }) => {
 export const usePayroll = () => {
   return useQuery({
     queryKey: ['payroll'],
-    queryFn: async () => {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/payroll');
-      if (!res.ok) throw new Error('Network error');
-      return res.json();
-    }
+    queryFn: () => unwrap(api.GET('/api/v1/payroll/')),
   });
 };
 
 export const usePartners = () => {
   return useQuery({
     queryKey: ['partners'],
-    queryFn: async () => {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/partners');
-      if (!res.ok) throw new Error('Network error');
-      return res.json();
-    }
+    queryFn: () => unwrap(api.GET('/api/v1/partners/')),
   });
 };
-
-
-
-

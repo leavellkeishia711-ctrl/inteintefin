@@ -6,20 +6,40 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import AdAccount, Consumable, CampaignRun, CampaignRunStat
 
-async def get_ad_account_cost(db: AsyncSession, ad_account_id: uuid.UUID) -> Decimal:
+async def get_ad_account_cost(db: AsyncSession, ad_account_id: uuid.UUID, date_from: Optional[date] = None, date_to: Optional[date] = None) -> Decimal:
     """
-    Calculate the total cost of all consumables associated with an ad_account.
-    Returns value in the base currency of the company (using fx_rate_to_base at time of purchase).
+    Calculate the total cost of all consumables associated with an ad_account, PLUS the ad spend.
+    Returns value in the base currency of the company (using fx_rate_to_base).
     """
-    result = await db.execute(
-        sa.select(sa.func.sum(Consumable.cost * Consumable.fx_rate_to_base))
-        .where(Consumable.ad_account_id == ad_account_id)
-        .where(Consumable.deleted_at.is_(None))
+    # 1. Consumables cost
+    consumables_stmt = sa.select(sa.func.sum(Consumable.cost * Consumable.fx_rate_to_base)).where(
+        Consumable.ad_account_id == ad_account_id,
+        Consumable.deleted_at.is_(None)
     )
-    total = result.scalar()
-    if total is None:
-        return Decimal('0.0000')
-    return Decimal(total)
+    if date_from:
+        consumables_stmt = consumables_stmt.where(Consumable.purchased_on >= date_from)
+    if date_to:
+        consumables_stmt = consumables_stmt.where(Consumable.purchased_on <= date_to)
+
+    cons_result = await db.execute(consumables_stmt)
+    cons_total = cons_result.scalar() or Decimal('0.0000')
+
+    # 2. Ad Spend cost
+    spend_stmt = sa.select(sa.func.sum(CampaignRunStat.spend * CampaignRunStat.fx_rate_to_base)).join(
+        CampaignRun, CampaignRunStat.campaign_run_id == CampaignRun.id
+    ).where(
+        CampaignRun.ad_account_id == ad_account_id,
+        CampaignRun.deleted_at.is_(None)
+    )
+    if date_from:
+        spend_stmt = spend_stmt.where(CampaignRunStat.stat_date >= date_from)
+    if date_to:
+        spend_stmt = spend_stmt.where(CampaignRunStat.stat_date <= date_to)
+
+    spend_result = await db.execute(spend_stmt)
+    spend_total = spend_result.scalar() or Decimal('0.0000')
+
+    return Decimal(cons_total) + Decimal(spend_total)
 
 async def upsert_campaign_run_stat(
     db: AsyncSession,
@@ -89,7 +109,6 @@ async def get_campaign_stats(
 ):
     stmt = sa.select(CampaignRunStat).where(
         CampaignRunStat.company_id == company_id,
-        CampaignRunStat.deleted_at.is_(None),
         CampaignRunStat.stat_date >= date_from,
         CampaignRunStat.stat_date <= date_to
     )

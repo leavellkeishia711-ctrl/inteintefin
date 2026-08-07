@@ -269,13 +269,43 @@
         }
       }
     },
-    "/api/v1/consumables/": {
+    "/api/v1/consumables/consumables/": {
+      "get": {
+        "tags": [
+          "consumables",
+          "consumables"
+        ],
+        "summary": "List Consumables",
+        "operationId": "list_consumables_api_v1_consumables_consumables__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsumableOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Consumables Api V1 Consumables Consumables  Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
       "post": {
         "tags": [
+          "consumables",
           "consumables"
         ],
         "summary": "Create Consumable",
-        "operationId": "create_consumable_api_v1_consumables__post",
+        "operationId": "create_consumable_api_v1_consumables_consumables__post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -313,6 +343,112 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/consumables/consumables/{consumable_id}": {
+      "get": {
+        "tags": [
+          "consumables",
+          "consumables"
+        ],
+        "summary": "Get Consumable",
+        "operationId": "get_consumable_api_v1_consumables_consumables__consumable_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "consumable_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Consumable Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumableOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "consumables",
+          "consumables"
+        ],
+        "summary": "Update Consumable",
+        "operationId": "update_consumable_api_v1_consumables_consumables__consumable_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "consumable_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Consumable Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsumableUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumableOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/transactions/": {
@@ -1031,6 +1167,40 @@
               "format": "uuid",
               "title": "Account Id"
             }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
           }
         ],
         "responses": {
@@ -1233,6 +1403,64 @@
         }
       }
     },
+    "/api/v1/campaign-runs/{run_id}/stats": {
+      "post": {
+        "tags": [
+          "campaign-runs"
+        ],
+        "summary": "Upsert Campaign Run Stat",
+        "operationId": "upsert_campaign_run_stat_api_v1_campaign_runs__run_id__stats_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignRunStatCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignRunStatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/campaign-run-stats/upsert": {
       "post": {
         "tags": [
@@ -1331,30 +1559,52 @@
         }
       }
     },
-    "/api/v1/webhooks/telegram": {
-      "post": {
+    "/api/v1/payroll/": {
+      "get": {
         "tags": [
-          "webhooks"
+          "payroll"
         ],
-        "summary": "Telegram Webhook",
-        "operationId": "telegram_webhook_api_v1_webhooks_telegram_post",
-        "parameters": [
-          {
-            "name": "x-telegram-bot-api-secret-token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "X-Telegram-Bot-Api-Secret-Token"
-            }
-          }
-        ],
+        "summary": "Get Payroll",
+        "operationId": "get_payroll_api_v1_payroll__get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs": {
+      "post": {
+        "tags": [
+          "payroll"
+        ],
+        "summary": "Create Payroll Run",
+        "operationId": "create_payroll_run_api_v1_payroll_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayrollRunCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunOut"
+                }
               }
             }
           },
@@ -1371,50 +1621,22 @@
         }
       }
     },
-    "/api/v1/alerts/": {
+    "/api/v1/payroll/runs/{run_id}": {
       "get": {
         "tags": [
-          "alerts"
+          "payroll"
         ],
-        "summary": "List Alerts",
-        "operationId": "list_alerts_api_v1_alerts__get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/alerts/{id}/acknowledge": {
-      "post": {
-        "tags": [
-          "alerts"
-        ],
-        "summary": "Acknowledge Alert",
-        "operationId": "acknowledge_alert_api_v1_alerts__id__acknowledge_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "summary": "Get Payroll Run",
+        "operationId": "get_payroll_run_api_v1_payroll_runs__run_id__get",
         "parameters": [
           {
-            "name": "id",
+            "name": "run_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "format": "uuid",
+              "title": "Run Id"
             }
           }
         ],
@@ -1423,7 +1645,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunOut"
+                }
               }
             }
           },
@@ -1433,6 +1657,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/": {
+      "get": {
+        "tags": [
+          "partners"
+        ],
+        "summary": "Get Partners",
+        "operationId": "get_partners_api_v1_partners__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_v1_settings__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
                 }
               }
             }
@@ -1484,6 +1750,46 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/webhooks/telegram": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Telegram Webhook",
+        "operationId": "telegram_webhook_api_v1_webhooks_telegram_post",
+        "parameters": [
+          {
+            "name": "x-telegram-bot-api-secret-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Telegram-Bot-Api-Secret-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/health": {
@@ -1763,6 +2069,40 @@
         },
         "type": "object",
         "title": "AdAccountUpdate"
+      },
+      "AffiliateNetworkBase": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "payment_terms": {
+            "type": "string",
+            "title": "Payment Terms"
+          },
+          "payout_model": {
+            "type": "string",
+            "title": "Payout Model"
+          },
+          "typical_hold_days": {
+            "type": "integer",
+            "title": "Typical Hold Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "payment_terms",
+          "payout_model",
+          "typical_hold_days"
+        ],
+        "title": "AffiliateNetworkBase"
       },
       "Body_login_api_v1_auth_login_post": {
         "properties": {
@@ -2332,6 +2672,106 @@
             "type": "string",
             "title": "Type"
           },
+          "ad_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ad Account Id"
+          },
+          "identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identifier"
+          },
+          "cost": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Cost",
+            "default": "0.00"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "fx_rate_to_base": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Fx Rate To Base"
+          },
+          "purchased_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Purchased On"
+          },
+          "expires_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires On"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "active"
+          },
+          "transaction_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "currency",
+          "fx_rate_to_base",
+          "purchased_on"
+        ],
+        "title": "ConsumableCreate"
+      },
+      "ConsumableOut": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "ad_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ad Account Id"
+          },
           "identifier": {
             "anyOf": [
               {
@@ -2351,21 +2791,92 @@
           "currency": {
             "type": "string",
             "title": "Currency"
+          },
+          "fx_rate_to_base": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Fx Rate To Base"
+          },
+          "purchased_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Purchased On"
+          },
+          "expires_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires On"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "active"
+          },
+          "transaction_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Id"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
           }
         },
         "type": "object",
         "required": [
           "type",
-          "cost",
-          "currency"
+          "currency",
+          "fx_rate_to_base",
+          "purchased_on",
+          "id",
+          "company_id"
         ],
-        "title": "ConsumableCreate"
+        "title": "ConsumableOut"
       },
-      "ConsumableOut": {
+      "ConsumableUpdate": {
         "properties": {
-          "status": {
-            "type": "string",
-            "title": "Status"
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "ad_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ad Account Id"
           },
           "identifier": {
             "anyOf": [
@@ -2377,13 +2888,152 @@
               }
             ],
             "title": "Identifier"
+          },
+          "cost": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Cost",
+            "default": "0.00"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "fx_rate_to_base": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fx Rate To Base"
+          },
+          "purchased_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchased On"
+          },
+          "expires_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires On"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "active"
+          },
+          "transaction_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Id"
+          }
+        },
+        "type": "object",
+        "title": "ConsumableUpdate"
+      },
+      "EmployeePayroll": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "base_salary": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Base Salary"
+          },
+          "bonus_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Bonus Amount"
+          },
+          "total_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Amount"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "model_type": {
+            "type": "string",
+            "title": "Model Type",
+            "default": "Fixed"
           }
         },
         "type": "object",
         "required": [
+          "user_id",
+          "name",
+          "role",
+          "base_salary",
+          "bonus_amount",
+          "total_amount",
           "status"
         ],
-        "title": "ConsumableOut"
+        "title": "EmployeePayroll"
+      },
+      "ExpectedCashItem": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "amount"
+        ],
+        "title": "ExpectedCashItem"
       },
       "HTTPValidationError": {
         "properties": {
@@ -2410,6 +3060,324 @@
           "health_score"
         ],
         "title": "HealthScoreResult"
+      },
+      "PartnerPayoutItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "network_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Network Id"
+          },
+          "network_name": {
+            "type": "string",
+            "title": "Network Name"
+          },
+          "campaign_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign Id"
+          },
+          "buyer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buyer Id"
+          },
+          "expected_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Expected Amount"
+          },
+          "actual_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Actual Amount"
+          },
+          "scrubbed_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Scrubbed Amount"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "booked_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Booked On"
+          },
+          "hold_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hold Until"
+          },
+          "paid_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "network_id",
+          "network_name",
+          "campaign_id",
+          "buyer_id",
+          "expected_amount",
+          "actual_amount",
+          "scrubbed_amount",
+          "status",
+          "booked_on",
+          "hold_until",
+          "paid_on"
+        ],
+        "title": "PartnerPayoutItem"
+      },
+      "PartnersResponse": {
+        "properties": {
+          "kpi_total_booked": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Kpi Total Booked"
+          },
+          "kpi_in_hold": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Kpi In Hold"
+          },
+          "kpi_net_confirmed": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Kpi Net Confirmed"
+          },
+          "kpi_avg_scrub": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Kpi Avg Scrub"
+          },
+          "networks": {
+            "items": {
+              "$ref": "#/components/schemas/AffiliateNetworkBase"
+            },
+            "type": "array",
+            "title": "Networks"
+          },
+          "expected_cash": {
+            "items": {
+              "$ref": "#/components/schemas/ExpectedCashItem"
+            },
+            "type": "array",
+            "title": "Expected Cash"
+          },
+          "payouts": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerPayoutItem"
+            },
+            "type": "array",
+            "title": "Payouts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kpi_total_booked",
+          "kpi_in_hold",
+          "kpi_net_confirmed",
+          "kpi_avg_scrub",
+          "networks",
+          "expected_cash",
+          "payouts"
+        ],
+        "title": "PartnersResponse"
+      },
+      "PayrollLineItemOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "base_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Base Amount"
+          },
+          "bonus_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Bonus Amount"
+          },
+          "total_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "base_amount",
+          "bonus_amount",
+          "total_amount",
+          "currency",
+          "status"
+        ],
+        "title": "PayrollLineItemOut"
+      },
+      "PayrollResponse": {
+        "properties": {
+          "total_payroll": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Payroll"
+          },
+          "active_employees": {
+            "type": "integer",
+            "title": "Active Employees"
+          },
+          "pending_approval": {
+            "type": "integer",
+            "title": "Pending Approval"
+          },
+          "employees": {
+            "items": {
+              "$ref": "#/components/schemas/EmployeePayroll"
+            },
+            "type": "array",
+            "title": "Employees"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_payroll",
+          "active_employees",
+          "pending_approval",
+          "employees"
+        ],
+        "title": "PayrollResponse"
+      },
+      "PayrollRunCreate": {
+        "properties": {
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_start",
+          "period_end"
+        ],
+        "title": "PayrollRunCreate"
+      },
+      "PayrollRunOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "total_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PayrollLineItemOut"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "period_start",
+          "period_end",
+          "total_amount",
+          "currency",
+          "status"
+        ],
+        "title": "PayrollRunOut"
       },
       "PnLResult": {
         "properties": {
@@ -2568,6 +3536,38 @@
           "margin"
         ],
         "title": "PnLResult"
+      },
+      "SettingsResponse": {
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "base_currency": {
+            "type": "string",
+            "title": "Base Currency"
+          },
+          "default_language": {
+            "type": "string",
+            "title": "Default Language"
+          },
+          "integrations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Integrations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_name",
+          "base_currency",
+          "default_language",
+          "integrations"
+        ],
+        "title": "SettingsResponse"
       },
       "SpendDiscrepancyResult": {
         "properties": {

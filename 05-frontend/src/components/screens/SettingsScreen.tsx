@@ -8,12 +8,6 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 
-const availableIntegrations = [
-  { id: 'fb', name: 'Facebook Ads', connected: true },
-  { id: 'tt', name: 'TikTok Ads', connected: false },
-  { id: 'gg', name: 'Google Ads', connected: true },
-];
-
 export default function SettingsScreen() {
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
@@ -23,7 +17,7 @@ export default function SettingsScreen() {
   const [locale, setLocale] = useState('en');
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocale(localStorage.getItem('financeIntel-locale') || 'en');
   }, []);

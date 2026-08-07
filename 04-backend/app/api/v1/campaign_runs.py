@@ -76,3 +76,36 @@ async def update_campaign_run(
     await db.commit()
     
     return run
+
+from app.schemas.campaigns import CampaignRunStatCreate, CampaignRunStatOut
+
+@router.post("/{run_id}/stats", response_model=CampaignRunStatOut)
+async def upsert_campaign_run_stat(
+    run_id: uuid.UUID,
+    stat_in: CampaignRunStatCreate,
+    db: AsyncSession = Depends(get_tenant_session),
+    company_id: str = Depends(get_current_user_company_id)
+):
+    from app.services.campaigns import upsert_campaign_run_stat as svc_upsert
+    
+    if stat_in.campaign_run_id != run_id:
+        raise HTTPException(status_code=400, detail="campaign_run_id in body must match path")
+        
+    try:
+        upserted_stat = await svc_upsert(
+            db=db,
+            company_id=uuid.UUID(company_id),
+            campaign_run_id=run_id,
+            stat_date=stat_in.stat_date,
+            source=stat_in.source,
+            external_id=stat_in.external_id,
+            spend=stat_in.spend,
+            revenue=stat_in.revenue,
+            currency=stat_in.currency,
+            fx_rate_to_base=stat_in.fx_rate_to_base
+        )
+        await db.commit()
+        return upserted_stat
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to upsert CampaignRunStat: {str(e)}")

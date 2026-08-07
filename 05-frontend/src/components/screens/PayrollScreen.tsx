@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
@@ -8,9 +8,18 @@ import { SectionTitle } from '@/components/ui/SectionTitle';
 
 import { usePayroll } from '@/lib/queries';
 export default function PayrollScreen() {
-  const { data, isLoading } = usePayroll();
+  const { data, isLoading, error } = usePayroll();
   const t = useTranslations('payroll');
+  const tc = useTranslations('common');
   
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500">{tc('loading')}</div>;
+  }
+  
+  if (error) {
+    return <div className="p-8 text-center text-red-500">{tc('noData')}</div>;
+  }
+
   return (
     <div className="space-y-6">
       <SectionTitle>{t('title')}</SectionTitle>

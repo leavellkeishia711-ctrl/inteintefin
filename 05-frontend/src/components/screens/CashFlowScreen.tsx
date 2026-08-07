@@ -4,30 +4,29 @@ import { useTranslations } from 'next-intl';
 import { money } from '@/lib/formatters';
 import { Card } from '@/components/ui/Card';
 import { SectionTitle } from '@/components/ui/SectionTitle';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Info, Loader2 } from 'lucide-react';
 import { useCashFlow } from '@/lib/queries';
 
 export default function CashFlowScreen() {
   const t = useTranslations('cashflow');
-  const tc = useTranslations('common');
 
   const today = new Date();
   const start_date = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
   const end_date = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
   const { data, isLoading, error } = useCashFlow({ start_date, end_date });
+  const tc = useTranslations('common');
 
   if (isLoading) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-teal-600" /></div>;
   }
 
   if (error || !data) {
-    return <div className="text-red-500">Failed to load cash flow data.</div>;
+    return <div className="text-red-500">{tc('noData')}</div>;
   }
 
   // Use the actual fields from CashFlowResult
-  const runway = data.runway_days ? String(data.runway_days) + ' days' : "N/A";
+  const runway = data.runway_days ? String(data.runway_days) + ' ' + tc('days') : tc('na');
   const opening = money(data.transaction_balance);
   const receipts = money("0");
   const outflows = money("0");
@@ -72,7 +71,7 @@ export default function CashFlowScreen() {
       <Card className="p-6 h-[400px] flex flex-col">
         <div className="text-sm font-medium text-gray-500 mb-6 uppercase tracking-wider">{t('cashFlowTrend')}</div>
         <div className="flex-1 min-h-0 text-gray-400 flex items-center justify-center">
-          Chart data requires historical API endpoints.
+          {tc('chartNeedsData')}
         </div>
       </Card>
     </div>

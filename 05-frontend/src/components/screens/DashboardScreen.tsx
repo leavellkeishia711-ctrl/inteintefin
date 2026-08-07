@@ -1,19 +1,16 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslations } from 'next-intl';
-import { money, percent } from '@/lib/formatters';
+import { money } from '@/lib/formatters';
 import { Card } from '@/components/ui/Card';
-import { SectionTitle } from '@/components/ui/SectionTitle';
-import { TrendTag } from '@/components/ui/TrendTag';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Sparkles, ArrowRight, ShieldCheck, AlertTriangle, ShieldAlert, Info, Clock, Loader2 } from 'lucide-react';
+import { Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 import { useHealth, usePnL, useCashFlow } from '@/lib/queries';
 
 export default function DashboardScreen() {
   const t = useTranslations('dashboard');
-  const tc = useTranslations('common');
   const tm = useTranslations('metrics');
+  const tc = useTranslations('common');
 
   const today = new Date();
   const start_date = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
@@ -21,19 +18,21 @@ export default function DashboardScreen() {
 
   const { data: healthData, isLoading: isHealthLoading } = useHealth({ start_date, end_date });
   const { data: pnlData, isLoading: isPnlLoading } = usePnL({ start_date, end_date });
+  const { data: cashFlowData, isLoading: isCashFlowLoading } = useCashFlow({ start_date, end_date });
 
-  if (isHealthLoading || isPnlLoading) {
+  if (isHealthLoading || isPnlLoading || isCashFlowLoading) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-teal-600" /></div>;
   }
 
   // Fallbacks if data fails
   const healthScore = healthData?.health_score ?? 100;
   
-  // Transform PnL data into metrics array shape
-  const metrics = pnlData ? [
-    { label: 'grossProfit', value: money(pnlData.gross_profit), change: '+0%', trend: 'up' as const },
-    { label: 'ebitda', value: money(pnlData.ebitda), change: '+0%', trend: 'up' as const },
-    { label: 'netProfit', value: money(pnlData.net_profit), change: '+0%', trend: 'up' as const },
+  // Transform data into metrics array shape
+  const metrics = pnlData && cashFlowData ? [
+    { label: 'cashRunway', value: cashFlowData.runway_days ? `${cashFlowData.runway_days} ${tc('days')}` : tc('na') },
+    { label: 'grossProfit', value: money(pnlData.gross_profit) },
+    { label: 'ebitda', value: money(pnlData.ebitda) },
+    { label: 'netProfit', value: money(pnlData.net_profit) },
   ] : [];
 
   return (
@@ -63,7 +62,7 @@ export default function DashboardScreen() {
       {/* We hide the chart since there's no real cashFlow time series yet in the backend */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-6 lg:col-span-2 h-[320px] flex flex-col items-center justify-center text-gray-400">
-          Chart data requires historical API endpoints.
+          {tc('chartNeedsData')}
         </Card>
 
         <Card className="p-6 bg-indigo-50 border-indigo-100 relative overflow-hidden flex flex-col">

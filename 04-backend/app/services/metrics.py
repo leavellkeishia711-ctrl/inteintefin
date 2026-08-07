@@ -110,3 +110,21 @@ async def get_spend_discrepancy(
     
     diff = tracker_spend - actual_spend
     return (tracker_spend, actual_spend, diff)
+
+def calculate_roi(revenue: Decimal, cost: Decimal) -> Decimal:
+    """Calculates ROI = (Revenue - Cost) / Cost. Safe division."""
+    if cost == 0:
+        return Decimal("0.0000")
+    return ((revenue - cost) / cost).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+
+def calculate_roas(revenue: Decimal, spend: Decimal) -> Decimal:
+    """Calculates ROAS = Revenue / Spend. Safe division."""
+    if spend == 0:
+        return Decimal("0.0000")
+    return (revenue / spend).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+
+def calculate_margin(revenue: Decimal, cost: Decimal) -> Decimal:
+    """Calculates Margin = (Revenue - Cost) / Revenue. Safe division."""
+    if revenue == 0:
+        return Decimal("0.0000")
+    return ((revenue - cost) / revenue).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * РЎРїСЂР°РІРѕС‡РЅРёРєРё РґР»СЏ С„РёР»СЊС‚СЂРѕРІ Рё СЃРµР»РµРєС‚РѕРІ.
  *
  * РСЃС‚РѕС‡РЅРёРєРё (СЃРј. 02-product-docs/):
@@ -152,15 +152,10 @@ export const LEAD_STATUSES = [
 // в”Ђв”Ђв”Ђ РўРёРїС‹ СЂР°СЃС…РѕРґРЅРёРєРѕРІ в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 // В«Р­РєРѕРЅРѕРјРёРєР° РјРµРґРёР°Р±Р°РёРЅРіР°В», СЂР°Р·РґРµР» 03.
 export const CONSUMABLE_TYPES = [
-  { value: 'proxy_mobile', label: 'РџСЂРѕРєСЃРё (mobile)' },
-  { value: 'proxy_residential', label: 'РџСЂРѕРєСЃРё (residential)' },
-  { value: 'proxy_datacenter', label: 'РџСЂРѕРєСЃРё (datacenter)' },
-  { value: 'card', label: 'РљР°СЂС‚Р°' },
-  { value: 'antidetect', label: 'РђРЅС‚РёРґРµС‚РµРєС‚-Р±СЂР°СѓР·РµСЂ' },
-  { value: 'tracker', label: 'РўСЂРµРєРµСЂ' },
-  { value: 'cloaking', label: 'РљР»РѕР°РєРёРЅРі' },
-  { value: 'account', label: 'РђРєРєР°СѓРЅС‚ (РїРѕРєСѓРїРєР°)' },
-  { value: 'other', label: 'РџСЂРѕС‡РµРµ' },
+  { value: 'proxy', label: 'Прокси' },
+  { value: 'card', label: 'Карта' },
+  { value: 'account_service', label: 'Сервис аккаунтов' },
+  { value: 'other', label: 'Прочее' },
 ] as const;
 
 // в”Ђв”Ђв”Ђ РҐРµР»РїРµСЂС‹ в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
@@ -177,11 +172,10 @@ export const staffRoleLabel = (value: string) =>
 
 // в”Ђв”Ђв”Ђ РџР°СЂС‚РЅС‘СЂСЃРєРёРµ РІС‹РїР»Р°С‚С‹ Рё С…РѕР»РґС‹ в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export const PAYOUT_STATUSES = [
-  { value: 'pending', label: 'Р’ С…РѕР»РґРµ', tone: 'warning' },
-  { value: 'approved', label: 'РџРѕРґС‚РІРµСЂР¶РґРµРЅРѕ', tone: 'ok' },
-  { value: 'paid', label: 'РџРѕР»СѓС‡РµРЅРѕ', tone: 'ok' },
-  { value: 'scrubbed', label: 'РЎРєСЂР°Р±', tone: 'neutral' },
-  { value: 'clawback', label: 'РљР»РѕСѓР±СЌРє', tone: 'danger' },
+  { value: 'booked', label: 'Booked', tone: 'neutral' },
+  { value: 'in_hold', label: 'In Hold', tone: 'warning' },
+  { value: 'scrubbed', label: 'Scrubbed', tone: 'danger' },
+  { value: 'paid', label: 'Paid', tone: 'ok' },
 ] as const;
 
 export type PayoutStatus = (typeof PAYOUT_STATUSES)[number]['value'];

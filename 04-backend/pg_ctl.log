@@ -1,0 +1,26 @@
+2026-08-07 15:40:58.405 GMT [5424] LOG:  could not open directory "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/pgsql/share/timezone": No such file or directory
+2026-08-07 15:40:58.405 GMT [5424] LOG:  invalid value for parameter "log_timezone": "UTC"
+2026-08-07 15:40:58.406 GMT [5424] LOG:  could not open directory "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/pgsql/share/timezone": No such file or directory
+2026-08-07 15:40:58.406 GMT [5424] LOG:  invalid value for parameter "TimeZone": "UTC"
+2026-08-07 15:40:58.443 GMT [5424] FATAL:  configuration file "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/04-backend/data/postgresql.conf" contains errors
+2026-08-07 15:41:35.698 GMT [2004] LOG:  syntax error in file "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/04-backend/data/postgresql.conf" line 603, near end of line
+2026-08-07 15:41:35.698 GMT [2004] FATAL:  configuration file "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/04-backend/data/postgresql.conf" contains errors
+2026-08-07 15:42:12.243 GMT [6160] FATAL:  could not open directory "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/pgsql/share/timezonesets": No such file or directory
+2026-08-07 15:42:12.243 GMT [6160] HINT:  This may indicate an incomplete PostgreSQL installation, or that the file "C:/Users/fylht/Desktop/Стартапы/SaaS финансовый менеджмент для медиабаинговых компаний/pgsql/bin/postgres.exe" has been moved away from its proper location.
+2026-08-07 15:42:46.562 GMT [13376] FATAL:  could not open directory "X:/pgsql/share/timezonesets": No such file or directory
+2026-08-07 15:42:46.562 GMT [13376] HINT:  This may indicate an incomplete PostgreSQL installation, or that the file "X:/pgsql/bin/postgres.exe" has been moved away from its proper location.
+2026-08-07 15:42:55.095 GMT [11348] FATAL:  could not open directory "X:/pgsql/share/timezonesets": No such file or directory
+2026-08-07 15:42:55.095 GMT [11348] HINT:  This may indicate an incomplete PostgreSQL installation, or that the file "X:/pgsql/bin/postgres.exe" has been moved away from its proper location.
+2026-08-07 15:43:14.103 GMT [3300] FATAL:  invalid value for parameter "timezone_abbreviations": "Default"
+2026-08-07 15:43:30.025 GMT [16188] FATAL:  invalid value for parameter "timezone_abbreviations": "Default"
+2026-08-07 15:43:47.853 GMT [15724] LOG:  starting PostgreSQL 16.3, compiled by Visual C++ build 1938, 64-bit
+2026-08-07 15:43:47.865 GMT [15724] LOG:  listening on IPv6 address "::1", port 5432
+2026-08-07 15:43:47.865 GMT [15724] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-08-07 15:43:48.010 GMT [14244] LOG:  database system was interrupted; last known up at 2026-08-01 13:23:06 GMT
+2026-08-07 15:43:49.616 GMT [14244] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-08-07 15:43:49.623 GMT [14244] LOG:  redo starts at 0/23B2138
+2026-08-07 15:43:49.623 GMT [14244] LOG:  invalid record length at 0/23B2220: expected at least 24, got 0
+2026-08-07 15:43:49.623 GMT [14244] LOG:  redo done at 0/23B21E8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-08-07 15:43:49.628 GMT [9244] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-08-07 15:43:49.639 GMT [9244] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.002 s, total=0.012 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/23B2220, redo lsn=0/23B2220
+2026-08-07 15:43:49.672 GMT [15724] LOG:  database system is ready to accept connections

@@ -25,7 +25,11 @@
     "cancel": "Cancel",
     "high": "HIGH",
     "medium": "MEDIUM",
-    "low": "LOW"
+    "low": "LOW",
+    "na": "N/A",
+    "loading": "Loading...",
+    "noData": "Failed to load data.",
+    "chartNeedsData": "Chart data requires historical API endpoints."
   },
   "nav": {
     "dashboard": "Dashboard",

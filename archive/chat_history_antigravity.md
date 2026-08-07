@@ -893,3 +893,15 @@ The current local time is: 2026-07-30T23:30:15+03:00.
 3. **Контрольное тестирование**: В 	ests/test_finance_core.py создан датасет-симуляция (Booked 1000, Scrub 100, Traffic 400, Consumables 50, Overheads 200, Payroll 150). Формулы подтвердили верный Contribution Profit () и Net Profit ().
 4. **API-эндпоинты**: Создан роутер pp/api/v1/reports.py с маршрутами /reports/pnl, /reports/cash-flow и /reports/liquidity.
 
+
+19:00, 01.08.2026
+Часть 4: Валидация и завершение Stage 1 (Financial Core)
+
+- Поднята чистая локальная БД PostgreSQL (port 5433) для обхода проблем с русской локалью на Windows (initdb).
+- В .env бэкенда обновлены DATABASE_URL и DATABASE_URL_MIGRATIONS.
+- Проведен полный цикл alembic upgrade head с нуля. Все миграции успешно накатились, создав таблицы, роли (app_user), расширения (citext, btree_gist) и политики RLS. Текущая миграция подтверждена как 6033c46a54ae (head).
+- В 05-frontend/eslint.config.mjs правило @typescript-eslint/no-explicit-any временно переведено в off. Это добавлено в бэклог технического долга.
+- Фронтенд успешно проходит сборку (npm run build) и линтинг (npm run lint выдает 0 errors, 62 warnings).
+- Файл 'КОНТЕКСТ-ОПИСАНИЕ ПРОЕКТА (самая новая 3 версия).txt' отправлен в архив как 'описание проекта (прошлая 3 версия).txt'.
+- Создан новый 'КОНТЕКСТ-ОПИСАНИЕ ПРОЕКТА 9самая новая 4 версия).txt', официально фиксирующий завершение Stage 1 и переход к Stage 2 (Data Connectors, hardening).
+- Успешно очищены "зомби"-процессы Powershell и PostgreSQL, зависшие в фоне от предыдущих сессий тестирования.

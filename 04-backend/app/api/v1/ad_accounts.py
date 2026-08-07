@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uuid
 from typing import List
+from datetime import date
 
 from app.core.deps import get_tenant_session, get_current_user_company_id, get_current_user, UserCtx
 from app.db.models.campaigns import AdAccount
@@ -77,6 +78,8 @@ async def update_ad_account(
 @router.get("/{account_id}/cost")
 async def get_account_cost(
     account_id: uuid.UUID,
+    date_from: date | None = None,
+    date_to: date | None = None,
     db: AsyncSession = Depends(get_tenant_session),
     company_id: str = Depends(get_current_user_company_id)
 ):
@@ -86,6 +89,6 @@ async def get_account_cost(
     if not account:
         raise HTTPException(status_code=404, detail="AdAccount not found")
         
-    cost = await get_ad_account_cost(db, account_id)
+    cost = await get_ad_account_cost(db, account_id, date_from, date_to)
     return {"ad_account_id": account_id, "cost": str(cost)}
 
