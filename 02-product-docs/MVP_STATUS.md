@@ -2,13 +2,13 @@
 
 This document tracks the readiness of the Stage 1 MVP against the requirements defined in `MVP.md`.
 
-**Stage 1: STATUS: ✅ COMPLETED**
+**Stage 1: STATUS: ⏳ PENDING (Awaiting CI)**
 
-- **Финальный SHA коммита:** `f7478e7053ca628c9cc856edd7cc449d684cdd32`
+- **Финальный SHA коммита:** `d810f2f1b51b2f7932a61721e542f6bf21589d81`
 - **CI Runs:**
-  - Backend CI: ✅ Passed (Run ID: `31249077430`)
-  - Frontend CI: ✅ Passed (Run ID: `31249077459`)
-  - Production Gate: ✅ Passed (Run ID: `31249077424`)
+  - Backend CI: ⏳ Pending (Run ID: `31249259253`)
+  - Frontend CI: ⏳ Pending (Run ID: `31249259254`)
+  - Production Gate: ⏳ Pending (Run ID: `31249259244`)
 ## Core Infrastructure
 | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- |
@@ -53,4 +53,4 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 | **SQLAlchemy Asyncpg Load Test** | ✅ Passed | `load_test_ci.py` (`prod-gate.yml`) |
 
 ## Conclusion
-**PRODUCTION READY**: Awaiting deployment. All Stage 1 functionality, architecture invariants, security requirements, and CI gates have successfully passed.
+**PRODUCTION BLOCKED**: Awaiting final green runs on the CI workflows for the latest remote HEAD (`d810f2f1`). The GitHub API is currently rate-limiting verification of the runs.
