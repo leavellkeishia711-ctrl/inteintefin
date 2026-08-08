@@ -27,3 +27,9 @@ def create_access_token(subject: str | Any, company_id: str, role: str, expires_
     to_encode = {"exp": expire, "sub": str(subject), "cid": str(company_id), "role": role}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+def create_refresh_token(subject: str | Any, company_id: str, role: str) -> str:
+    # 30 days expiry for refresh token
+    expire = datetime.now(timezone.utc) + timedelta(days=30)
+    to_encode = {"exp": expire, "sub": str(subject), "cid": str(company_id), "role": role, "type": "refresh"}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
