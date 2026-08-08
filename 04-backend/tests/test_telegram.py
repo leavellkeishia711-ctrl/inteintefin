@@ -155,9 +155,12 @@ async def test_telegram_link_success_and_reuse(monkeypatch):
         mock_db[f"telegram_link:{token}"] = str(user.id).encode('utf-8')
 
         # First use
-        res1 = await app.services.telegram_bot.handle_telegram_message(db, 99999, f"/link {token}")
+        import random
+        chat_id_first = random.randint(1000000, 999999999)
+        res1 = await app.services.telegram_bot.handle_telegram_message(db, chat_id_first, f"/link {token}")
         assert res1 == "Your Telegram account has been successfully linked!"
 
         # Second use
-        res2 = await app.services.telegram_bot.handle_telegram_message(db, 88888, f"/link {token}")
+        chat_id_second = random.randint(1000000, 999999999)
+        res2 = await app.services.telegram_bot.handle_telegram_message(db, chat_id_second, f"/link {token}")
         assert res2 == "Invalid or expired link token."
