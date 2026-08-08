@@ -2,15 +2,19 @@
 // ESLint rules below strictly forbid float coercion to protect string-based Decimal precision.
  
 
-export const money = (value: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
-  if (!value) return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(0);
+export const formatMoney = (amount: number | string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
+  if (amount === null || amount === undefined) return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(0);
   
+  const value = amount.toString();
   const isNegative = value.startsWith('-');
   const absStr = isNegative ? value.slice(1) : value;
   
   const partsStr = absStr.split('.');
   const integerPart = partsStr[0] || '0';
-  const fractionalPart = (partsStr[1] || '00').padEnd(2, '0').slice(0, 2);
+  const rawFraction = partsStr[1] || '00';
+  // Keep up to 4 decimal places if they exist, otherwise 2
+  const fractionLen = Math.max(2, Math.min(4, rawFraction.length));
+  const fractionalPart = rawFraction.padEnd(fractionLen, '0').slice(0, fractionLen);
   
   let intBig: bigint;
   try {
@@ -22,12 +26,16 @@ export const money = (value: string | null | undefined, currency: string = 'USD'
   const formatter = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionLen,
+    maximumFractionDigits: 4,
   });
 
   const parts = formatter.formatToParts(intBig);
   return parts.map(p => p.type === 'fraction' ? fractionalPart : p.value).join('');
+};
+
+export const money = (value: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
+  return formatMoney(value, currency, locale);
 };
 
 export const moneyCompact = (value: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {

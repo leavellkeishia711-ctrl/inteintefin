@@ -53,7 +53,9 @@
     "cashBalance": "Cash balance",
     "cashRunway": "Cash runway",
     "lockedInHold": "Locked in hold",
-    "overdueHoldAlert": "Overdue hold alert"
+    "lockedInHold": "Locked in hold",
+    "overdueHoldAlert": "Overdue hold alert",
+    "aiInsight": "\"Your health score looks great, indicating a solid cash position and healthy margins.\""
   },
   "pnl": {
     "title": "P&L",

@@ -71,7 +71,7 @@ export default function DashboardScreen() {
             <Sparkles size={16} />{t('aiFinancialAnalyst')}
           </div>
           <p className="text-sm text-gray-700 leading-relaxed flex-1">
-            &quot;Your health score looks great, indicating a solid cash position and healthy margins.&quot;
+            {t('aiInsight')}
           </p>
           <button className="mt-4 flex items-center justify-between bg-white px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 hover:border-indigo-300 transition-colors">
             {t('reviewCampaigns')} <ArrowRight size={14} className="text-gray-400" />
