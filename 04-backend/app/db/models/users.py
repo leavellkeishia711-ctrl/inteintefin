@@ -55,6 +55,7 @@ class Invite(Base, TimestampMixin, CompanyScoped):
     role: Mapped[str] = mapped_column(String, nullable=False)
     token_hash: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     invited_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

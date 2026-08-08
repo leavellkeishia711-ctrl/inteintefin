@@ -47,3 +47,10 @@ get_tenant_session = get_db
 async def get_current_user_company_id(user: UserCtx = Depends(get_current_user)) -> str:
     return user.company_id
 
+def require_roles(*roles: str):
+    async def role_checker(user: UserCtx = Depends(get_current_user)):
+        if user.role not in roles:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+        return user
+    return role_checker
+

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts
+from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts, invites
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(invites.router, prefix=f"{settings.API_V1_STR}/auth", tags=["invites"])
 app.include_router(imports.router, prefix=f"{settings.API_V1_STR}/imports", tags=["imports"])
 app.include_router(consumables.router, prefix=f"{settings.API_V1_STR}")
 app.include_router(transactions.router, prefix=f"{settings.API_V1_STR}/transactions", tags=["transactions"])
