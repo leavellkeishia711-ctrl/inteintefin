@@ -63,26 +63,26 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
     try:
         c_id = UUID(company_id) if isinstance(company_id, str) else company_id
 
-        if tool_name == "get_pnl":
+        if tool_name == "get_pnl_report":
             args = GetPnLArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             pnl = await calculate_pnl(db, c_id, args.date_from, args.date_to)
             return True, {"pnl": pnl}
             
-        elif tool_name == "get_cashflow":
+        elif tool_name == "get_cash_flow":
             args = GetCashflowArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             cf = await calculate_cashflow(db, c_id, args.date_to)
             return True, {"cash_flow": cf}
             
-        elif tool_name == "get_metrics":
+        elif tool_name == "get_financial_summary":
             args = GetMetricsArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             hs = await get_health_score(db, c_id, as_of_date=args.date_to)
             discrepancy = await get_spend_discrepancy(db, c_id, args.date_from, args.date_to)
             return True, {"health_score": hs, "spend_discrepancy": discrepancy}
             
-        elif tool_name == "get_campaign_stats":
+        elif tool_name == "get_campaign_metrics":
             args = GetCampaignStatsArgs(**arguments)
             validate_dates(args.date_from, args.date_to)
             stats = await get_campaign_stats(
@@ -101,31 +101,6 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
                 } for s in stats
             ]
             
-        elif tool_name == "get_transactions":
-            args = GetTransactionsArgs(**arguments)
-            validate_dates(args.date_from, args.date_to)
-            txs = await get_transactions(
-                db, c_id, args.date_from, args.date_to,
-                category=args.category, type_=args.type, limit=args.limit
-            )
-            return True, [
-                {
-                    "amount": t.amount,
-                    "currency": t.currency,
-                    "date": t.date,
-                    "category": t.category,
-                    "type": t.type,
-                    "status": t.status,
-                    "description": t.description
-                } for t in txs
-            ]
-            
-        elif tool_name == "get_consumables_cost":
-            args = GetConsumablesCostArgs(**arguments)
-            validate_dates(args.date_from, args.date_to)
-            cost = await get_ad_account_cost(db, c_id, args.ad_account_id, args.date_from, args.date_to)
-            return True, {"consumables_cost": cost}
-            
         else:
             return False, f"Error: Unknown tool {tool_name}"
             
@@ -139,33 +114,23 @@ async def execute_tool(tool_name: str, arguments: dict, db: AsyncSession, compan
 def get_tools_spec() -> List[Dict[str, Any]]:
     return [
         {
-            "name": "get_pnl",
+            "name": "get_pnl_report",
             "description": "Get Profit and Loss statement for a date range.",
             "input_schema": GetPnLArgs.model_json_schema()
         },
         {
-            "name": "get_cashflow",
+            "name": "get_cash_flow",
             "description": "Get cash flow metrics for a date range.",
             "input_schema": GetCashflowArgs.model_json_schema()
         },
         {
-            "name": "get_metrics",
+            "name": "get_financial_summary",
             "description": "Get health score and ROI metrics.",
             "input_schema": GetMetricsArgs.model_json_schema()
         },
         {
-            "name": "get_campaign_stats",
+            "name": "get_campaign_metrics",
             "description": "Get campaign performance statistics.",
             "input_schema": GetCampaignStatsArgs.model_json_schema()
-        },
-        {
-            "name": "get_transactions",
-            "description": "Get financial transactions.",
-            "input_schema": GetTransactionsArgs.model_json_schema()
-        },
-        {
-            "name": "get_consumables_cost",
-            "description": "Get the cost of consumables for a specific ad account.",
-            "input_schema": GetConsumablesCostArgs.model_json_schema()
         }
     ]

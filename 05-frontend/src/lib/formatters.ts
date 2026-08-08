@@ -31,7 +31,13 @@ export const formatMoney = (amount: string | null | undefined, currency: string 
   });
 
   const parts = formatter.formatToParts(intBig);
-  return parts.map(p => p.type === 'fraction' ? fractionalPart : p.value).join('');
+  let formatted = parts.map(p => p.type === 'fraction' ? fractionalPart : p.value).join('');
+  
+  if (isNegative && intBig === BigInt(0) && !formatted.includes('-')) {
+    formatted = '-' + formatted;
+  }
+  
+  return formatted;
 };
 
 export const money = (value: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
@@ -55,13 +61,19 @@ export const moneyCompact = (value: string | null | undefined, currency: string 
   // For compact notation, we don't strictly care about exact decimal fraction since it's an approximation unknownway.
   // But to avoid floats completely, we can format the BigInt directly. 
   // Wait, if it's 1.5M, Intl on BigInt does that for us!
-  return new Intl.NumberFormat(locale, {
+  let result = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     notation: 'compact',
     compactDisplay: 'short',
     maximumFractionDigits: 1,
   }).format(intBig);
+
+  if (isNegative && intBig === BigInt(0) && !result.includes('-')) {
+    result = '-' + result;
+  }
+  
+  return result;
 };
 
 export const percent = (value: string | null | undefined, decimals: number = 2, locale: string = 'en-US'): string => {
@@ -87,7 +99,13 @@ export const percent = (value: string | null | undefined, decimals: number = 2, 
   });
   
   const parts = formatter.formatToParts(intBig);
-  return parts.map(p => p.type === 'fraction' ? fractionalPart : p.value).join('');
+  let formatted = parts.map(p => p.type === 'fraction' ? fractionalPart : p.value).join('');
+  
+  if (isNegative && intBig === BigInt(0) && !formatted.includes('-')) {
+    formatted = '-' + formatted;
+  }
+  
+  return formatted;
 };
 
 export const formatDate = (date: string | Date | null | undefined, locale: string = 'en'): string => {

@@ -5,6 +5,8 @@ const api = axios.create({
   withCredentials: true, // This allows sending cookies
 });
 
+let refreshPromise: Promise<any> | null = null;
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -20,10 +22,15 @@ api.interceptors.response.use(
       }
 
       try {
-        const { data } = await api.post('/api/v1/auth/refresh');
+        if (!refreshPromise) {
+            refreshPromise = api.post('/api/v1/auth/refresh').finally(() => {
+                refreshPromise = null;
+            });
+        }
         
-        // Update the access token in headers if needed (though we use bearer, maybe we should attach it)
-        if (data.access_token) {
+        const { data } = await refreshPromise;
+        
+        if (data && data.access_token) {
           api.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
           originalRequest.headers['Authorization'] = `Bearer ${data.access_token}`;
         }
@@ -32,7 +39,6 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // If refresh fails, redirect to login
         if (typeof window !== 'undefined') {
-          // Keep current language if possible, otherwise default to en
           const lang = window.location.pathname.startsWith('/ru') ? 'ru' : 'en';
           window.location.href = `/${lang}/login`;
         }
@@ -43,5 +49,39 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const fetchTransactions = async (params: Record<string, unknown>) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+        if (value) searchParams.append(key, value.toString());
+    });
+
+    const res = await api.get(`/api/v1/transactions?${searchParams.toString()}`);
+    return res.data;
+};
+
+export const createTransaction = async (data: Record<string, unknown>) => {
+    const res = await api.post(`/api/v1/transactions`, data);
+    return res.data;
+};
+
+export const uploadCsv = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post(`/api/v1/imports/upload`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return res.data;
+};
+
+export const commitImport = async (batchId: string, columnMapping: Record<string, string>) => {
+    const res = await api.post(`/api/v1/imports/${batchId}/commit`, {
+        batch_id: batchId,
+        column_mapping: columnMapping
+    });
+    return res.data;
+};
 
 export default api;

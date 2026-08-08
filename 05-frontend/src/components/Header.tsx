@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Calendar, ChevronDown, Bell, Globe } from 'lucide-react';
 import { usePathname, useRouter } from '@/i18n/routing';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 
 interface HeaderProps {
@@ -17,6 +18,18 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [langOpen, setLangOpen] = useState(false);
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const res = await api.get('/api/v1/auth/me');
+      return res.data;
+    }
+  });
+
+  const getInitials = (email?: string) => {
+    if (!email) return 'U';
+    return email.substring(0, 2).toUpperCase();
+  };
 
   const switchLocale = (newLocale: string) => {
     // 1. Set cookie for next-intl
@@ -72,8 +85,8 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
         <button className="text-gray-400 hover:text-gray-900 transition-colors">
           <Bell size={20} />
         </button>
-        <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-semibold text-sm">
-          JD
+        <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-semibold text-sm cursor-pointer" title={user?.email}>
+          {getInitials(user?.email)}
         </div>
       </div>
     </header>

@@ -9,15 +9,30 @@ app = FastAPI(
 )
 
 import sys
+import json
 
-if settings.ENVIRONMENT == "production" and "*" in settings.CORS_ORIGINS:
-    print("FATAL ERROR: Wildcard CORS origin is not allowed in production")
+def parse_cors_origins(origins_str: str) -> list[str]:
+    if origins_str.startswith("["):
+        try:
+            origins = json.loads(origins_str)
+        except Exception:
+            origins = []
+    else:
+        origins = [x.strip() for x in origins_str.split(",") if x.strip()]
+    if "*" in origins:
+        raise ValueError("Wildcard CORS origin is not allowed")
+    return origins
+
+try:
+    cors_origins = parse_cors_origins(settings.CORS_ORIGINS)
+except ValueError as e:
+    print(f"FATAL ERROR: {e}")
     sys.exit(1)
 
 # Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],

@@ -12,7 +12,7 @@ async def ask_financial_analyst(db: AsyncSession, company_id: UUID | str, prompt
     tools = get_tools_spec()
     
     messages: List[Dict[str, Any]] = [
-        {"role": "system", "content": "You are a Financial Analyst AI for a media buying company. Answer user questions based ONLY on data from the database. You MUST use the provided tools to fetch data. If you don't call a tool, you cannot answer the question."},
+        {"role": "system", "content": "You are a Financial Analyst AI for a media buying company. Answer user questions based ONLY on data from the database. You MUST use the provided tools in the allowlist to fetch data. Arbitrary SQL execution is strictly forbidden and impossible. Never attempt to write or output raw SQL. If you don't call a tool, you cannot answer the question."},
         {"role": "user", "content": prompt}
     ]
     

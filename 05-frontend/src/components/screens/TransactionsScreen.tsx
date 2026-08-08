@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/Card';
 import { money } from '@/lib/formatters';
 import { Receipt, Plus, Upload, Filter, Search, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchTransactions } from '@/lib/api/client';
+import { fetchTransactions } from '@/lib/api';
 import { useState } from 'react';
 import { TransactionModal } from '@/components/modals/TransactionModal';
 import { ImportWizardModal } from '@/components/modals/ImportWizardModal';

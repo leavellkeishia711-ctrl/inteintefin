@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTransaction } from '@/lib/api/client';
+import { createTransaction } from '@/lib/api';
 import { X, Loader2 } from 'lucide-react';
 
 interface Props {
