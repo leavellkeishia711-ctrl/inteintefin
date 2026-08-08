@@ -7,11 +7,12 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
+import api from '@/lib/api';
 
 export default function SettingsScreen() {
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/settings', {headers:{'Authorization':'Bearer test'}}).then(res => res.json())
+    queryFn: () => api.get('/api/v1/settings').then(res => res.data)
   });
   const t = useTranslations('settings');
   const [locale, setLocale] = useState('en');

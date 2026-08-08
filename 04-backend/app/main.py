@@ -8,17 +8,19 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+import sys
+
+if settings.ENVIRONMENT == "production" and "*" in settings.CORS_ORIGINS:
+    print("FATAL ERROR: Wildcard CORS origin is not allowed in production")
+    sys.exit(1)
+
 # Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://staging.financeintel.co",
-        "https://app.financeintel.co",
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])

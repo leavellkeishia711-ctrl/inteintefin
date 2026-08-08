@@ -51,8 +51,36 @@ async def test_invites_happy_path(client_a: AsyncClient):
     assert "Invite already used or revoked" in res_accept_rev.json()["detail"]
 
 @pytest.mark.asyncio
-async def test_invites_media_buyer_forbidden(client_a: AsyncClient):
-    pass
+async def test_invites_media_buyer_forbidden(app):
+    import httpx
+    import uuid
+    from app.core.security import create_access_token
+    token = create_access_token(
+        subject=str(uuid.uuid4()), 
+        company_id=str(uuid.uuid4()), 
+        role="media_buyer"
+    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        client.headers.update({"Authorization": f"Bearer {token}"})
+        res = await client.post("/api/v1/auth/invite", json={"email": "test@test.com", "role": "media_buyer"})
+        assert res.status_code == 403
+        
+@pytest.mark.asyncio
+async def test_invites_team_lead_forbidden(app):
+    import httpx
+    import uuid
+    from app.core.security import create_access_token
+    token = create_access_token(
+        subject=str(uuid.uuid4()), 
+        company_id=str(uuid.uuid4()), 
+        role="team_lead"
+    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        client.headers.update({"Authorization": f"Bearer {token}"})
+        res = await client.post("/api/v1/auth/invite", json={"email": "test@test.com", "role": "media_buyer"})
+        assert res.status_code == 403
 
 @pytest.mark.asyncio
 async def test_invites_cross_tenant(client_a: AsyncClient, client_b: AsyncClient):
@@ -64,4 +92,22 @@ async def test_invites_cross_tenant(client_a: AsyncClient, client_b: AsyncClient
     assert res_list_b.status_code == 200
     invites_b = res_list_b.json()
     assert not any(i["email"] == "cross@test.com" for i in invites_b)
+
+@pytest.mark.asyncio
+async def test_duplicate_invite_email(client_a: AsyncClient):
+    await client_a.post("/api/v1/auth/invite", json={"email": "dup@test.com", "role": "creative"})
+    res = await client_a.post("/api/v1/auth/invite", json={"email": "dup@test.com", "role": "creative"})
+    assert res.status_code == 200 # Allowed to have multiple invites for the same email? Or wait, in create_invite we only check User table.
+    
+    # We must mock accept_invite to create a user and then fail on second invite
+    # Actually, in create_invite:
+    # "Не допускай создание инвайта для уже существующего пользователя той же компании."
+    # We check the User table. Let's create a user.
+    res_accept = await client_a.post(f"/api/v1/auth/invite/{res.json()['token']}/accept", json={"name": "Dup", "password": "pass"})
+    assert res_accept.status_code == 200
+    
+    # Now creating invite for dup@test.com should fail
+    res_fail = await client_a.post("/api/v1/auth/invite", json={"email": "dup@test.com", "role": "creative"})
+    assert res_fail.status_code == 400
+    assert "already exists in the company" in res_fail.text
 

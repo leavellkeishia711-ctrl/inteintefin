@@ -30,8 +30,12 @@ api.interceptors.response.use(
         
         return api(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, you might want to redirect to login
-        // window.location.href = '/login';
+        // If refresh fails, redirect to login
+        if (typeof window !== 'undefined') {
+          // Keep current language if possible, otherwise default to en
+          const lang = window.location.pathname.startsWith('/ru') ? 'ru' : 'en';
+          window.location.href = `/${lang}/login`;
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -4,12 +4,15 @@ import React, { useState } from 'react';
 import { Calendar, ChevronDown, Bell, Globe } from 'lucide-react';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { useLocale } from 'next-intl';
+import api from '@/lib/api';
 
 interface HeaderProps {
   title?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({ title }) => {
+  const tNav = useTranslations('nav');
+  const tMock = useTranslations('mock');
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -19,11 +22,8 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
     // 1. Set cookie for next-intl
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
     // 2. Mock API call to save user preference
-    fetch('/api/user/preferences', {
-      method: 'POST',
-      body: JSON.stringify({ preferred_language: newLocale }),
-      headers: { 'Content-Type': 'application/json' }
-    }).catch(() => {}); // ignore for now as backend is not connected
+    api.post('/api/user/preferences', { preferred_language: newLocale })
+      .catch(() => {}); // ignore for now as backend is not connected
     
     // 3. Navigate
     router.replace(pathname, { locale: newLocale });
@@ -33,13 +33,13 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
   return (
     <header className="h-16 border-b border-gray-200 bg-white px-8 flex items-center justify-between sticky top-0 z-10 shrink-0">
       <div>
-        <h2 className="font-semibold text-gray-900">{title || 'Dashboard'}</h2>
-        <span className="text-xs text-gray-400">Alpha Media Group · Oct 1 – Oct 31, 2026</span>
+        <h2 className="font-semibold text-gray-900">{title || tNav('dashboard')}</h2>
+        <span className="text-xs text-gray-400">{tMock('dateRange')}</span>
       </div>
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200 cursor-pointer hover:border-gray-300 transition-colors">
           <Calendar size={14} />
-          Oct 2026
+          {tMock('month')}
           <ChevronDown size={14} className="text-gray-400" />
         </div>
         

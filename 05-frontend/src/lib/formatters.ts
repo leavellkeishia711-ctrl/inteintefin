@@ -2,7 +2,7 @@
 // ESLint rules below strictly forbid float coercion to protect string-based Decimal precision.
  
 
-export const formatMoney = (amount: number | string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
+export const formatMoney = (amount: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
   if (amount === null || amount === undefined) return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(0);
   
   const value = amount.toString();

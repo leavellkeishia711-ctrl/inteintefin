@@ -32,7 +32,7 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 | Transactions CRUD & Categorization | ✅ Done | `transactions.py` |
 | P&L & Cashflow calculation | ✅ Done | `pnl.py`, `cashflow.py` |
 | Telegram Bot Integration (`/status`, `/link`) | ✅ Done | `telegram_bot.py`, `webhooks.py` |
-| AI Analyst Tool Use (Anthropic) | ✅ Done | `ai/client.py`, SQL tool use only |
+| AI Analyst Tool Use (Anthropic) | ⏳ Pending | `ai/client.py`, SQL tool use only |
 | Background Payroll & Alerts | ✅ Done | Celery `tasks.py` |
 
 ## Production Readiness (CI Gates)

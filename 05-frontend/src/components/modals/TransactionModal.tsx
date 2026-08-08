@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTransaction } from '@/lib/api/client';
@@ -61,7 +61,7 @@ export function TransactionModal({ onClose }: Props) {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-content-secondary">Currency</label>
+              <label className="text-sm font-medium text-content-secondary">{t('currency')}</label>
               <select
                 value={formData.currency}
                 onChange={e => setFormData({...formData, currency: e.target.value})}
@@ -82,8 +82,8 @@ export function TransactionModal({ onClose }: Props) {
                 onChange={e => setFormData({...formData, type: e.target.value})}
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-content-primary focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
+                <option value="expense">{t('expense')}</option>
+                <option value="income">{t('income')}</option>
               </select>
             </div>
             <div className="space-y-1">
@@ -93,12 +93,12 @@ export function TransactionModal({ onClose }: Props) {
                 onChange={e => setFormData({...formData, category: e.target.value})}
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-content-primary focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
-                <option value="ad_spend">Ad Spend</option>
-                <option value="revenue">Revenue</option>
-                <option value="consumables">Consumables</option>
-                <option value="salary">Salary</option>
-                <option value="software">Software</option>
-                <option value="tax">Tax</option>
+                <option value="ad_spend">{t('ad_spend')}</option>
+                <option value="revenue">{t('revenue')}</option>
+                <option value="consumables">{t('consumables')}</option>
+                <option value="salary">{t('salary')}</option>
+                <option value="software">{t('software')}</option>
+                <option value="tax">{t('tax')}</option>
               </select>
             </div>
           </div>
@@ -136,7 +136,7 @@ export function TransactionModal({ onClose }: Props) {
               onClick={onClose}
               className="px-4 py-2 border border-border text-content-secondary rounded-lg hover:text-content-primary transition-colors"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -144,7 +144,7 @@ export function TransactionModal({ onClose }: Props) {
               className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
             >
               {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save
+              {t('save')}
             </button>
           </div>
         </form>
