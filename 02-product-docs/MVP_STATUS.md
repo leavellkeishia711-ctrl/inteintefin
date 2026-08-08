@@ -4,11 +4,11 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 
 **Stage 1: STATUS: ✅ COMPLETED**
 
-- **Финальный SHA коммита:** `e137cb46b4c7963270bc2dda91ccf4aa556cd70d`
+- **Финальный SHA коммита:** `2ebf08beba1fb0b96dfdc98687f38d9007b29cc7`
 - **CI Runs:**
-  - Backend CI: ✅ Passed (Run ID: `31249527873`)
-  - Frontend CI: ✅ Passed (Run ID: `31249527863`)
-  - Production Gate: ✅ Passed (Run ID: `31249527850`)
+  - Backend CI: ✅ Passed (Run ID: `31249627109`)
+  - Frontend CI: ✅ Passed (Run ID: `31249627130`)
+  - Production Gate: ✅ Passed (Run ID: `31249627095`)
 ## Core Infrastructure
 | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- |
