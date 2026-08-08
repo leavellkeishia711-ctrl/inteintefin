@@ -16,8 +16,9 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- |
 | Decimal `NUMERIC(20,4)` for all currency | ✅ Done | Custom `condecimal`, `check_floats.py` |
-| RLS (Row-Level Security) on `company_id` | ✅ Done | `init-db.sql`, `tenant_session` |
-| JWT Authentication (Stateless) | ✅ Done | `deps.py`, `auth.py` |
+| RLS (Row-Level Security) on `company_id` | ✅ Passed | `init-db.sql`, `tenant_session` |
+| JWT Authentication & Refresh Tokens | ✅ Passed | `deps.py`, `auth.py` |
+| Roles & Invites (Media Buyer ready) | ✅ Passed | `invites.py`, `require_roles` |
 | Idempotency on Imports | ✅ Done | `UNIQUE(company_id, source, external_id)` |
 | UTC Timestamps | ✅ Done | `TIMESTAMPTZ` on all models |
 | Soft Delete | ✅ Done | `deleted_at` on models |
