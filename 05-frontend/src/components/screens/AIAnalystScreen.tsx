@@ -26,8 +26,8 @@ export default function AIAnalystScreen() {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/api/v1/chat', { message: userMsg, locale });
-      setMessages(prev => [...prev, { role: 'assistant', text: res.data.content || t('notConnected') }]);
+      const res = await api.post<{ content?: string }>('/api/v1/chat', { message: userMsg, locale });
+      setMessages(prev => [...prev, { role: 'assistant', text: res.content || t('notConnected') }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', text: t('notConnected') }]);
     } finally {

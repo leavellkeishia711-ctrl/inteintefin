@@ -20,10 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
   const [langOpen, setLangOpen] = useState(false);
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: async () => {
-      const res = await api.get('/api/v1/auth/me');
-      return res.data;
-    }
+    queryFn: () => api.get('/api/v1/auth/me'),
   });
 
   const getInitials = (email?: string) => {

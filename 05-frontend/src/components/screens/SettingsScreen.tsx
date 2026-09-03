@@ -12,7 +12,7 @@ import api from '@/lib/api';
 export default function SettingsScreen() {
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => api.get('/api/v1/settings').then(res => res.data)
+    queryFn: () => api.get('/api/v1/settings'),
   });
   const t = useTranslations('settings');
   const [locale, setLocale] = useState('en');
