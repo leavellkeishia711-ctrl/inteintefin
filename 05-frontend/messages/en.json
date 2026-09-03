@@ -53,7 +53,8 @@
     "cashBalance": "Cash balance",
     "cashRunway": "Cash runway",
     "lockedInHold": "Locked in hold",
-    "overdueHoldAlert": "Overdue hold alert"
+    "overdueHoldAlert": "Overdue hold alert",
+    "aiInsight": "\"Your health score looks great, indicating a solid cash position and healthy margins.\""
   },
   "pnl": {
     "title": "P&L",
@@ -114,7 +115,10 @@
     "cpa": "CPA",
     "cpl": "CPL",
     "cpm": "CPM",
-    "ctr": "CTR"
+    "ctr": "CTR",
+    "noCampaigns": "No campaigns found",
+    "unknown": "Unknown",
+    "filterAll": "All verticals"
   },
   "team": {
     "title": "Team",
@@ -292,7 +296,9 @@
         "content": "Several affiliates report a recent increase in chargebacks from one large crypto CPA network, with payouts being clawed back 2-3 weeks after initial approval.",
         "recommendation": "Review recent payouts from this network for the affected offers; consider holding a portion of commission until the chargeback pattern is confirmed resolved."
       }
-    }
+    },
+    "dateRange": "Alpha Media Group · Oct 1 – Oct 31, 2026",
+    "month": "Oct 2026"
   },
   "mockLabels": {
     "Partner payouts": "Partner payouts",
@@ -332,5 +338,24 @@
     "Базовые понятия: выручка, профит, ROI, scrub, hold и кассовые разрывы.": "Basic concepts: revenue, profit, ROI, scrub, hold, and cash gaps.",
     "Рынок арбитража трафика и performance-маркетинга": "Traffic arbitrage and performance marketing market",
     "Из чего состоит рынок, основные вертикали, доли и перспективы.": "Market structure, main verticals, shares, and prospects."
+  },
+  "transactions": {
+    "add_transaction": "Add Transaction",
+    "amount": "Amount",
+    "currency": "Currency",
+    "type": "Type",
+    "category": "Category",
+    "date": "Date",
+    "description": "Description",
+    "expense": "Expense",
+    "income": "Income",
+    "ad_spend": "Ad Spend",
+    "revenue": "Revenue",
+    "consumables": "Consumables",
+    "salary": "Salary",
+    "software": "Software",
+    "tax": "Tax",
+    "cancel": "Cancel",
+    "save": "Save"
   }
 }

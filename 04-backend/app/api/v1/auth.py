@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -67,7 +67,7 @@ async def register(user_in: UserCreate):
     )
 
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     from app.db.session import system_session
     
     # Lookup user using system_session to bypass RLS since company_id is unknown
@@ -82,12 +82,99 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
                 headers={"WWW-Authenticate": "Bearer"},
             )
             
+        from app.core.config import settings
+        from app.core.security import create_refresh_token
         access_token = create_access_token(
             subject=str(user.id),
             company_id=str(user.company_id),
             role=user.role
         )
+        refresh_token = create_refresh_token(
+            subject=str(user.id),
+            company_id=str(user.company_id),
+            role=user.role
+        )
+        max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=settings.COOKIE_SECURE, samesite="lax", path="/api/v1/auth", max_age=max_age)
         return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token_endpoint(request: Request, response: Response):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+    
+    from app.services.telegram_bot import get_redis
+    from jose import jwt, JWTError
+    from app.core.config import settings
+    import time
+    
+    try:
+        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        user_id = payload.get("sub")
+        company_id = payload.get("cid")
+        role = payload.get("role")
+        jti = payload.get("jti")
+        if not jti or not user_id or not company_id or not role:
+            raise HTTPException(status_code=401, detail="Invalid token claims")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    try:
+        redis = await get_redis()
+        is_denied = await redis.get(f"denylist:refresh:{jti}")
+        if is_denied:
+            raise HTTPException(status_code=401, detail="Token revoked")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service Unavailable")
+        
+    try:
+        exp = payload.get("exp")
+        now = int(time.time())
+        ttl = exp - now if exp else settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        if ttl > 0:
+            await redis.set(f"denylist:refresh:{jti}", "1", ex=ttl)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service Unavailable")
+        
+    from app.core.security import create_refresh_token
+    access_token = create_access_token(subject=user_id, company_id=company_id, role=role)
+    new_refresh_token = create_refresh_token(subject=user_id, company_id=company_id, role=role)
+    max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    response.set_cookie(key="refresh_token", value=new_refresh_token, httponly=True, secure=settings.COOKIE_SECURE, samesite="lax", path="/api/v1/auth", max_age=max_age)
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+async def logout(request: Request, response: Response):
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        from app.services.telegram_bot import get_redis
+        from jose import jwt, JWTError
+        from app.core.config import settings
+        import time
+        try:
+            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            jti = payload.get("jti")
+            if jti:
+                redis = await get_redis()
+                exp = payload.get("exp")
+                now = int(time.time())
+                ttl = exp - now if exp else settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+                if ttl > 0:
+                    await redis.set(f"denylist:refresh:{jti}", "1", ex=ttl)
+        except JWTError:
+            pass # Invalid token, do nothing
+        except Exception:
+            raise HTTPException(status_code=503, detail="Service Unavailable")
+            
+    from app.core.config import settings
+    response.delete_cookie(key="refresh_token", httponly=True, secure=settings.COOKIE_SECURE, samesite="lax", path="/api/v1/auth")
+    return {"status": "success"}
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: dict = Depends(get_current_user)): # it's UserCtx

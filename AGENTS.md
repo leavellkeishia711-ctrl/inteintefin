@@ -8,7 +8,6 @@ SaaS финансового учёта для медиабаинга. Вирту
 04-backend/ FastAPI + SQLAlchemy 2.0 + Alembic + Celery
 05-frontend/ Next.js 16.2.10 + React 19 + Tailwind v4 + next-intl
 08-devops/ docker-compose, деплой
-archive/ НЕ ЧИТАТЬ. Старые логи и черновики.
 
 ## Инварианты. Нарушение = блокирующий баг
 1. ДЕНЬГИ. Только Decimal / NUMERIC(20,4). float в финансовых расчётах запрещён. Округление ROUND_HALF_UP до 4 знаков. Валюта хранится рядом с суммой.

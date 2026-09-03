@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     # App
     PROJECT_NAME: str = "FinanceIntel Backend"
     API_V1_STR: str = "/api/v1"
+    ENVIRONMENT: str = "development"
+    CORS_ORIGINS: str = "http://localhost:3000"
     
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://financeintel:secret_password@localhost:5432/financeintel"
@@ -24,6 +26,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    COOKIE_SECURE: bool = True
     
     # AI
     AI_PROVIDER: str

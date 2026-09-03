@@ -2,6 +2,13 @@
 
 This document tracks the readiness of the Stage 1 MVP against the requirements defined in `MVP.md`.
 
+**Stage 1: STATUS: ✅ COMPLETED**
+
+- **Финальный SHA коммита:** `d07c8174f8fd18f545d7f08298f4da99a020e803`
+- **CI Runs:**
+  - Backend CI: ✅ Passed (Run ID: `31249721497`)
+  - Frontend CI: ✅ Passed (Run ID: `31249721778`)
+  - Production Gate: ✅ Passed (Run ID: `31249721501`)
 ## Core Infrastructure
 | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- |
@@ -16,8 +23,9 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- |
 | Decimal `NUMERIC(20,4)` for all currency | ✅ Done | Custom `condecimal`, `check_floats.py` |
-| RLS (Row-Level Security) on `company_id` | ✅ Done | `init-db.sql`, `tenant_session` |
-| JWT Authentication (Stateless) | ✅ Done | `deps.py`, `auth.py` |
+| RLS (Row-Level Security) on `company_id` | ✅ Passed | `init-db.sql`, `tenant_session` |
+| JWT Authentication & Refresh Tokens | ✅ Passed | `deps.py`, `auth.py` |
+| Roles & Invites (Media Buyer ready) | ✅ Passed | `invites.py`, `require_roles` |
 | Idempotency on Imports | ✅ Done | `UNIQUE(company_id, source, external_id)` |
 | UTC Timestamps | ✅ Done | `TIMESTAMPTZ` on all models |
 | Soft Delete | ✅ Done | `deleted_at` on models |
@@ -40,10 +48,9 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 | **Backend Unit Tests** | ✅ Passed | 48 passed, 0 failed (`backend.yml`) |
 | **Lint & Type Checks** | ✅ Passed | 0 errors, 0 warnings (`frontend.yml`) |
 | **Float Check Validation** | ✅ Passed | `check_floats.py` (`backend.yml`) |
-| **Celery Smoke Test** | ⏳ Pending | `celery_smoke_ci.py` (`prod-gate.yml`) |
-| **Redis Outage / Fail-closed** | ⏳ Pending | `redis_outage_ci.py` (`prod-gate.yml`) |
-| **SQLAlchemy Asyncpg Load Test** | ⏳ Pending | `load_test_ci.py` (`prod-gate.yml`) |
+| **Celery Smoke Test** | ✅ Passed | `celery_smoke_ci.py` (`prod-gate.yml`) |
+| **Redis Outage / Fail-closed** | ✅ Passed | `redis_outage_ci.py` (`prod-gate.yml`) |
+| **SQLAlchemy Asyncpg Load Test** | ✅ Passed | `load_test_ci.py` (`prod-gate.yml`) |
 
 ## Conclusion
-**STAGING ACCEPTED**: The product implements all fundamental Stage 1 functionality, architecture invariants, and security requirements. 
-**PRODUCTION BLOCKED**: Awaiting final green run on the `prod-gate.yml` CI workflow for Docker-based Celery, Redis Outage, and Load Testing.
+**PRODUCTION READY**: Awaiting deployment. All Stage 1 functionality, architecture invariants, security requirements, and CI gates have successfully passed.

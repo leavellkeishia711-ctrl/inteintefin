@@ -15,15 +15,10 @@ SaaS финансового учёта для медиабаинговых ко�
 
 ## Структура проекта
 
-- `01-design/`: Дизайн-материалы, макеты.
 - `02-product-docs/`: Источник правды по требованиям (PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS)
 - `03-database/`: Инициализационные скрипты БД (пусто)
 - `04-backend/`: Бэкенд на FastAPI, SQLAlchemy 2.0, Alembic, Celery
 - `05-frontend/`: Фронтенд на Next.js 16 (App Router), React 19, Tailwind v4, next-intl
 - `08-devops/`: Конфигурации для развертывания, docker-compose
-- `09-reference/`: Справочные материалы.
-- `scripts/`: Вспомогательные скрипты.
-- `scratch/`: Временная папка.
-- `archive/`: Старые логи и переписки агентов. НЕ ЧИТАТЬ КАК ИСТОЧНИК ПРАВДЫ.
 
 Примечание: Папок 06-market-intelligence и 07-integrations в текущем скоупе (Stage 1) нет, они удалены или не создавались.

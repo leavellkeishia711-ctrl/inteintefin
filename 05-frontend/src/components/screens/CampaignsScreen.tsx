@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -10,7 +10,7 @@ import { useCampaignRuns } from '@/lib/queries';
 
 export default function CampaignsScreen() {
   const t = useTranslations('campaigns');
-  
+  const tCommon = useTranslations('common');
   const [verticalFilter, setVerticalFilter] = useState('');
   const [sortKey, setSortKey] = useState('revenue');
   const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
@@ -29,11 +29,11 @@ export default function CampaignsScreen() {
   const items = data || [];
   
   // Quick hack to filter out duplicates or missing verticals
-  const verticals = Array.from(new Set(items.map((c: any) => c.vertical || 'Unknown'))).filter(Boolean);
+  const verticals = Array.from(new Set(items.map((c: any) => c.vertical || t('unknown')))).filter(Boolean);
 
   let filtered = items;
   if (verticalFilter) {
-    filtered = filtered.filter((c: any) => (c.vertical || 'Unknown') === verticalFilter);
+    filtered = filtered.filter((c: any) => (c.vertical || t('unknown')) === verticalFilter);
   }
 
   filtered.sort((a: any, b: any) => {
@@ -108,9 +108,9 @@ export default function CampaignsScreen() {
                   >
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{c.name}</div>
-                      <div className="text-xs text-gray-500">{c.vertical || 'Unknown'}</div>
+                      <div className="text-xs text-gray-500">{c.vertical || t('unknown')}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{c.platform || 'Unknown'}</td>
+                    <td className="px-4 py-3 text-gray-600">{c.platform || t('unknown')}</td>
                     <td className="px-4 py-3 text-right text-gray-900">{money(c.spend)}</td>
                     <td className="px-4 py-3 text-right text-gray-900">{money(c.revenue)}</td>
                     <td className="px-4 py-3 text-right font-medium">
@@ -124,19 +124,19 @@ export default function CampaignsScreen() {
                       <td colSpan={5} className="px-4 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center text-xs">
                           <div className="bg-white p-2 rounded shadow-sm">
-                            <div className="text-gray-500 mb-1">ROAS</div>
+                            <div className="text-gray-500 mb-1">{tCommon('roas')}</div>
                             <div className="font-bold">{c.roas || '-'}</div>
                           </div>
                           <div className="bg-white p-2 rounded shadow-sm">
-                            <div className="text-gray-500 mb-1">CPA</div>
+                            <div className="text-gray-500 mb-1">{t('cpa')}</div>
                             <div className="font-bold">{c.cpa ? money(c.cpa) : '-'}</div>
                           </div>
                           <div className="bg-white p-2 rounded shadow-sm">
-                            <div className="text-gray-500 mb-1">CTR</div>
+                            <div className="text-gray-500 mb-1">{t('ctr')}</div>
                             <div className="font-bold">{c.ctr ? percent(c.ctr) : '-'}</div>
                           </div>
                           <div className="bg-white p-2 rounded shadow-sm">
-                            <div className="text-gray-500 mb-1">Conversions</div>
+                            <div className="text-gray-500 mb-1">{t('conversions')}</div>
                             <div className="font-bold">{c.conversions || '-'}</div>
                           </div>
                         </div>
@@ -148,7 +148,7 @@ export default function CampaignsScreen() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                    No campaigns found
+                    {t('noCampaigns')}
                   </td>
                 </tr>
               )}

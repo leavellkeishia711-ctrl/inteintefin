@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Sparkles, Send } from 'lucide-react';
+import api from '@/lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -25,13 +26,8 @@ export default function AIAnalystScreen() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, locale }),
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', text: data.content || t('notConnected') }]);
+      const res = await api.post('/api/v1/chat', { message: userMsg, locale });
+      setMessages(prev => [...prev, { role: 'assistant', text: res.data.content || t('notConnected') }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', text: t('notConnected') }]);
     } finally {

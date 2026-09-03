@@ -57,31 +57,31 @@
 - [x] `AGENTS.md` in root with invariants (Decimal, company_id, CR-1).
 - [x] Move chat history and prompts to `archive/`.
 - [x] Setup `04-backend` skeleton (folders, pyproject.toml).
-- [ ] DB Models (SQLAlchemy 2.0) matching DB_SCHEMA.md.
-- [ ] Multi-tenancy Layer 1: PostgreSQL Row-Level Security (RLS) on all domain tables.
-- [ ] Multi-tenancy Layer 2: FastAPI Dependency (`SET LOCAL app.company_id`).
-- [ ] Auth: Argon2, JWT (access 15m, refresh httpOnly).
-- [ ] Endpoints: `/auth/register`, `/auth/login`, `/auth/me`, `/auth/invite`.
-- [ ] `test_tenant_isolation.py` (Must be GREEN).
-- [ ] Alembic migrations setup and generated.
-- [ ] Backend Decimal validation rule (prohibit float).
-- [ ] Transactions CRUD + CSV Import Wizard (2 steps: parse/preview -> confirm).
-- [ ] `consumables.identifier` PAN validator (PCI rule).
+- [x] DB Models (SQLAlchemy 2.0) matching DB_SCHEMA.md. `app/db/models/` (base.py, campaigns.py, companies.py, finance.py, system.py, users.py) + `test_types.py`, `test_rls_completeness.py`.
+- [x] Multi-tenancy Layer 1: PostgreSQL Row-Level Security (RLS) on all domain tables. `alembic/versions/0002_rls.py`, `e8acf4873fc7_enforce_rls_on_remaining_tables.py`.
+- [x] Multi-tenancy Layer 2: FastAPI Dependency (`set_config('app.company_id', ...)`). `app/db/session.py` L104-107, `app/core/deps.py` `tenant_session(company_id)`.
+- [x] Auth: Argon2, JWT (access 15m, refresh httpOnly). `app/api/v1/auth.py`, `app/core/security.py` + `test_auth.py`.
+- [x] Endpoints: `/auth/register`, `/auth/login`, `/auth/me`, `/auth/invite`. `app/api/v1/auth.py`, `app/api/v1/invites.py` + `test_auth.py`, `test_invites.py`.
+- [x] `test_tenant_isolation.py` (Must be GREEN). `tests/test_tenant_isolation.py`.
+- [x] Alembic migrations setup and generated. 8 migration versions in `alembic/versions/`.
+- [x] Backend Decimal validation rule (prohibit float). `scripts/check_floats.py` + `tests/test_no_float.py`.
+- [x] Transactions CRUD + CSV Import Wizard (2 steps: parse/preview -> confirm). `app/api/v1/transactions.py`, `app/api/v1/imports.py`, `app/services/imports.py` + `test_transactions.py`.
+- [x] `consumables.identifier` PAN validator (PCI rule). `app/schemas/campaigns.py` validator + `test_consumables.py` (test_pan_masking).
 
 ## Part 5: Domain & Calculations (Week 3 & 4)
-- [ ] Media Buying Domain: `ad_accounts` -> `consumables` -> `campaign_runs`.
-- [ ] `account_cost(ad_account_id)` calculation.
-- [ ] `services/pnl.py`, `services/cashflow.py`, `services/metrics.py` (Gross, EBITDA, EBIT, Net, Runway, Health Score).
-- [ ] Partner payouts lifecycle (booked -> in_hold -> scrubbed -> paid).
+- [x] Media Buying Domain: `ad_accounts` -> `consumables` -> `campaign_runs`. `app/api/v1/ad_accounts.py`, `app/api/v1/campaign_runs.py`, `app/api/v1/campaign_run_stats.py`, `app/api/v1/consumables.py` + `test_campaigns.py`, `test_media_buying.py`.
+- [x] `account_cost(ad_account_id)` calculation. `app/services/campaigns.py:get_ad_account_cost` + `test_campaigns.py:test_get_ad_account_cost`.
+- [x] `services/pnl.py`, `services/cashflow.py`, `services/metrics.py` (Gross, EBITDA, EBIT, Net, Runway, Health Score). + `test_computation.py`.
+- [~] Partner payouts lifecycle (booked -> in_hold -> scrubbed -> paid). `app/services/partners.py`, `app/schemas/partners.py`, `app/api/v1/partners.py` exist. **No dedicated test file.**
 
 ## Track A: Backend Finalization (Block 7)
-- [ ] 7.1 Audit Log: JSONB-diff of transactions, budgets, payroll. System actor for celery tasks. Explicit blacklist for secrets.
-- [ ] 7.2 Celery + beat: `app/workers/celery_app.py`, tasks in `tasks.py`. Tenant isolation context manager `tenant_task_session(company_id)`. Broker config via `.env`.
-- [ ] 7.3 Alerts: cash_runway < N days, ROI < threshold. Dedup via dedup_key and cooldown_until. Email + Telegram delivery.
-- [ ] 7.4 Telegram-bot (outgoing only): POST `/telegram/link`, handle `/start <token>`, return personal stats isolated by RLS.
-- [ ] 7.5 Data Quality Monitoring: Check stalled data (no transactions, stalled trackers).
-- [ ] 7.6 Backend i18n: Language from company/user profile (EN, RU).
-- [ ] 7.7 AI Financial Analyst: Fixed tool set, strict RLS, no text-to-SQL. Handle tool failure gracefully with 5 retries.
+- [x] 7.1 Audit Log: JSONB-diff of transactions, budgets, payroll. System actor for celery tasks. Explicit blacklist for secrets. `app/services/audit.py` (generate_diff, record_user_audit, record_system_audit) + `test_audit.py`.
+- [x] 7.2 Celery + beat: `app/workers/celery_app.py`, tasks in `tasks.py`. Tenant isolation context manager `tenant_task_session(company_id)`. Broker config via `.env`. + `test_celery_tenant_isolation.py`.
+- [x] 7.3 Alerts: cash_runway < N days, ROI < threshold. Dedup via dedup_key and cooldown_until. Email + Telegram delivery. `app/services/alerts.py`, `app/api/v1/alerts.py` + `test_alerts.py`.
+- [x] 7.4 Telegram-bot (outgoing only): POST `/telegram/link`, handle `/start <token>`, return personal stats isolated by RLS. `app/services/telegram_bot.py`, `app/api/v1/webhooks.py` + `test_telegram.py`, `test_telegram_link.py`.
+- [~] 7.5 Data Quality Monitoring: Check stalled data (no transactions, stalled trackers). `app/services/data_quality.py` exists. **No dedicated test file.**
+- [~] 7.6 Backend i18n: Language from company/user profile (EN, RU). `app/core/i18n.py` exists. **No dedicated test file.**
+- [x] 7.7 AI Financial Analyst: Fixed tool set, strict RLS, no text-to-SQL. Handle tool failure gracefully with 5 retries. `app/ai/analyst.py`, `app/ai/tools.py`, `app/ai/client.py` + `test_ai_analyst.py`.
 
 ## Track B: Frontend Data Layer & i18n
 - [ ] B.1 Backend decimal serialization to string configured globally.
@@ -91,3 +91,11 @@
 - [ ] B.1 Decimal formatter (`Intl.NumberFormat`) treating values as strings without `parseFloat`. Explicit `null` handling.
 - [ ] B.2 i18n migration (next-intl).
 - [ ] B.3 Header fetching from `/auth/me`.
+
+## Долг по тестам
+
+Пункты, где код существует, но выделенные тесты отсутствуют (помечены `[~]`):
+
+1. **Partner payouts lifecycle** — `app/services/partners.py`, `app/schemas/partners.py`, `app/api/v1/partners.py` существуют. Нет `test_partners.py`. Нужны тесты: создание, смена статуса (booked→in_hold→scrubbed→paid), запрет перехода в невалидный статус, тенант-изоляция.
+2. **Data Quality Monitoring** — `app/services/data_quality.py` существует. Нет `test_data_quality.py`. Нужны тесты: обнаружение stalled данных, отсутствие транзакций за период, stalled трекеры.
+3. **Backend i18n** — `app/core/i18n.py` существует. Нет `test_i18n.py`. Нужны тесты: определение языка из профиля пользователя/компании, fallback на EN.

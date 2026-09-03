@@ -21,6 +21,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserCtx:
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "access":
+            raise credentials_exception
         user_id = payload.get("sub")
         company_id = payload.get("cid")
         role = payload.get("role", "member")
@@ -46,4 +48,11 @@ get_tenant_session = get_db
 
 async def get_current_user_company_id(user: UserCtx = Depends(get_current_user)) -> str:
     return user.company_id
+
+def require_roles(*roles: str):
+    async def role_checker(user: UserCtx = Depends(get_current_user)):
+        if user.role not in roles:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+        return user
+    return role_checker
 
