@@ -7,6 +7,7 @@ import logging
 
 from .base import Connector, NormalizedRecord
 from app.db.session import async_session_maker, system_session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
 from app.db.models.companies import Company
 from app.services.fx import resolve_fx_rate
