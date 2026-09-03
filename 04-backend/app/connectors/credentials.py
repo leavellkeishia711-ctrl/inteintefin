@@ -4,8 +4,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from app.core.config import settings
+
 def get_cipher() -> Fernet:
-    key = os.getenv("CONNECTOR_SECRET_KEY")
+    key = settings.CONNECTOR_SECRET_KEY
     if not key:
         raise ValueError("CONNECTOR_SECRET_KEY environment variable is not set")
     try:
