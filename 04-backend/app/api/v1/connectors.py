@@ -56,7 +56,7 @@ async def create_connector(
         sync_interval_minutes=config_in.sync_interval_minutes
     )
     db.add(new_config)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_config)
     return new_config
 
@@ -96,7 +96,7 @@ async def update_connector(
             raise HTTPException(status_code=400, detail="Invalid status")
         config.status = config_in.status
         
-    await db.commit()
+    await db.flush()
     await db.refresh(config)
     return config
 
@@ -118,7 +118,7 @@ async def delete_connector(
     from datetime import datetime, timezone
     config.deleted_at = datetime.now(timezone.utc)
     config.status = "paused"
-    await db.commit()
+    await db.flush()
     return None
 
 @router.post("/{connector_id}/sync")
