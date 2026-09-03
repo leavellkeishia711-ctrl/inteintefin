@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 
 export default function PartnersScreen() {
-  const { data, isLoading } = usePartners();
+  const { data, isLoading, error } = usePartners();
   const t = useTranslations('partners');
   const tc = useTranslations('common');
 
@@ -27,8 +27,8 @@ export default function PartnersScreen() {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-teal-600" /></div>;
   }
 
-  if (!data) {
-    return <div className="text-red-500">Failed to load partners data.</div>;
+  if (error || !data) {
+    return <div className="text-red-500">{t('loadError')}</div>;
   }
 
   const handleSort = (key: string) => {
@@ -119,7 +119,7 @@ export default function PartnersScreen() {
                   </tr>
                 ))}
                 {(!data.networks || data.networks.length === 0) && (
-                  <tr><td colSpan={5} className="py-8 text-center text-gray-500">No networks found.</td></tr>
+                  <tr><td colSpan={5} className="py-8 text-center text-gray-500">{t('noNetworks')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -211,7 +211,7 @@ export default function PartnersScreen() {
                 </tr>
               ))}
               {filteredPayouts.length === 0 && (
-                <tr><td colSpan={6} className="py-8 text-center text-gray-500">No payouts found.</td></tr>
+                <tr><td colSpan={6} className="py-8 text-center text-gray-500">{t('noPayouts')}</td></tr>
               )}
             </tbody>
           </table>

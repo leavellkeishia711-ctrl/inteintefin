@@ -3,7 +3,7 @@
  
 
 export const formatMoney = (amount: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
-  if (amount === null || amount === undefined) return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(0);
+  if (amount === null || amount === undefined) return '—';
   
   const value = amount.toString();
   const isNegative = value.startsWith('-');
@@ -45,7 +45,7 @@ export const money = (value: string | null | undefined, currency: string = 'USD'
 };
 
 export const moneyCompact = (value: string | null | undefined, currency: string = 'USD', locale: string = 'en-US'): string => {
-  if (!value) return new Intl.NumberFormat(locale, { style: 'currency', currency, notation: 'compact' }).format(0);
+  if (value === null || value === undefined || value === '') return '—';
   
   const isNegative = value.startsWith('-');
   const absStr = isNegative ? value.slice(1) : value;

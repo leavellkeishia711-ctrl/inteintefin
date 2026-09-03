@@ -118,7 +118,8 @@
     "ctr": "CTR",
     "noCampaigns": "No campaigns found",
     "unknown": "Unknown",
-    "filterAll": "All verticals"
+    "filterAll": "All verticals",
+    "loadError": "Failed to load campaign data."
   },
   "team": {
     "title": "Team",
@@ -208,7 +209,10 @@
     "note": "Note",
     "overdue": "OVERDUE",
     "daysInHold": "days in hold",
-    "expectedArrivals": "Expected Cash Arrivals"
+    "expectedArrivals": "Expected Cash Arrivals",
+    "loadError": "Failed to load partners data.",
+    "noNetworks": "No networks found.",
+    "noPayouts": "No payouts found."
   },
   "ai": {
     "title": "AI Analyst",
@@ -356,6 +360,8 @@
     "software": "Software",
     "tax": "Tax",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "load_error": "Error loading transactions: {message}",
+    "no_data": "You have not added unknown transactions yet. Import a CSV file or add your first transaction manually."
   }
 }

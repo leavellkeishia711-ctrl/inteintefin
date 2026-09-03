@@ -12,7 +12,7 @@ import api from '@/lib/api';
 export default function SettingsScreen() {
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => api.get('/api/v1/settings').then(res => res.data)
+    queryFn: () => api.get<any>('/api/v1/settings'),
   });
   const t = useTranslations('settings');
   const [locale, setLocale] = useState('en');
@@ -37,8 +37,8 @@ export default function SettingsScreen() {
         <h3 className="font-semibold text-lg mb-4">{t('profile')}</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('compunknownName')}</label>
-            <input type="text" disabled value={settingsData?.compunknown_name || 'Loading...'} className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm p-2 border" />
+            <label className="block text-sm font-medium text-gray-700">{t('companyName')}</label>
+            <input type="text" disabled value={settingsData?.company_name || 'Loading...'} className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm p-2 border" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">{t('currency')}</label>

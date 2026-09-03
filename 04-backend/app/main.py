@@ -1,20 +1,44 @@
+from decimal import Decimal
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts, invites
+import json as json_stdlib
+import sys
+
+
+class DecimalEncoder(json_stdlib.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
+
+
+class DecimalJSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json_stdlib.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(',', ':'),
+            cls=DecimalEncoder,
+        ).encode('utf-8')
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    default_response_class=DecimalJSONResponse,
 )
 
-import sys
-import json
+
 
 def parse_cors_origins(origins_str: str) -> list[str]:
     if origins_str.startswith("["):
         try:
-            origins = json.loads(origins_str)
+            origins = json_stdlib.loads(origins_str)
         except Exception:
             origins = []
     else:

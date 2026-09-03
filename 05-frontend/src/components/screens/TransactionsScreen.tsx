@@ -98,7 +98,7 @@ export function TransactionsScreen() {
                   <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3 text-red-500">
                       <AlertCircle className="w-8 h-8" />
-                      <p>Error loading transactions: {(error as Error).message}</p>
+                      <p>{t('load_error', { message: (error as Error).message })}</p>
                     </div>
                   </td>
                 </tr>
@@ -110,8 +110,7 @@ export function TransactionsScreen() {
                         <Receipt className="w-6 h-6 text-content-tertiary" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-medium text-content-primary mb-1">{t('no_data')}</h3>
-                        <p className="text-sm text-content-secondary mb-4">You have not added unknown transactions yet. Import a CSV file or add your first transaction manually.</p>
+                        <p className="text-sm text-content-secondary mb-4">{t('no_data')}</p>
                       </div>
                       <div className="flex items-center gap-3 w-full">
                         <button 
