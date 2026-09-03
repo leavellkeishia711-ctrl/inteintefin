@@ -38,7 +38,7 @@ class ConnectorResponse(BaseModel):
 async def create_connector(
     config_in: ConnectorCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner"]))
+    user=Depends(require_roles("owner"))
 ):
     stmt = select(ConnectorConfig).where(
         ConnectorConfig.connector_name == config_in.connector_name,
@@ -63,7 +63,7 @@ async def create_connector(
 @router.get("/", response_model=List[ConnectorResponse])
 async def list_connectors(
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner", "cfo", "member"]))
+    user=Depends(require_roles("owner", "cfo", "member"))
 ):
     res = await db.execute(select(ConnectorConfig).where(
         ConnectorConfig.company_id == user.company_id,
@@ -76,7 +76,7 @@ async def update_connector(
     connector_id: uuid.UUID,
     config_in: ConnectorUpdate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner"]))
+    user=Depends(require_roles("owner"))
 ):
     res = await db.execute(select(ConnectorConfig).where(
         ConnectorConfig.id == connector_id,
@@ -104,7 +104,7 @@ async def update_connector(
 async def delete_connector(
     connector_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner"]))
+    user=Depends(require_roles("owner"))
 ):
     res = await db.execute(select(ConnectorConfig).where(
         ConnectorConfig.id == connector_id,
@@ -125,7 +125,7 @@ async def delete_connector(
 async def manual_sync(
     connector_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner", "cfo"]))
+    user=Depends(require_roles("owner", "cfo"))
 ):
     res = await db.execute(select(ConnectorConfig).where(
         ConnectorConfig.id == connector_id,
