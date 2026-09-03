@@ -38,3 +38,4 @@ __all__ = [
     "DecisionRecommendation",
     "ChatMessage",
 ]
+from .connectors import ConnectorConfig

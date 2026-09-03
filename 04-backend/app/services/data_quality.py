@@ -60,3 +60,42 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
             cooldown_hours=48, # Don't alert every day if it's already triggered
             notifiers=[LoggingNotifier(), TelegramNotifier(db)]
         )
+
+    from app.db.models.connectors import ConnectorConfig
+    # Monitor Connectors
+    result = await db.execute(select(ConnectorConfig).where(ConnectorConfig.company_id == company_id))
+    connectors = result.scalars().all()
+    
+    for conn in connectors:
+        if conn.status == 'active':
+            # Check if it has a successful sync
+            if conn.last_successful_sync is None:
+                await trigger_alert(
+                    db, company_id,
+                    type='operational',
+                    risk_level='warning',
+                    message=f"Connector {conn.connector_name} is active but has no successful syncs.",
+                    dedup_key=f"connector_no_sync_{conn.id}",
+                    cooldown_hours=24,
+                    notifiers=[LoggingNotifier(), TelegramNotifier(db)]
+                )
+            elif conn.last_successful_sync < threshold_date:
+                await trigger_alert(
+                    db, company_id,
+                    type='operational',
+                    risk_level='warning',
+                    message=f"Connector {conn.connector_name} is stale. No successful sync in {days_threshold} days.",
+                    dedup_key=f"connector_stale_{conn.id}",
+                    cooldown_hours=24,
+                    notifiers=[LoggingNotifier(), TelegramNotifier(db)]
+                )
+        elif conn.status in ('failing', 'unauthorized'):
+            await trigger_alert(
+                db, company_id,
+                type='operational',
+                risk_level='critical',
+                message=f"Connector {conn.connector_name} is in status {conn.status}.",
+                dedup_key=f"connector_status_{conn.id}_{conn.status}",
+                cooldown_hours=12,
+                notifiers=[LoggingNotifier(), TelegramNotifier(db)]
+            )

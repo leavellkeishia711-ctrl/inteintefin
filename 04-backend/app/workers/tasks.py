@@ -72,3 +72,13 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=0, minute=0), # Daily at midnight UTC
     },
 }
+
+@celery_app.task(name='sync_connectors_task')
+def sync_connectors_task():
+    from app.connectors.scheduler import run_scheduled_syncs
+    asyncio.run(run_scheduled_syncs())
+
+celery_app.conf.beat_schedule['sync-connectors-every-hour'] = {
+    'task': 'sync_connectors_task',
+    'schedule': 3600.0,
+}
