@@ -118,20 +118,20 @@ export const fetchTransactions = async (params: Record<string, unknown>) => {
   Object.entries(params).forEach(([key, value]) => {
     if (value) searchParams.append(key, value.toString());
   });
-  return api.get(`/api/v1/transactions?${searchParams.toString()}`);
+  return api.get<any>(`/api/v1/transactions?${searchParams.toString()}`);
 };
 
 export const createTransaction = async (data: Record<string, unknown>) =>
-  api.post('/api/v1/transactions', data);
+  api.post<any>('/api/v1/transactions', data);
 
 export const uploadCsv = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
-  return api.post('/api/v1/imports/upload', formData);
+  return api.post<{ batch_id: string; columns: string[]; sample_data: any[] }>('/api/v1/imports/upload', formData);
 };
 
 export const commitImport = async (batchId: string, columnMapping: Record<string, string>) =>
-  api.post(`/api/v1/imports/${batchId}/commit`, {
+  api.post<any>(`/api/v1/imports/${batchId}/commit`, {
     batch_id: batchId,
     column_mapping: columnMapping,
   });

@@ -23,7 +23,7 @@ export default function CampaignsScreen() {
   }
 
   if (error || !data) {
-    return <div className="text-red-500">Failed to load campaign data.</div>;
+    return <div className="text-red-500">{t('loadError')}</div>;
   }
 
   const items = data || [];

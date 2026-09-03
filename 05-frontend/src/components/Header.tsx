@@ -18,9 +18,9 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [langOpen, setLangOpen] = useState(false);
-  const { data: user } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => api.get('/api/v1/auth/me'),
+    queryFn: () => api.get<{ email?: string }>('/api/v1/auth/me'),
   });
 
   const getInitials = (email?: string) => {
