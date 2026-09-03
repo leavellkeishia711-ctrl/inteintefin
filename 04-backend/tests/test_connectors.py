@@ -22,8 +22,8 @@ def test_credentials_encryption():
         decrypt_secret("invalid_cipher")
 
 @pytest.mark.asyncio
-async def test_api_create_connector(client: AsyncClient, token_headers_owner):
-    res = await client.post("/api/v1/connectors/", headers=token_headers_owner, json={
+async def test_api_create_connector(client_a: AsyncClient):
+    res = await client_a.post("/api/v1/connectors/", json={
         "connector_name": "keitaro",
         "secret": "my_secret",
         "sync_interval_minutes": 60
@@ -36,8 +36,13 @@ async def test_api_create_connector(client: AsyncClient, token_headers_owner):
     assert data["status"] == "active"
 
 @pytest.mark.asyncio
-async def test_api_tenant_isolation(client: AsyncClient, token_headers_owner, token_headers_admin2, db_session):
-    res = await client.get("/api/v1/connectors/", headers=token_headers_admin2)
+async def test_api_tenant_isolation(client_a: AsyncClient, client_b: AsyncClient):
+    await client_a.post("/api/v1/connectors/", json={
+        "connector_name": "keitaro",
+        "secret": "my_secret2",
+        "sync_interval_minutes": 60
+    })
+    res = await client_b.get("/api/v1/connectors/")
     assert res.status_code == 200
     assert len(res.json()) == 0
 
@@ -88,3 +93,65 @@ async def test_keitaro_fetch_429():
                 
             assert mock_get.call_count == 3 # Should retry
             assert mock_sleep.call_count == 2
+
+@pytest.mark.asyncio
+async def test_keitaro_fetch_500():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+        from httpx import Response, Request
+        mock_get.return_value = Response(500, request=Request("GET", "https://api.keitaro.io/v1/report"))
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            with pytest.raises(ConnectorError):
+                await connector.fetch()
+            assert mock_get.call_count == 3
+
+@pytest.mark.asyncio
+async def test_keitaro_fetch_timeout():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+        import httpx
+        mock_get.side_effect = httpx.TimeoutException("Timeout")
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            with pytest.raises(ConnectorError):
+                await connector.fetch()
+            assert mock_get.call_count == 3
+
+@pytest.mark.asyncio
+async def test_keitaro_malformed_json():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+        from httpx import Response, Request
+        mock_get.return_value = Response(200, content=b"invalid json", request=Request("GET", "https://api.keitaro.io/v1/report"))
+        with pytest.raises(ConnectorError):
+            await connector.fetch()
+
+def test_keitaro_normalize_utc():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    raw = [{"campaign_id": "1", "date": "2024-01-01", "spend": 10, "revenue": 10}]
+    normalized = connector.normalize(raw)
+    assert normalized[0].stat_date == date(2024, 1, 1)
+
+def test_keitaro_normalize_missing_fields():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    raw = [{"campaign_id": "1"}]
+    # Should skip
+    normalized = connector.normalize(raw)
+    assert len(normalized) == 0
+
+@pytest.mark.asyncio
+async def test_keitaro_fetch_403():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+        from httpx import Response, Request
+        mock_get.return_value = Response(403, request=Request("GET", "https://api.keitaro.io/v1/report"))
+        with pytest.raises(UnauthorizedError):
+            await connector.fetch()
+        assert mock_get.call_count == 1 # No retry on 403
+
+def test_keitaro_normalize_bad_money():
+    connector = KeitaroConnector(config=None, decrypted_api_key="mock")
+    raw = [{"campaign_id": "1", "date": "2024-01-01", "spend": "bad_money", "revenue": "10"}]
+    # Should skip
+    normalized = connector.normalize(raw)
+    assert len(normalized) == 0
+

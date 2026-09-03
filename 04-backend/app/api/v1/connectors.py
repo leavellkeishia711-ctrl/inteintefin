@@ -6,7 +6,7 @@ from typing import List
 from datetime import datetime
 import uuid
 
-from app.api.deps import get_db, require_roles
+from app.core.deps import get_db, require_roles
 from app.db.models.connectors import ConnectorConfig
 from app.connectors.credentials import encrypt_secret
 from app.connectors.scheduler import sync_connector_instance

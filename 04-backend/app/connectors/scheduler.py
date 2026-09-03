@@ -8,7 +8,7 @@ import os
 
 from app.db.session import system_session, tenant_session
 from app.db.models.connectors import ConnectorConfig
-from app.connectors.keitaro import KeitaroConnector
+from app.connectors.keitaro import KeitaroConnector, UnauthorizedError
 from app.connectors.credentials import decrypt_secret
 
 logger = logging.getLogger(__name__)
@@ -59,6 +59,10 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 config.retry_count = 0
                 await db.commit()
                 
+            except UnauthorizedError as e:
+                logger.error(f"Connector sync unauthorized: {e}")
+                config.status = 'unauthorized'
+                await db.commit()
             except Exception as e:
                 logger.error(f"Connector sync failed: {e}")
                 # Failure logic
