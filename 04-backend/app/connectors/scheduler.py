@@ -51,7 +51,7 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 else:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
 
-                await connector.sync()
+                await connector.sync(db)
                 
                 # Success
                 config.last_successful_sync = datetime.now(timezone.utc)

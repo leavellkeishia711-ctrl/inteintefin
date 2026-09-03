@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import uuid
 from decimal import Decimal
 from datetime import date
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class NormalizedRecord(BaseModel):
     source: str
@@ -28,12 +29,12 @@ class Connector(ABC):
         pass
 
     @abstractmethod
-    async def upsert(self, normalized_data: List[NormalizedRecord]) -> None:
+    async def upsert(self, session: AsyncSession, normalized_data: List[NormalizedRecord]) -> None:
         """Upserts the normalized data into the database."""
         pass
     
-    async def sync(self) -> None:
+    async def sync(self, session: AsyncSession) -> None:
         """Orchestrates the entire sync process."""
         raw_data = await self.fetch()
         normalized = self.normalize(raw_data)
-        await self.upsert(normalized)
+        await self.upsert(session, normalized)

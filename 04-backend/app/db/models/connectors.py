@@ -3,9 +3,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, ForeignKey, Integer, DateTime, UniqueConstraint, CheckConstraint, Index
 from datetime import datetime
 from app.db.session import Base
-from .base import TimestampMixin, CompanyScoped
+from .base import TimestampMixin, CompanyScoped, SoftDeleteMixin
 
-class ConnectorConfig(Base, TimestampMixin, CompanyScoped):
+class ConnectorConfig(Base, TimestampMixin, CompanyScoped, SoftDeleteMixin):
     __tablename__ = "connector_configs"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
