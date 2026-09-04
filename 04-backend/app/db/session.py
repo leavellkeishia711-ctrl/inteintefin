@@ -98,13 +98,19 @@ async def tenant_session(company_id: str) -> AsyncGenerator[AsyncSession, None]:
     token = current_company_id.set(str(company_id))
     try:
         async with tenant_session_maker() as session:
-
             session.info["is_tenant_session"] = True
-            await session.execute(
-                text("SELECT set_config('app.company_id', :cid, true)"),
-                {"cid": str(company_id)},
-            )
-            yield session
+            try:
+                async with session.begin():
+                    await session.execute(
+                        text("SELECT set_config('app.company_id', :cid, true)"),
+                        {"cid": str(company_id)},
+                    )
+                    yield session
+            except sqlalchemy.exc.InvalidRequestError as e:
+                if "Can't operate on closed transaction inside context manager" in str(e):
+                    pass
+                else:
+                    raise
     finally:
         current_company_id.reset(token)
 

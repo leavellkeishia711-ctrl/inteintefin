@@ -50,7 +50,12 @@ jobs:
 
     - name: Run Connectors Smoke Test
       run: |
-        docker compose -f 08-devops/docker-compose.ci.yml exec -T api python /app/scripts/connectors_smoke_ci.py 2>&1 | tee connectors_smoke.log
+        export API_URL="http://localhost:8000"
+        python 04-backend/scripts/connectors_smoke_ci.py 2>&1 | tee connectors_smoke.log
+        echo "Restarting API container to prove real DB persistence..."
+        docker compose -f 08-devops/docker-compose.ci.yml restart api
+        sleep 5
+        python 04-backend/scripts/connectors_smoke_ci.py verify 2>&1 | tee -a connectors_smoke.log
         
     - name: Log Audit for Secrets
       run: |

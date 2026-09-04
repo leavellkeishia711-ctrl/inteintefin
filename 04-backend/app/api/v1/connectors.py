@@ -34,7 +34,7 @@ class ConnectorResponse(BaseModel):
     class Config:
         from_attributes = True
 
-@router.post("/", response_model=ConnectorResponse)
+@router.post("/", response_model=ConnectorResponse, status_code=201)
 async def create_connector(
     config_in: ConnectorCreate,
     db: AsyncSession = Depends(get_db),
@@ -56,6 +56,8 @@ async def create_connector(
         sync_interval_minutes=config_in.sync_interval_minutes
     )
     db.add(new_config)
+    await db.flush()
+    await db.refresh(new_config)
     return new_config
 
 @router.get("/", response_model=List[ConnectorResponse])
@@ -94,6 +96,8 @@ async def update_connector(
             raise HTTPException(status_code=400, detail="Invalid status")
         config.status = config_in.status
         
+    await db.flush()
+    await db.refresh(config)
     return config
 
 @router.delete("/{connector_id}", status_code=204)
@@ -114,6 +118,7 @@ async def delete_connector(
     from datetime import datetime, timezone
     config.deleted_at = datetime.now(timezone.utc)
     config.status = "paused"
+    await db.flush()
     return None
 
 @router.post("/{connector_id}/sync")
@@ -132,6 +137,8 @@ async def manual_sync(
         raise HTTPException(status_code=404, detail="Connector not found")
         
     import asyncio
+    from datetime import datetime, timezone
+    config.last_attempted_sync = datetime.now(timezone.utc)
     asyncio.create_task(sync_connector_instance(str(user.company_id), str(config.id)))
     
     return {"status": "sync_started"}

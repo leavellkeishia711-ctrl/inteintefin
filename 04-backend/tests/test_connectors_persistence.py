@@ -10,7 +10,7 @@ async def test_api_persistence_create(client_a):
         "secret": "my-secret-key-123",
         "sync_interval_minutes": 60
     })
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     data = resp.json()
     conn_id = data["id"]
     
@@ -38,7 +38,7 @@ async def test_api_persistence_patch_status(client_a):
         "secret": "my-secret",
         "sync_interval_minutes": 60
     })
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     conn_id = resp.json()["id"]
 
     resp2 = await client_a.patch(f"/api/v1/connectors/{conn_id}", json={
@@ -68,7 +68,7 @@ async def test_api_persistence_soft_delete(client_a):
         "secret": "my-secret",
         "sync_interval_minutes": 60
     })
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     conn_id = resp.json()["id"]
 
     resp2 = await client_a.delete(f"/api/v1/connectors/{conn_id}")
