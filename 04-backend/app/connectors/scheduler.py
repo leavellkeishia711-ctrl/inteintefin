@@ -58,6 +58,9 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 elif config.connector_name == "affise":
                     from app.connectors.affise import AffiseConnector
                     connector = AffiseConnector(config, decrypted)
+                elif config.connector_name == "meta":
+                    from app.connectors.meta_ads import MetaAdsConnector
+                    connector = MetaAdsConnector(config, decrypted)
                 else:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
 
