@@ -55,6 +55,9 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 elif config.connector_name == "voluum":
                     from app.connectors.voluum import VoluumConnector
                     connector = VoluumConnector(config, decrypted)
+                elif config.connector_name == "affise":
+                    from app.connectors.affise import AffiseConnector
+                    connector = AffiseConnector(config, decrypted)
                 else:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
 
