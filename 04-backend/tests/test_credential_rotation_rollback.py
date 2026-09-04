@@ -29,7 +29,7 @@ async def test_credential_rotation_rollback(company_b_fixtures):
         )
         db_session.add(conn)
         await db_session.commit()
-        conn_id = conn_id
+        conn_id = conn.id
         
         # Rotate should fail
         with pytest.raises(Exception):

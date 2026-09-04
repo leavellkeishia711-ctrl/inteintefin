@@ -28,7 +28,7 @@ async def test_credential_rotation(company_b_fixtures):
         )
         db_session.add(conn)
         await db_session.commit()
-        conn_id = conn_id
+        conn_id = conn.id
         
         # Rotate
         await rotate_keys(old_key, new_key, db=db_session, dry_run=False, company_id=comp_id)
