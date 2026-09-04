@@ -11,6 +11,7 @@ class AdAccount(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "ad_accounts"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
     platform: Mapped[str] = mapped_column(String, nullable=False)
     external_account_id: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False)

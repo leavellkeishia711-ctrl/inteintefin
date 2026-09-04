@@ -1,0 +1,39 @@
+import pytest
+import uuid
+from datetime import datetime, timezone, timedelta
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.db.models.connectors import ConnectorConfig
+from app.services.data_quality import monitor_stalled_data
+from app.db.models.alerts import Alert
+
+pytestmark = pytest.mark.asyncio
+
+async def test_stale_source_dq_dedup(db_session: AsyncSession, company: dict):
+    comp_id = uuid.UUID(company["id"])
+    
+    now = datetime.now(timezone.utc)
+    
+    conn = ConnectorConfig(
+        company_id=comp_id,
+        connector_name="keitaro",
+        status="active",
+        encrypted_credentials="enc",
+        sync_interval_minutes=60,
+        last_successful_sync=now - timedelta(hours=4)
+    )
+    db_session.add(conn)
+    await db_session.commit()
+    
+    # Run once
+    await monitor_stalled_data(db_session, comp_id)
+    await db_session.commit()
+    
+    # Run twice
+    await monitor_stalled_data(db_session, comp_id)
+    await db_session.commit()
+    
+    res = await db_session.execute(select(Alert).where(Alert.company_id == comp_id))
+    alerts = res.scalars().all()
+    stale_alerts = [a for a in alerts if "Data Quality Alert" in a.message]
+    assert len(stale_alerts) == 1 # Deduplicated by trigger_alert logic (which uses dedup_key)

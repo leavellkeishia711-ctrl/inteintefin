@@ -2,6 +2,7 @@ import asyncio
 import httpx
 import os
 import sys
+import uuid
 
 async def run_smoke():
     # Use localhost:8000 when running from host
@@ -9,7 +10,7 @@ async def run_smoke():
     
     print("--- 1. Register & Login ---")
     async with httpx.AsyncClient(base_url=api_url) as client:
-        email = "smoke_conn@example.com"
+        email = f"smoke_conn_{uuid.uuid4().hex[:6]}@example.com"
         pwd = "strongpass123"
         r1 = await client.post("/api/v1/auth/register", json={"email": email, "password": pwd})
         if r1.status_code not in (200, 201):
@@ -79,6 +80,18 @@ async def run_verify():
             print("CRITICAL: Connector data corrupted!")
             sys.exit(1)
             
+        print("--- Ad Accounts Smoke ---")
+        r_ad = await client.post("/api/v1/ad-accounts/", json={
+            "platform": "facebook",
+            "external_account_id": "act_12345",
+            "name": "fb_smoke",
+            "status": "active"
+        })
+        if r_ad.status_code != 200:
+            print("Ad accounts failed:", r_ad.text)
+            sys.exit(1)
+        ad_id = r_ad.json()["id"]
+        
         print("--- 6. Trigger sync ---")
         r5 = await client.post(f"/api/v1/connectors/{c_id}/sync")
         if r5.status_code != 200:
@@ -94,7 +107,9 @@ async def run_verify():
             sys.exit(1)
             
         print(f"Status after sync: {found['status']}")
-        # It could be 'failing' or 'unauthorized' or 'active', but last_attempted_sync must be set.
+        
+        # Stale DQ smoke: this is triggered via check_alerts task, which is celery, 
+        # but in CI we can't easily assert on it, but the DB unit tests cover it.
             
         print("Connectors smoke test PASSED.")
 
