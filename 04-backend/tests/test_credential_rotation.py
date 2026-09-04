@@ -33,9 +33,8 @@ async def test_credential_rotation(company_b_fixtures):
         await rotate_keys(old_key, new_key, db=db_session, dry_run=False, company_id=comp_id)
         
         # Verify new key decrypts it
-        res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == conn.id))
-        updated_conn = res.scalars().first()
-        
+        res = await db_session.execute(select(ConnectorConfig.encrypted_secret).where(ConnectorConfig.id == conn.id))
+        secret_val = res.scalar()
         f_new = Fernet(new_key.encode('utf-8'))
-        decrypted = f_new.decrypt(updated_conn.encrypted_secret.encode('utf-8')).decode('utf-8')
+        decrypted = f_new.decrypt(secret_val.encode('utf-8')).decode('utf-8')
         assert decrypted == "my_secret_token"

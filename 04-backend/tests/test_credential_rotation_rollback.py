@@ -35,9 +35,7 @@ async def test_credential_rotation_rollback(company_b_fixtures):
             await rotate_keys(wrong_old_key, new_key, db=db_session, dry_run=False, company_id=comp_id)
             
         # Verify rollback - old key still decrypts it
-        res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == conn.id))
-        updated_conn = res.scalars().first()
-        await db_session.refresh(updated_conn)
-        
-        decrypted = f_old.decrypt(updated_conn.encrypted_secret.encode('utf-8')).decode('utf-8')
+        res = await db_session.execute(select(ConnectorConfig.encrypted_secret).where(ConnectorConfig.id == conn.id))
+        secret_val = res.scalar()
+        decrypted = f_old.decrypt(secret_val.encode('utf-8')).decode('utf-8')
         assert decrypted == "my_secret_token"

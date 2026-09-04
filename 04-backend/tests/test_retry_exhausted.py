@@ -12,7 +12,7 @@ async def test_retry_exhausted():
         attempts += 1
         req = httpx.Request("GET", "http://test")
         resp = httpx.Response(503, request=req)
-        raise ConnectorError("503", request=req, response=resp)
+        raise httpx.HTTPStatusError("503", request=req, response=resp)
 
     with pytest.raises(ConnectorError):
         await with_retry(fetch_data, max_retries=2, base_delay=0)
