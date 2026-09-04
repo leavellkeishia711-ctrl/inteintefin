@@ -10,6 +10,9 @@ from app.connectors.base import UnauthorizedError, RateLimitError
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
 from app.db.session import system_session
 
+from app.db.models.companies import Company
+from app.db.models.users import User
+
 class DummyConfig:
     def __init__(self, company_id):
         self.company_id = company_id
@@ -118,16 +121,37 @@ async def test_binom_upsert_idempotency(company_b_fixtures):
 @pytest.mark.asyncio
 async def test_binom_tenant_isolation(company_b_fixtures):
     company_id_a = uuid.uuid4()
+    user_id_a = uuid.uuid4()
     
     company_id_b = uuid.UUID(company_b_fixtures.ids["company_id"])
     user_id_b = uuid.UUID(company_b_fixtures.ids["user_id"])
     
-    # Configure connector for company_a
-    config = DummyConfig(company_id_a)
-    connector = BinomConnector(config, "secret_key")
-    
     async with system_session() as db_session:
-        # Create run in company_b
+        comp_a = Company(
+            id=company_id_a,
+            name="Company A",
+            base_currency="USD"
+        )
+        db_session.add(comp_a)
+        
+        user_a = User(
+            id=user_id_a,
+            company_id=company_id_a,
+            name="User A",
+            email="user_a@test.com",
+            password_hash="hash",
+            role="admin"
+        )
+        db_session.add(user_a)
+        
+        run_a = CampaignRun(
+            company_id=company_id_a,
+            buyer_id=user_id_a,
+            started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+            note="500"
+        )
+        db_session.add(run_a)
+        
         run_b = CampaignRun(
             company_id=company_id_b,
             buyer_id=user_id_b,
@@ -135,21 +159,30 @@ async def test_binom_tenant_isolation(company_b_fixtures):
             note="500"
         )
         db_session.add(run_b)
+        
         await db_session.commit()
         
-        # Connector for company_a tries to update company_b's run (note="500")
+        config = DummyConfig(company_id_a)
+        connector = BinomConnector(config, "secret_key")
+        
         raw_data = [
             {"camp_id": "500", "date": "2026-09-01", "cost": "99.00", "revenue": "99.00"}
         ]
         normalized = connector.normalize(raw_data)
+        
         await connector.upsert(db_session, normalized)
         await db_session.commit()
         
-        # Verify no stat was created for company_b
-        stmt = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run_b.id)
-        res = await db_session.execute(stmt)
-        stats = res.scalars().all()
-        assert len(stats) == 0
+        stmt_a = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run_a.id)
+        res_a = await db_session.execute(stmt_a)
+        stats_a = res_a.scalars().all()
+        assert len(stats_a) == 1
+        assert stats_a[0].company_id == company_id_a
+        
+        stmt_b = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run_b.id)
+        res_b = await db_session.execute(stmt_b)
+        stats_b = res_b.scalars().all()
+        assert len(stats_b) == 0
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
