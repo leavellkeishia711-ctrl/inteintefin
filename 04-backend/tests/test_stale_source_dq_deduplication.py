@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.models.connectors import ConnectorConfig
 from app.services.data_quality import monitor_stalled_data
-from app.db.models.alerts import Alert
+from app.db.models.system import Alert
 
 pytestmark = pytest.mark.asyncio
 
