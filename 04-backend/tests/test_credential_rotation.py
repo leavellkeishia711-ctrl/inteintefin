@@ -22,7 +22,7 @@ async def test_credential_rotation(db_session: AsyncSession, company: dict):
         company_id=comp_id,
         connector_name="keitaro",
         status="active",
-        encrypted_credentials=enc_secret,
+        encrypted_secret=enc_secret,
         sync_interval_minutes=60
     )
     db_session.add(conn)
@@ -36,5 +36,5 @@ async def test_credential_rotation(db_session: AsyncSession, company: dict):
     updated_conn = res.scalars().first()
     
     f_new = Fernet(new_key.encode('utf-8'))
-    decrypted = f_new.decrypt(updated_conn.encrypted_credentials.encode('utf-8')).decode('utf-8')
+    decrypted = f_new.decrypt(updated_conn.encrypted_secret.encode('utf-8')).decode('utf-8')
     assert decrypted == "my_secret_token"

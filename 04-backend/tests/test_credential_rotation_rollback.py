@@ -23,7 +23,7 @@ async def test_credential_rotation_rollback(db_session: AsyncSession, company: d
         company_id=comp_id,
         connector_name="keitaro",
         status="active",
-        encrypted_credentials=enc_secret,
+        encrypted_secret=enc_secret,
         sync_interval_minutes=60
     )
     db_session.add(conn)
@@ -37,5 +37,5 @@ async def test_credential_rotation_rollback(db_session: AsyncSession, company: d
     res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == conn.id))
     updated_conn = res.scalars().first()
     
-    decrypted = f_old.decrypt(updated_conn.encrypted_credentials.encode('utf-8')).decode('utf-8')
+    decrypted = f_old.decrypt(updated_conn.encrypted_secret.encode('utf-8')).decode('utf-8')
     assert decrypted == "my_secret_token"

@@ -18,7 +18,7 @@ async def test_stale_source_dq_dedup(db_session: AsyncSession, company: dict):
         company_id=comp_id,
         connector_name="keitaro",
         status="active",
-        encrypted_credentials="enc",
+        encrypted_secret="enc",
         sync_interval_minutes=60,
         last_successful_sync=now - timedelta(hours=4)
     )
