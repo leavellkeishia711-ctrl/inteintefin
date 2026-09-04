@@ -1,6 +1,6 @@
 # FinanceIntel — правила для AI-агентов
 SaaS финансового учёта для медиабаинга. Виртуальный CFO поверх трекеров.
-Стадия: Stage 1 "Financial Core". Всё, чего нет в 02-product-docs/MVP.md, вне скоупа.
+Стадия: Stage 2 "Data Connectors". Всё, чего нет в 02-product-docs/MVP.md, вне скоупа.
 
 ## Структура
 02-product-docs/ PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS (источник правды)
@@ -34,5 +34,12 @@ SaaS финансового учёта для медиабаинга. Вирту
 - Данные через TanStack Query + src/lib/api. Прямой импорт из mockData запрещён.
 - Next.js 16 свежее твоих тренировочных данных: перед написанием читай node_modules/next/dist/docs/.
 
+
+## Data Connectors
+- Все интеграции обязаны реализовывать базовый интерфейс Connector из connectors/base.py (как только он будет финализирован).
+- Идемпотентность строго обязательна (повторный синк за тот же период не дублирует данные, а делает upsert).
+- Явная обработка Rate Limits и exponential backoff для внешних API.
+- Секреты коннекторов не должны светиться в логах, передаваться в LLM и должны отдаваться клиенту только в замаскированном виде (или скрываться полностью).
+
 ## Вне скоупа сейчас
-Market Intelligence, парсинг Telegram, 06-admin-frontend, коннекторы к рекламным API, Forecasting, Scenario Modeling, свой инференс. Не предлагать, не писать.
+Market Intelligence, парсинг Telegram, 06-admin-frontend, Forecasting, Scenario Modeling, свой инференс. Не предлагать, не писать.

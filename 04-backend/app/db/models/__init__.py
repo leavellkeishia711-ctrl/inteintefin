@@ -8,6 +8,7 @@ from .system import (
     AffiliateNetwork, PartnerPayout, Alert, AuditLog, CompensationPlan,
     PayrollRun, PayrollLineItem, DecisionRecommendation, ChatMessage
 )
+from .connectors import ConnectorConfig
 
 # This file exposes all models so Alembic can import them easily
 __all__ = [
@@ -37,4 +38,5 @@ __all__ = [
     "PayrollLineItem",
     "DecisionRecommendation",
     "ChatMessage",
+    "ConnectorConfig",
 ]

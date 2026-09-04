@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     AI_MODEL: str
     AI_API_KEY: str
     
+    # Connectors
+    CONNECTOR_SECRET_KEY: str
+    
     # Telegram
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     TELEGRAM_WEBHOOK_SECRET: str

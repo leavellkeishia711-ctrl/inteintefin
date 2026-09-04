@@ -99,3 +99,14 @@
 1. **Partner payouts lifecycle** — `app/services/partners.py`, `app/schemas/partners.py`, `app/api/v1/partners.py` существуют. Нет `test_partners.py`. Нужны тесты: создание, смена статуса (booked→in_hold→scrubbed→paid), запрет перехода в невалидный статус, тенант-изоляция.
 2. **Data Quality Monitoring** — `app/services/data_quality.py` существует. Нет `test_data_quality.py`. Нужны тесты: обнаружение stalled данных, отсутствие транзакций за период, stalled трекеры.
 3. **Backend i18n** — `app/core/i18n.py` существует. Нет `test_i18n.py`. Нужны тесты: определение языка из профиля пользователя/компании, fallback на EN.
+
+## Phase 3 � Stage 2: Data Connectors
+- [x] 3.1 Branch feat/stage2-connectors from main
+- [x] 3.2 connectors/base.py abstract class
+- [x] 3.3 connectors/credentials.py encrypted storage
+- [x] 3.4 connectors/scheduler.py Celery beat
+- [x] 3.5 connectors/keitaro.py Keitaro implementation
+- [x] 3.6 api/v1/connectors.py CRUD & sync endpoints
+- [x] 3.7 DB model & Alembic migration
+- [x] 3.8 Add metrics to data_quality.py
+- [x] 3.9 Write test_connectors.py
