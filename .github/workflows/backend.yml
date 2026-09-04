@@ -56,8 +56,11 @@ jobs:
         echo "DB_SSLMODE=prefer" >> .env
         python scripts/setup_ci_db.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
         
-    - name: Run Alembic migrations
+
+    - name: Run Alembic migrations (with downgrade test)
       run: |
+        alembic upgrade head 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+        alembic downgrade -1 2>&1 | tee -a $GITHUB_STEP_SUMMARY
         alembic upgrade head 2>&1 | tee -a $GITHUB_STEP_SUMMARY
         
     - name: Run check_floats.py
