@@ -23,7 +23,7 @@ class KeitaroConnector(Connector):
 
     async def _do_fetch(self, client: httpx.AsyncClient) -> List[Dict[str, Any]]:
         headers = {"Api-Key": self.api_key}
-        response = await client.get(f"{self.base_url}/report", headers=headers, timeout=15.0)
+        response = await client.get(f"{self.base_url}/report", headers=headers, timeout=15)
         response.raise_for_status()
         
         try:

@@ -29,7 +29,7 @@ T = TypeVar('T')
 async def with_retry(
     func: Callable[[], Awaitable[T]],
     max_retries: int = 3,
-    base_delay: float = 1.0,
+    base_delay: int = 1,
     retry_statuses: tuple = (429, 500, 502, 503, 504)
 ) -> T:
     """

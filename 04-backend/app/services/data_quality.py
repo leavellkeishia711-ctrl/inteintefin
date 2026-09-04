@@ -85,7 +85,7 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
                 # Minimum threshold of 2 hours just to avoid false positives on quick intervals
                 stale_threshold_minutes = max(stale_threshold_minutes, 120)
                 
-                delta_minutes = (now - conn.last_successful_sync).total_seconds() / 60.0
+                delta_minutes = (now - conn.last_successful_sync).total_seconds() / 60
                 
                 if delta_minutes > stale_threshold_minutes:
                     await trigger_alert(
