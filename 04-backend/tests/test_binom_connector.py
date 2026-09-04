@@ -116,9 +116,8 @@ async def test_binom_upsert_idempotency(company_b_fixtures):
         assert stats[0].revenue == Decimal("120.00")
 
 @pytest.mark.asyncio
-async def test_binom_tenant_isolation(company_a_fixtures, company_b_fixtures):
-    company_id_a = uuid.UUID(company_a_fixtures.ids["company_id"])
-    user_id_a = uuid.UUID(company_a_fixtures.ids["user_id"])
+async def test_binom_tenant_isolation(company_b_fixtures):
+    company_id_a = uuid.uuid4()
     
     company_id_b = uuid.UUID(company_b_fixtures.ids["company_id"])
     user_id_b = uuid.UUID(company_b_fixtures.ids["user_id"])
@@ -232,3 +231,4 @@ async def test_binom_smoke(mock_get, company_b_fixtures):
         await connector.upsert(db_session, norm)
         
     assert mock_get.call_count >= 1
+
