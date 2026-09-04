@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app.db.session import system_session
 from app.db.models.connectors import ConnectorConfig
 
-async def rotate_keys(old_key: str, new_key: str, db=None, dry_run=False):
+async def rotate_keys(old_key: str, new_key: str, db=None, dry_run=False, company_id=None):
     """
     Rotates the encryption key for all connector secrets in the database.
     Reads with old_key, encrypts with new_key.
@@ -20,6 +20,8 @@ async def rotate_keys(old_key: str, new_key: str, db=None, dry_run=False):
     # We shouldn't use `async with session:` because if db is passed from tests, it closes it.
     # We will just use it directly, and only commit if not dry_run.
     stmt = select(ConnectorConfig)
+    if company_id:
+        stmt = stmt.where(ConnectorConfig.company_id == company_id)
     result = await session.execute(stmt)
     configs = result.scalars().all()
 

@@ -18,7 +18,7 @@ async def test_stale_source_dq(company_b_fixtures):
             company_id=comp_id,
             connector_name="keitaro",
             status="active",
-            encrypted_secret="enc",
+            encrypted_secret="gAAAAABkAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
             sync_interval_minutes=60,
             last_successful_sync=now - timedelta(hours=4) # 240 mins > 3 * 60 (180)
         )

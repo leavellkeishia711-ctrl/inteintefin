@@ -30,7 +30,7 @@ async def test_credential_rotation(company_b_fixtures):
         await db_session.commit()
         
         # Rotate
-        await rotate_keys(old_key, new_key, db=db_session, dry_run=False)
+        await rotate_keys(old_key, new_key, db=db_session, dry_run=False, company_id=comp_id)
         
         # Verify new key decrypts it
         res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == conn.id))
