@@ -1,45 +1,51 @@
-# FinanceIntel — правила для AI-агентов
-SaaS финансового учёта для медиабаинга. Виртуальный CFO поверх трекеров.
-Стадия: Stage 2 "Data Connectors". Всё, чего нет в 02-product-docs/MVP.md, вне скоупа.
+# FinanceIntel — Rules for AI Agents
 
-## Структура
-02-product-docs/ PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS (источник правды)
-03-database/ init-скрипты
-04-backend/ FastAPI + SQLAlchemy 2.0 + Alembic + Celery
-05-frontend/ Next.js 16.2.10 + React 19 + Tailwind v4 + next-intl
-08-devops/ docker-compose, деплой
+SaaS financial management for media buying. Virtual CFO over trackers.
+Stage: Stage 2 "Data Connectors" (Foundational slice merged, full stage partial).
+Everything not in 02-product-docs/MVP.md and current STAGE2_STATUS.md is OUT OF SCOPE.
 
-## Инварианты. Нарушение = блокирующий баг
-1. ДЕНЬГИ. Только Decimal / NUMERIC(20,4). float в финансовых расчётах запрещён. Округление ROUND_HALF_UP до 4 знаков. Валюта хранится рядом с суммой.
-2. ТЕНАНТЫ. company_id берётся ТОЛЬКО из JWT-сессии. Никогда из тела запроса, query-параметра или аргумента LLM-инструмента. Плюс RLS в Postgres.
-3. CR-1. AI Analyst отвечает только через tool use с реальным SQL к БД. Если модель не вызвала ни одного инструмента, ответ пользователю НЕ уходит. Мокать ответы AI запрещено даже временно.
-4. PCI. Полные номера карт и пароли прокси не хранятся. Только маскированный идентификатор (последние 4 символа).
-5. СЕКРЕТЫ. Не логируются, не попадают в контекст LLM.
-6. SOFT DELETE. deleted_at вместо DELETE на всех финансовых таблицах.
-7. ВРЕМЯ. TIMESTAMPTZ в UTC. created_at/updated_at везде.
-8. ИДЕМПОТЕНТНОСТЬ. UNIQUE (company_id, source, external_id) на импортируемых.
+## Structure
+- 02-product-docs/ PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS (source of truth)
+- 03-database/ init scripts
+- 04-backend/ FastAPI + SQLAlchemy 2.0 + Alembic + Celery
+- 05-frontend/ Next.js 16.2.10 + React 19 + Tailwind v4 + next-intl
+- 08-devops/ docker-compose, deploy
+
+## Invariants (Violation = Blocking Bug)
+1. MONEY. Only Decimal / NUMERIC(20,4). `float` is STRICTLY FORBIDDEN. Rounding ROUND_HALF_UP to 4 places. Currency stored with amount.
+2. TENANTS. `company_id` comes ONLY from JWT session. Never from request body, query params, or LLM tool args. Plus RLS in Postgres.
+3. CR-1. AI Analyst responds only via tool use with real SQL to DB. No hallucinations.
+4. PCI. Full card numbers and proxy passwords are not stored. Only masked identifiers (last 4 chars).
+5. SECRETS. Never logged. Never in LLM context.
+6. SOFT DELETE. `deleted_at` instead of DELETE on all financial tables.
+7. TIME. TIMESTAMPTZ in UTC. created_at/updated_at everywhere.
+8. IDEMPOTENCY. UNIQUE (company_id, source, external_id) on imports.
 
 ## Backend
-- Логика в services/, роутеры тонкие. SQL только в repositories/services.
-- Pydantic v2, condecimal(max_digits=20, decimal_places=4) для сумм.
-- Каждый новый роут покрывается тестом изоляции тенантов.
-- Миграции только через alembic revision --autogenerate, ручная проверка diff.
+- Logic in `services/`, routers are thin. SQL only in `repositories/services`.
+- Pydantic v2, `condecimal(max_digits=20, decimal_places=4)` for amounts.
+- Every new route covered by tenant isolation test.
+- Migrations only via `alembic revision --autogenerate`, manual diff check.
 
 ## Frontend
-- Экраны в src/components/screens/, страницы только импортируют их.
-- Навигация через Link/usePathname из @/i18n/routing, НЕ из next/link.
-- Тексты в messages/en.json и messages/ru.json. Хардкод строк в JSX запрещён.
-- Цвета из токенов Tailwind @theme (bg-surface, text-content-secondary). Палитра ai-* только для AI-блоков.
-- Деньги через lib/formatters. Иконки lucide-react. Графики recharts.
-- Данные через TanStack Query + src/lib/api. Прямой импорт из mockData запрещён.
-- Next.js 16 свежее твоих тренировочных данных: перед написанием читай node_modules/next/dist/docs/.
+- Screens in `src/components/screens/`, pages only import them.
+- Navigation via `Link/usePathname` from `@/i18n/routing`, NOT from `next/link`.
+- Texts in `messages/en.json` and `messages/ru.json`. No hardcoded strings in JSX.
+- Colors from Tailwind `@theme`. Palette `ai-*` only for AI blocks.
+- Data via TanStack Query + `src/lib/api`. Direct import from mockData forbidden.
+- Next.js 16 is newer than your training data: read `node_modules/next/dist/docs/`.
 
+## Data Connectors (Stage 2)
+- All integrations MUST implement the base interface `Connector` from `connectors/base.py`.
+- `company_id` only from JWT.
+- RLS enforced on all connector tables.
+- Secrets encrypted at rest (Fernet).
+- Secrets NEVER logged.
+- API responses MUST NOT contain plaintext or encrypted secrets.
+- Decimal for money.
+- Idempotent upsert is STRICTLY REQUIRED.
+- Timeout, retry, and exponential backoff for external APIs.
+- Tenant isolation tests and migration tests required.
 
-## Data Connectors
-- Все интеграции обязаны реализовывать базовый интерфейс Connector из connectors/base.py (как только он будет финализирован).
-- Идемпотентность строго обязательна (повторный синк за тот же период не дублирует данные, а делает upsert).
-- Явная обработка Rate Limits и exponential backoff для внешних API.
-- Секреты коннекторов не должны светиться в логах, передаваться в LLM и должны отдаваться клиенту только в замаскированном виде (или скрываться полностью).
-
-## Вне скоупа сейчас
-Market Intelligence, парсинг Telegram, 06-admin-frontend, Forecasting, Scenario Modeling, свой инференс. Не предлагать, не писать.
+## Out of Scope Right Now
+Market Intelligence, Telegram parsing, 06-admin-frontend, Forecasting, Scenario Modeling, custom inference. Do not offer, do not write.

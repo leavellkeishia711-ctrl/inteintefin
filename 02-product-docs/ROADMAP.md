@@ -1,157 +1,83 @@
-# ROADMAP — от MVP к полной инфраструктуре
+# FinanceIntel Roadmap
 
-> **Родительский документ:** `PRD.md`.
-> **Текущая стадия:** `MVP.md` (Stage 1 — Financial Core).
-> Этот файл описывает **все будущие стадии и модули**: что нужно сделать и к чему прийти в итоге на каждом шаге.
+This document outlines the phased delivery plan for FinanceIntel.
 
 ---
 
-## Карта стадий
+## Stage 1 - Foundation & Core (MVP)
+**Status:** COMPLETED
 
-```
-Stage 1  Financial Core            ← МЫ ЗДЕСЬ (см. MVP.md)
-Stage 2  Data Connectors           коннекторы к трекерам и рекламе
-Stage 3  AI Analytics & Forecasting внутренняя AI-аналитика и прогноз
-Stage 4  Market Intelligence       внешняя разведка + Human Review (самый рискованный)
-         ├── 4a  автомониторинг курируемых источников (Bot API)  ← даёт ценность целиком
-         └── 4b  автообнаружение новых источников (Telethon)     ← опционально, дорого
-Stage 5  Decision & Scale          рекомендации, сценарии, enterprise-обвязка
-```
-
-Каждая стадия завершается работающим и продаваемым срезом продукта. Не начинаем следующую, пока предыдущая не доведена до Definition of Done.
+- [x] Multi-tenancy & Security (RLS, JWT, Argon2).
+- [x] Database Schema & DB Migrations.
+- [x] Transactions CRUD & CSV Import.
+- [x] P&L and Cashflow Calculation.
+- [x] Tenant-isolated Background Tasks (Celery).
+- [x] Base AI Financial Analyst (SQL tool).
+- [x] Telegram Alerts.
+- [x] Foundational Frontend (Next.js, Tailwind).
 
 ---
 
-## Stage 1 — Financial Core (текущая)
+## 📍 МЫ ЗДЕСЬ: Stage 2 - Data Connectors
+**Status:** IN PROGRESS (Foundational Slice Merged)
 
-Полностью описана в `MVP.md`. Итог: работающий финансовый учёт (P&L, Cash Flow, Cash Runway, EBITDA), ручной ввод + CSV, учёт рекламных аккаунтов и расходников (прокси/карты), заливы (`campaign_runs`), Telegram-бот (безопасная привязка аккаунта, личный статус, алерты), базовый AI-аналитик на внутренних данных, расчёт зарплат (`payroll`), локализация (`i18n`), Data Quality Monitoring, audit log, мультитенантность.
+**Goal:** Automated ingestion of costs, revenues, and campaigns.
 
-> **Market Intelligence в Stage 1 отсутствует полностью.** Ветка «аналитик вручную приносит источник» (MI-lite из Аддендума v2.1) отменена, а не отложена — см. Аддендум v2.6. MI появляется впервые на Stage 4 сразу в автоматическом виде.
+**Completed (Foundational Slice):**
+- [x] `connectors/base.py` abstract class.
+- [x] Encrypted credentials storage.
+- [x] Keitaro implementation.
+- [x] Sync scheduling (Celery beat).
+- [x] Connector API endpoints & DB models.
+- [x] Tenant isolation and persistence testing.
+- [x] Production Smoke Test.
 
-**К чему приходим:** продукт, который уже даёт владельцу «одну честную цифру» и продаётся без AI-разведки.
-
----
-
-## Stage 2 — Data Connectors
-
-**Цель:** убрать ручной ввод, автоматически подтягивать spend/revenue.
-
-### Что нужно сделать
-- **Абстракция коннектора** — единый интерфейс `Connector` (fetch → normalize → upsert). Все источники реализуют его.
-- **Учёт рекламных аккаунтов (`ad_accounts`)** — аккаунты и кампании появляются вместе, одно без другого неполноценно.
-- Нормализация данных: единые валюты, единый формат метрик, дедупликация, разрешение конфликтов.
-- Хранение credentials источников (шифрование секретов, ротация).
-- Обработка rate limits, ретраи, backoff, идемпотентность импорта.
-- Планировщик синхронизаций (периодический pull по расписанию).
-- Расширение Data Quality Monitoring: «источник X не обновлялся N часов», статусы коннекторов.
-
-### Порядок подключения источников (по ценности/простоте)
-1. Трекеры: Keitaro → Binom → Voluum.
-2. Партнёрки: Affise (доходная сторона).
-3. Реклама: Meta Ads → Google Ads → TikTok Ads (расходная сторона).
-4. (позже) банковские/платёжные API для реального cash balance.
-
-### Будущие файлы/модули (ориентир)
-```
-connectors/base.py              интерфейс Connector + общая нормализация
-connectors/keitaro.py           первый трекер
-connectors/binom.py
-connectors/voluum.py
-connectors/affise.py
-connectors/meta_ads.py
-connectors/google_ads.py
-connectors/tiktok_ads.py
-connectors/scheduler.py         периодические синхронизации
-connectors/credentials.py       шифрованное хранилище ключей источников
-```
-
-**К чему приходим:** данные сами появляются в системе. Campaign Financial Analytics (§5.4) наполняется реальными цифрами.
+**Open (Pending Implementation):**
+- [ ] `ad_accounts` mapping and synchronization.
+- [ ] Shared rate-limit/retry/backoff policy.
+- [ ] Credential rotation.
+- [ ] Stale-source DQ alert.
+- [ ] Binom integration.
+- [ ] Voluum integration.
+- [ ] Affise integration.
+- [ ] Meta Ads integration.
+- [ ] Google Ads integration.
+- [ ] TikTok Ads integration.
 
 ---
 
-## Stage 3 — AI Analytics & Forecasting
+## Stage 3 - Cashflow & Budget Planning
+**Status:** PLANNED
 
-**Цель:** превратить сырые цифры в объяснения и прогнозы. Всё ещё **только на внутренних данных** — без внешней разведки, без модерации.
-
-### Что нужно сделать
-- **Campaign Financial Analytics (§5.4)** — не просто цифры, а поиск причин: «ROI упал → CPM вырос на 15%, конверсия лендинга упала».
-- **Team Performance Analytics (§5.5)** — эффективность байеров/команд, риск-профили.
-- **Forecasting Engine (§5.9)** — прогноз cash flow и рисков по историческим данным компании (time-series).
-- **Budget Planning (§5.12)** — планирование бюджета с AI-проверкой на безопасность ликвидности.
-- Улучшение AI Financial Analyst: доступ к кампаниям, командам, историческим трендам.
-
-### Будущие файлы/модули (ориентир)
-```
-analytics/campaign_analysis.py  причинно-следственный разбор метрик
-analytics/team_performance.py
-forecasting/engine.py           time-series прогноз cash flow
-forecasting/health_score.py     продвинутый Finance Health Score
-budget/planner.py               план бюджета + проверка ликвидности
-ai/analyst.py                   расширенный контекст для AI-ассистента
-```
-
-**К чему приходим:** продукт отвечает не только «сколько денег», но и «почему так» и «что будет через 45 дней».
+- [ ] Budget Requests & Approvals workflow.
+- [ ] Automated Payroll run generation.
+- [ ] Invoice generation & PDF export.
+- [ ] Partner / Affiliate Payout lifecycle (Hold, Scrubbed, Paid).
+- [ ] Advanced Rule Engine for cost allocation.
 
 ---
 
-## Stage 4 — Market Intelligence (самый рискованный)
+## Stage 4a - Market Intelligence (Human-in-the-loop)
+**Status:** PLANNED (Out of current scope)
 
-> ⚠️ Начинать только после того, как Stage 1–3 стабильны и монетизируются.
-> Здесь сосредоточены юридические (Telegram ToS, скрейпинг), репутационные (слухи о банах) и технические риски.
-
-**Цель:** внешняя разведка — сигналы из Telegram/форумов/СМИ, прогноз их влияния, с обязательной проверкой человеком.
-
-> **Промежуточной ручной версии не будет.** MI-lite отменён. Первое появление MI в продукте — уже автоматический сбор. Роль аналитика с самого начала — **только** утверждать/отклонять готовые черновики, он не приносит источники.
-
-Стадия делится на две части, различающиеся по стоимости и риску. **4a даёт продуктовую ценность целиком** — 4b можно не делать вообще или делать сильно позже.
-
-### Stage 4a — Автомониторинг курируемого списка источников
-
-Куратор **один раз при настройке** добавляет конкретные Telegram-чаты/каналы/RSS. Дальше система работает сама.
-
-- **End-to-end пайплайн (§5.7):** ingestion → preprocessing → pattern detection → risk scoring → draft → **Human Review Queue** → moderation → publication → feedback loop.
-- **Таблицы, которые поднимаются на этой стадии:** `intelligence_sources`, `raw_signals`, `detected_patterns`, `moderation_log`, `forecast_accuracy`, `company_vertical_watchlist`, `ai_generated_posts`, `impact_briefs`. В MVP они не нужны.
-- **Каскад стоимости LLM (обязателен):** дешёвая модель/эвристика фильтрует поток сырых сообщений → дорогая модель вызывается **только** на подтверждённых паттернах. Без каскада стоимость токенов на потоке Telegram-сообщений выходит из-под контроля.
-- Доступ к Telegram: **только Bot API** (бот приглашается администратором чата). Риск блокировки низкий.
-- **Разработка UI:** Панель модерации (директория `06-admin-frontend`) сознательно отложена и начнёт разрабатываться именно на этом этапе, так как до Stage 4a в ней нет функциональной необходимости.
-
-### Stage 4b — Автообнаружение новых источников (опционально, дорого)
-
-Система сама находит чаты, о которых ей никто не говорил.
-
-- Требует **клиентского доступа** (Telethon/MTProto) вместо Bot API → риск бана аккаунта-читателя.
-- Нужен выделенный сервисный номер, консервативные rate limits, постепенное вступление в чаты.
-- Мониторинг здоровья reader-аккаунта: алерт «Telegram reader account rate-limited/заблокирован», а не молчаливая остановка сбора.
-- **Решение о старте 4b принимается отдельно**, после того как 4a покажет, что клиенты реально читают ленту.
-
-### Общее для 4a и 4b
-- **Human Review Layer** — ни один AI-пост не публикуется без статуса `approved` от модератора.
-- **SLA-эскалация:** напоминания модератору на 24ч и 48ч, авто-`expired` через 72ч.
-- Новые роли: `content_moderator`, `compliance/admin`.
-- Распределение ленты: общерыночные сигналы (`pattern.vertical IS NULL`) — всем; вертикальные — по `company_vertical_watchlist`.
-- **Impact Briefs:** персональные немодерируемые брифы влияния на конкретную компанию, с обязательным UI-дисклеймером.
+- [ ] Telegram / News scraping.
+- [ ] Admin / Moderator Frontend for Human Review.
+- [ ] Signal Extraction & Pattern Detection.
 
 ---
 
-## Stage 5 — Decision & Scale
+## Stage 4b - Market Intelligence (Automated)
+**Status:** PLANNED (Out of current scope)
 
-**Цель:** от аналитики к рекомендациям + enterprise-готовность.
-
-### Что нужно сделать
-- **Decision Recommendation Engine (§5.10):** конкретные действия («сократи Gambling EU на 20%, переложи в Crypto US»). Рекомендации на данных MI наследуют требование проверки.
-- **Scenario Modeling / What-if (§5.13):** моделирование последствий решений до их принятия.
-- **Financial Safeguards (Финансовые предохранители):** автоматическая заморозка бюджетов (`budget_requests_frozen`), финансирования кампаний (`funding_status`) и выплат (`payroll_line_items.status='held'`). Поля в схеме БД заложены в MVP, но их использование отложено до этой стадии. *Обоснование:* логически эти триггеры требуют уверенной работы Budget Planning (Stage 3) и Payroll, поэтому автоматическое блокирование переносится на стадию зрелости Decision & Scale, где система уже берёт на себя управленческие решения.
-- **AI Content Intelligence (§5.8):** регулярные дайджесты/обзоры через ту же Human Review Queue.
-- **Собственная модель/инференс на своём сервере** — если к этому моменту экономика оправдывает уход с внешних API (масштаб, стоимость токенов, приватность).
-- Enterprise-обвязка: SSO/SAML, гранулярные права, экспорт отчётов, продвинутый Audit/Compliance, наблюдаемость, масштабирование БД.
+- [ ] Telethon/MTProto direct connections.
+- [ ] Auto-publishing to intelligence feeds.
+- [ ] Impact Briefs.
 
 ---
 
-## Сквозные принципы на всех стадиях
+## Stage 5 - Decision & Scale
+**Status:** PLANNED (Out of current scope)
 
-- **Деньги — только `decimal`**, аккуратное округление, мультивалютность с фиксацией курса на дату операции.
-- **Изоляция тенантов** проверяется тестами на каждой стадии.
-- **Секреты** (ключи источников, токены) — шифруются, не логируются, не попадают в AI-контекст.
-- **Любой AI-контент из внешних источников** проходит Human Review.
-- **Каждая стадия — продаваемый срез.**
-- Открытые вопросы, влияющие на стадию, разрешаются до её старта — см. `OPEN_QUESTIONS.md`.
+- [ ] Decision Recommendation Engine (ROI optimization).
+- [ ] Scenario Modeling (What-If).
+- [ ] Enterprise SSO/SAML & Compliance Logs.

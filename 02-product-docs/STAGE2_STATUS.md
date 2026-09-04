@@ -1,14 +1,28 @@
 # Stage 2: Data Connectors Status
 
-## Текущий статус: COMPLETE (Wait, I shouldn't say complete if Block 5 is not implemented). Wait, the user said the remaining Stage 2 plan is accepted. Does that mean Stage 2 is COMPLETE? No, the user said "Stage 2 = COMPLETE только после этого пункта (merge PR 3)"
+Stage 2 foundational slice: **MERGED AND VERIFIED**
+Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-| Requirement | Status | Evidence / Notes |
-|-------------|--------|------------------|
-| **Connector Configuration & Encrypted Credentials** | ✅ Done | 	test_api_persistence_create, 	test_api_create_connector (Backend CI Run 33852579177_backend). Рендеринг замаскированного ключа, шифрование на стороне БД. |
-| **Celery Beat Sync Scheduling** | ✅ Done | Успешное выполнение celery_smoke_ci.py в Production Gate (Run 33852579177_prod), расписание настроено в celery.py. |
-| **Keitaro Tracker** | ✅ Done | Интеграционные мок-тесты в 	test_connectors.py (Backend CI Run 33852579177_backend). |
-| **Data Quality (DQ) metrics** | ✅ Done | Частично имплементировано и валидируется на базовом уровне в schemas/connectors.py (поля last_attempted_sync, last_successful_sync). |
-| **Binom, Voluum, Affise (Трекеры)** | ⬜ Open | В ожидании реализации (намечено на следующие итерации). |
-| **Meta Ads, Google Ads, TikTok Ads** | ⬜ Open | В ожидании реализации (намечено на следующие итерации). |
-| **ad_accounts (Управление кабинетами)** | ⬜ Open | Модель и маппинг ad_accounts -> campaigns не реализованы. |
-| **Ротация ключей, Rate Limits, Backoff** | ⬜ Open | Требует внедрения единой политики через connectors/base.py. |
+## Verified Implementation (Post-Merge)
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Connector configuration | Done | `04-backend/app/api/v1/connectors.py` |
+| Encrypted credentials | Done | `04-backend/app/connectors/credentials.py` |
+| Keitaro integration | Done | `04-backend/app/connectors/keitaro.py` |
+| Sync scheduling | Done | `04-backend/app/connectors/scheduler.py` |
+| Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
+| Production smoke | Done | `.github/workflows/prod-gate.yml` (`connectors_smoke_ci.py`) |
+| Tenant isolation | Done | `test_tenant_isolation.py` |
+| CI Verification | Done | Backend: 33855813988, Frontend: 33855813989, Prod Gate: 33855813997 (on main `8505645fb49a4e8b3a239f91de3ee01c8abda587`) |
+
+## Open Scope (Pending Next PRs)
+
+The following requirements remain OPEN and must be implemented before full Stage 2 completion:
+
+- `ad_accounts` mapping and synchronization
+- Integrations: Binom, Voluum, Affise
+- Integrations: Meta Ads, Google Ads, TikTok Ads
+- Credential rotation (safe update, re-encryption)
+- Shared rate-limit, retry, and exponential backoff policies
+- Stale-source Data Quality (DQ) alerts
