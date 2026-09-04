@@ -1,28 +1,21 @@
-# Stage 2: Data Connectors Status
+# Stage 2 Status
 
-Stage 2 foundational slice: **MERGED AND VERIFIED**
-Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
+**Status:** PARTIAL / IN PROGRESS
+**Current Main SHA:** `008a40774452d810a5ffb3a01ce0cf0de5c048c1`
 
-## Verified Implementation (Post-Merge)
+## Completed (PR #6 and prior)
+- Foundational slice (connector configs, API, scheduler, persistence tests)
+- Core improvements (BaseConnector expansion, generic retry/backoff, rotation CLI, stale-source DQ, ad_accounts model)
+- 11 strict invariant tests (Tenant isolation, CRUD, Backoff, Rotation, DQ)
+- Green CI (Backend, Frontend, Prod-Gate)
 
-| Requirement | Status | Evidence |
-|---|---|---|
-| Connector configuration | Done | `04-backend/app/api/v1/connectors.py` |
-| Encrypted credentials | Done | `04-backend/app/connectors/credentials.py` |
-| Keitaro integration | Done | `04-backend/app/connectors/keitaro.py` |
-| Sync scheduling | Done | `04-backend/app/connectors/scheduler.py` |
-| Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
-| Production smoke | Done | `.github/workflows/prod-gate.yml` (`connectors_smoke_ci.py`) |
-| Tenant isolation | Done | `test_tenant_isolation.py` |
-| CI Verification | Done | Backend: 33855813988, Frontend: 33855813989, Prod Gate: 33855813997 (on main `8505645fb49a4e8b3a239f91de3ee01c8abda587`) |
+## Open Integrations
+- Binom: Planned
+- Voluum: Planned
+- Affise: Planned
+- Meta Ads: Planned
+- Google Ads: Planned
+- TikTok Ads: Planned
 
-## Open Scope (Pending Next PRs)
-
-The following requirements remain OPEN and must be implemented before full Stage 2 completion:
-
-- `ad_accounts` mapping and synchronization
-- Integrations: Binom, Voluum, Affise
-- Integrations: Meta Ads, Google Ads, TikTok Ads
-- Credential rotation (safe update, re-encryption)
-- Shared rate-limit, retry, and exponential backoff policies
-- Stale-source Data Quality (DQ) alerts
+## Definition of Done
+Full Stage 2 will not be COMPLETE until all 6 integrations listed above are implemented, integrated into the generic connector ecosystem, and verified via CI.

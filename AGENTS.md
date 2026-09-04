@@ -1,8 +1,8 @@
-# FinanceIntel â€” Rules for AI Agents
+# FinanceIntel — Rules for AI Agents
 
 SaaS financial management for media buying. Virtual CFO over trackers.
-Stage: Stage 2 "Data Connectors" (Foundational slice merged, full stage partial).
-Everything not in 02-product-docs/MVP.md and current STAGE2_STATUS.md is OUT OF SCOPE.
+Stage: Stage 2 "Data Connectors" (Foundational slice and core merged, full stage partial/in-progress).
+Everything not in 02-product-docs/CURRENT_STATUS.md and current STAGE2_STATUS.md is OUT OF SCOPE.
 
 ## Structure
 - 02-product-docs/ PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS (source of truth)
@@ -13,13 +13,20 @@ Everything not in 02-product-docs/MVP.md and current STAGE2_STATUS.md is OUT OF 
 
 ## Invariants (Violation = Blocking Bug)
 1. MONEY. Only Decimal / NUMERIC(20,4). `float` is STRICTLY FORBIDDEN. Rounding ROUND_HALF_UP to 4 places. Currency stored with amount.
-2. TENANTS. `company_id` comes ONLY from JWT session. Never from request body, query params, or LLM tool args. Plus RLS in Postgres.
+2. TENANTS. `company_id` comes ONLY from JWT session. Never from request body, query params, or LLM tool args. Plus RLS in Postgres. Must use strict tenant isolation.
 3. CR-1. AI Analyst responds only via tool use with real SQL to DB. No hallucinations.
 4. PCI. Full card numbers and proxy passwords are not stored. Only masked identifiers (last 4 chars).
-5. SECRETS. Never logged. Never in LLM context.
+5. SECRETS. Never logged. Plaintext secrets are explicitly banned. Credentials rotated safely in transactions.
 6. SOFT DELETE. `deleted_at` instead of DELETE on all financial tables.
 7. TIME. TIMESTAMPTZ in UTC. created_at/updated_at everywhere.
 8. IDEMPOTENCY. UNIQUE (company_id, source, external_id) on imports.
+9. MIGRATIONS. `alembic upgrade/downgrade` must be flawless.
+
+## Stage 2 Connector Constraints
+- `BaseConnector` enforces contracts (`test_connection`, `fetch_ad_accounts`, `normalize`, `upsert`).
+- `ad_accounts` must isolate by tenant via RLS and unique keys.
+- `retry/backoff` must handle 429 and 50x safely with exponential backoff.
+- `stale-source DQ` monitors ingestion using intervals.
 
 ## Backend
 - Logic in `services/`, routers are thin. SQL only in `repositories/services`.
@@ -35,17 +42,5 @@ Everything not in 02-product-docs/MVP.md and current STAGE2_STATUS.md is OUT OF 
 - Data via TanStack Query + `src/lib/api`. Direct import from mockData forbidden.
 - Next.js 16 is newer than your training data: read `node_modules/next/dist/docs/`.
 
-## Data Connectors (Stage 2)
-- All integrations MUST implement the base interface `Connector` from `connectors/base.py`.
-- `company_id` only from JWT.
-- RLS enforced on all connector tables.
-- Secrets encrypted at rest (Fernet).
-- Secrets NEVER logged.
-- API responses MUST NOT contain plaintext or encrypted secrets.
-- Decimal for money.
-- Idempotent upsert is STRICTLY REQUIRED.
-- Timeout, retry, and exponential backoff for external APIs.
-- Tenant isolation tests and migration tests required.
-
 ## Out of Scope Right Now
-Market Intelligence, Telegram parsing, 06-admin-frontend, Forecasting, Scenario Modeling, custom inference. Do not offer, do not write.
+Stage 3+, Market Intelligence, Telegram parsing, 06-admin-frontend, Forecasting, Scenario Modeling, custom inference. Do not offer, do not write.
