@@ -20,7 +20,7 @@ async def test_api_persistence_create(client_a):
     # decode the client token to find company_id
     token = client_a.headers["Authorization"].split(" ")[1]
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    company_id = payload.get("company_id")
+    company_id = payload.get("cid")
     
     async with tenant_session(company_id) as db:
         import uuid
@@ -51,7 +51,7 @@ async def test_api_persistence_patch_status(client_a):
     from jose import jwt
     from app.core.config import settings
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    company_id = payload.get("company_id")
+    company_id = payload.get("cid")
 
     async with tenant_session(company_id) as db:
         import uuid
@@ -78,7 +78,7 @@ async def test_api_persistence_soft_delete(client_a):
     from jose import jwt
     from app.core.config import settings
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    company_id = payload.get("company_id")
+    company_id = payload.get("cid")
 
     # DB verify
     async with tenant_session(company_id) as db:
