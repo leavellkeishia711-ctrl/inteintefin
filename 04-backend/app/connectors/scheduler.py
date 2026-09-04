@@ -49,6 +49,9 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 # Instantiate correct connector class
                 if config.connector_name == "keitaro":
                     connector = KeitaroConnector(config, decrypted)
+                elif config.connector_name == "binom":
+                    from app.connectors.binom import BinomConnector
+                    connector = BinomConnector(config, decrypted)
                 else:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
 
