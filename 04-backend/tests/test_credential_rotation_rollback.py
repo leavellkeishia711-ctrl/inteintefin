@@ -29,13 +29,14 @@ async def test_credential_rotation_rollback(company_b_fixtures):
         )
         db_session.add(conn)
         await db_session.commit()
+        conn_id = conn_id
         
         # Rotate should fail
         with pytest.raises(Exception):
             await rotate_keys(wrong_old_key, new_key, db=db_session, dry_run=False, company_id=comp_id)
             
         # Verify rollback - old key still decrypts it
-        res = await db_session.execute(select(ConnectorConfig.encrypted_secret).where(ConnectorConfig.id == conn.id))
+        res = await db_session.execute(select(ConnectorConfig.encrypted_secret).where(ConnectorConfig.id == conn_id))
         secret_val = res.scalar()
         decrypted = f_old.decrypt(secret_val.encode('utf-8')).decode('utf-8')
         assert decrypted == "my_secret_token"
