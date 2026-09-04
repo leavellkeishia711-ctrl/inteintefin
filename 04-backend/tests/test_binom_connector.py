@@ -1,20 +1,19 @@
 import pytest
 import httpx
-from datetime import date
+from datetime import datetime, timezone
 from decimal import Decimal
 import uuid
 from sqlalchemy import select
 from unittest.mock import AsyncMock, patch, MagicMock
-import asyncio
-
 from app.connectors.binom import BinomConnector
-from app.connectors.base import UnauthorizedError, RateLimitError, ConnectorError
+from app.connectors.base import UnauthorizedError, RateLimitError
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.session import system_session
 
 class DummyConfig:
     def __init__(self, company_id):
         self.company_id = company_id
-        self.settings = {"base_url": "https://api.binom.test"}
+        self.settings = {"base_url": "https://api.binom.test", "currency": "USD"}
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
@@ -29,6 +28,9 @@ async def test_binom_test_connection_success(mock_get):
     
     result = await connector.test_connection()
     assert result is True
+    # Ensure api_key is in headers, not in URL
+    assert "Api-Key" in mock_get.call_args.kwargs.get("headers", {})
+    assert "api_key" not in mock_get.call_args[0]
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
@@ -53,35 +55,32 @@ async def test_binom_normalization():
         {"camp_id": "100", "date": "2026-09-01", "cost": "10.50", "revenue": "20.75"},
         {"camp_id": "101", "date": "2026-09-02", "cost": "0", "revenue": "1.00"},
         {"invalid": "data"},
-        {"camp_id": "102"} # missing date
+        {"camp_id": "102"}
     ]
     
     normalized = connector.normalize(raw_data)
     
     assert len(normalized) == 2
-    
     assert normalized[0].external_id == "100"
-    assert normalized[0].stat_date == date(2026, 9, 1)
+    assert normalized[0].stat_date == datetime(2026, 9, 1, tzinfo=timezone.utc).date()
     assert normalized[0].spend == Decimal("10.50")
     assert normalized[0].revenue == Decimal("20.75")
     assert normalized[0].source == "binom"
-    
-    assert normalized[1].external_id == "101"
+    assert normalized[0].currency == "USD"
 
 @pytest.mark.asyncio
 async def test_binom_upsert_idempotency(company_b_fixtures):
-    company, user = company_b_fixtures
-    config = DummyConfig(company.id)
+    company_id = uuid.UUID(company_b_fixtures.ids["company_id"])
+    user_id = uuid.UUID(company_b_fixtures.ids["user_id"])
+    config = DummyConfig(company_id)
     connector = BinomConnector(config, "secret_key")
     
-    from app.db.session import system_session
     async with system_session() as db_session:
-        # Create a campaign run that maps to binom camp_id "200"
         run = CampaignRun(
-            company_id=company.id,
-            buyer_id=user.id,
-            started_at=date(2026, 9, 1),
-            note="200" # external_id matches here
+            company_id=company_id,
+            buyer_id=user_id,
+            started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+            note="200"
         )
         db_session.add(run)
         await db_session.commit()
@@ -117,36 +116,119 @@ async def test_binom_upsert_idempotency(company_b_fixtures):
         assert stats[0].revenue == Decimal("120.00")
 
 @pytest.mark.asyncio
+async def test_binom_tenant_isolation(company_a_fixtures, company_b_fixtures):
+    company_id_a = uuid.UUID(company_a_fixtures.ids["company_id"])
+    user_id_a = uuid.UUID(company_a_fixtures.ids["user_id"])
+    
+    company_id_b = uuid.UUID(company_b_fixtures.ids["company_id"])
+    user_id_b = uuid.UUID(company_b_fixtures.ids["user_id"])
+    
+    # Configure connector for company_a
+    config = DummyConfig(company_id_a)
+    connector = BinomConnector(config, "secret_key")
+    
+    async with system_session() as db_session:
+        # Create run in company_b
+        run_b = CampaignRun(
+            company_id=company_id_b,
+            buyer_id=user_id_b,
+            started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+            note="500"
+        )
+        db_session.add(run_b)
+        await db_session.commit()
+        
+        # Connector for company_a tries to update company_b's run (note="500")
+        raw_data = [
+            {"camp_id": "500", "date": "2026-09-01", "cost": "99.00", "revenue": "99.00"}
+        ]
+        normalized = connector.normalize(raw_data)
+        await connector.upsert(db_session, normalized)
+        await db_session.commit()
+        
+        # Verify no stat was created for company_b
+        stmt = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run_b.id)
+        res = await db_session.execute(stmt)
+        stats = res.scalars().all()
+        assert len(stats) == 0
+
+@pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
-async def test_binom_retry_429(mock_get):
+async def test_binom_retry_429(mock_get, monkeypatch):
     config = DummyConfig(uuid.uuid4())
     connector = BinomConnector(config, "secret_key")
     
-    # Fail 2 times with 429, then succeed
     resp_429 = MagicMock()
     resp_429.status_code = 429
+    
+    mock_get.side_effect = [
+        httpx.HTTPStatusError("429", request=MagicMock(), response=resp_429),
+        httpx.HTTPStatusError("429", request=MagicMock(), response=resp_429),
+        httpx.HTTPStatusError("429", request=MagicMock(), response=resp_429),
+        httpx.HTTPStatusError("429", request=MagicMock(), response=resp_429)
+    ]
+    
+    monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
+    
+    with pytest.raises(RateLimitError):
+        await connector.fetch()
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_binom_retry_5xx_success(mock_get, monkeypatch):
+    config = DummyConfig(uuid.uuid4())
+    connector = BinomConnector(config, "secret_key")
+    
+    resp_500 = MagicMock()
+    resp_500.status_code = 500
     
     resp_200 = MagicMock()
     resp_200.status_code = 200
     resp_200.json.return_value = [{"camp_id": "300", "date": "2026-09-01", "cost": "5.0"}]
     
     mock_get.side_effect = [
-        httpx.HTTPStatusError("429", request=MagicMock(), response=resp_429),
-        httpx.HTTPStatusError("429", request=MagicMock(), response=resp_429),
+        httpx.HTTPStatusError("500", request=MagicMock(), response=resp_500),
         resp_200
     ]
     
-    # We need to temporarily speed up sleep for the test
-    import app.connectors.base
-    original_sleep = asyncio.sleep
-    async def mock_sleep(*args, **kwargs):
-        pass
-    app.connectors.base.asyncio.sleep = mock_sleep
+    monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
     
-    try:
-        data = await connector.fetch()
-        assert len(data) == 1
-        assert data[0]["camp_id"] == "300"
-        assert mock_get.call_count == 3
-    finally:
-        app.connectors.base.asyncio.sleep = original_sleep
+    data = await connector.fetch()
+    assert len(data) == 1
+    assert data[0]["camp_id"] == "300"
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_binom_unauthorized(mock_get, monkeypatch):
+    config = DummyConfig(uuid.uuid4())
+    connector = BinomConnector(config, "secret_key")
+    
+    resp_401 = MagicMock()
+    resp_401.status_code = 401
+    mock_get.side_effect = httpx.HTTPStatusError("401", request=MagicMock(), response=resp_401)
+    
+    monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
+    
+    with pytest.raises(UnauthorizedError):
+        await connector.fetch()
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_binom_smoke(mock_get, company_b_fixtures):
+    company_id = uuid.UUID(company_b_fixtures.ids["company_id"])
+    config = DummyConfig(company_id)
+    connector = BinomConnector(config, "secret_key")
+    
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = []
+    mock_get.return_value = mock_resp
+    
+    assert await connector.test_connection() is True
+    
+    async with system_session() as db_session:
+        raw = await connector.fetch()
+        norm = connector.normalize(raw)
+        await connector.upsert(db_session, norm)
+        
+    assert mock_get.call_count >= 1

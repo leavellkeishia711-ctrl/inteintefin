@@ -2,10 +2,8 @@ from typing import List, Dict, Any
 from decimal import Decimal, InvalidOperation
 import httpx
 from datetime import datetime, timezone
-import asyncio
 import logging
-
-from .base import Connector, NormalizedRecord, with_retry, ConnectorError
+from .base import Connector, NormalizedRecord, with_retry
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
 from app.db.models.companies import Company
@@ -19,32 +17,37 @@ class BinomConnector(Connector):
         super().__init__(config)
         self.api_key = decrypted_api_key
         # Binom is self-hosted, so base_url must be provided in settings
-        # e.g., "https://tracker.mycompany.com"
         settings = getattr(config, 'settings', {}) or {}
         self.base_url = settings.get("base_url", "").rstrip("/")
         if not self.base_url:
-            self.base_url = "https://mock.binom.local" # Default fallback for tests
+            self.base_url = "https://mock.binom.local"
 
     async def test_connection(self) -> bool:
-        """Verifies connection by fetching a simple endpoint like timezone or campaign count."""
+        """Verifies connection by fetching a simple endpoint."""
         async with httpx.AsyncClient() as client:
             try:
-                # Mock endpoint for testing connection
+                headers = {"Api-Key": self.api_key}
                 response = await with_retry(lambda: client.get(
-                    f"{self.base_url}/?page=status&api_key={self.api_key}",
+                    f"{self.base_url}/?page=status",
+                    headers=headers,
                     timeout=10
                 ))
                 response.raise_for_status()
                 return True
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Binom test_connection HTTP error: {type(e).__name__} status={e.response.status_code}")
+                return False
             except Exception as e:
-                logger.error(f"Binom test_connection failed: {e}")
+                logger.error(f"Binom test_connection network error: {type(e).__name__}")
                 return False
 
     async def fetch_campaigns(self) -> List[Dict[str, Any]]:
         """Fetches raw campaign list."""
         async with httpx.AsyncClient() as client:
+            headers = {"Api-Key": self.api_key}
             response = await with_retry(lambda: client.get(
-                f"{self.base_url}/?page=Campaigns&api_key={self.api_key}",
+                f"{self.base_url}/?page=Campaigns",
+                headers=headers,
                 timeout=15
             ))
             response.raise_for_status()
@@ -54,8 +57,10 @@ class BinomConnector(Connector):
     async def fetch_metrics(self) -> List[Dict[str, Any]]:
         """Fetches stats/metrics."""
         async with httpx.AsyncClient() as client:
+            headers = {"Api-Key": self.api_key}
             response = await with_retry(lambda: client.get(
-                f"{self.base_url}/?page=Stats&group1=1&group2=3&api_key={self.api_key}",
+                f"{self.base_url}/?page=Stats&group1=1&group2=3",
+                headers=headers,
                 timeout=15
             ))
             response.raise_for_status()
@@ -68,6 +73,11 @@ class BinomConnector(Connector):
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
         normalized = []
+        settings = getattr(self.config, 'settings', {}) or {}
+        currency = str(settings.get("currency", "USD"))
+        if len(currency) != 3:
+            currency = "USD"
+            
         for row in raw_data:
             if not isinstance(row, dict):
                 continue
@@ -81,7 +91,6 @@ class BinomConnector(Connector):
                 continue
                 
             try:
-                # Binom often returns dates like YYYY-MM-DD
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
             except ValueError:
                 continue
@@ -100,10 +109,9 @@ class BinomConnector(Connector):
                 stat_date=stat_date,
                 spend=spend,
                 revenue=revenue,
-                currency="USD"  # Trackers often operate in USD, mapping should be dynamic later
+                currency=currency
             ))
             
-        # Deduplicate taking the latest if multiple rows have same external_id and date
         unique_records = {}
         for rec in normalized:
             key = (rec.external_id, rec.stat_date)
@@ -119,18 +127,24 @@ class BinomConnector(Connector):
             return
         base_currency = company.base_currency
 
+        matched = 0
+        skipped = 0
+
         for record in normalized_data:
-            # For Binom, map 'note' in CampaignRun to the Binom 'camp_id'
             stmt = select(CampaignRun).where(
                 and_(
                     CampaignRun.company_id == self.config.company_id,
-                    CampaignRun.note == record.external_id
+                    CampaignRun.note == record.external_id,
+                    CampaignRun.deleted_at.is_(None)
                 )
             )
             run_res = await session.execute(stmt)
             run = run_res.scalars().first()
             if not run:
+                skipped += 1
                 continue
+                
+            matched += 1
 
             try:
                 fx_rate = await resolve_fx_rate(session, record.currency, base_currency, record.stat_date)
@@ -143,7 +157,7 @@ class BinomConnector(Connector):
                 CampaignRunStat.stat_date == record.stat_date,
                 CampaignRunStat.source == record.source,
                 CampaignRunStat.external_id == record.external_id
-            ))
+           ))
             stat_res = await session.execute(stmt_stat)
             stat = stat_res.scalars().first()
             
@@ -164,3 +178,6 @@ class BinomConnector(Connector):
                     external_id=record.external_id
                 )
                 session.add(new_stat)
+                
+        if skipped > 0:
+            logger.warning(f"Binom upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")
