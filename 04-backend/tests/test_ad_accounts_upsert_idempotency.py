@@ -57,11 +57,11 @@ async def test_upsert_idempotency(company_b_fixtures):
         assert len(accounts) == 1
         
         # Second upsert (update status)
-        acc.status = "paused"
+        acc.status = "suspended"
         await conn.upsert_ad_accounts(db_session, [acc])
         await db_session.commit()
         
         res = await db_session.execute(select(AdAccount).where(AdAccount.platform == "tiktok"))
         accounts = res.scalars().all()
         assert len(accounts) == 1
-        assert accounts[0].status == "paused"
+        assert accounts[0].status == "suspended"

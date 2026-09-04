@@ -24,6 +24,6 @@ async def test_ad_account_crud(client_a: AsyncClient):
     assert resp.status_code == 200
     
     # Update
-    resp = await client_a.patch(f"/api/v1/ad-accounts/{acc_id}", json={"status": "paused"})
+    resp = await client_a.patch(f"/api/v1/ad-accounts/{acc_id}", json={"status": "suspended"})
     assert resp.status_code == 200
-    assert resp.json()["status"] == "paused"
+    assert resp.json()["status"] == "suspended"

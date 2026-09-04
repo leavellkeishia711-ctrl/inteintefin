@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.db.models import Transaction, CampaignRunStat
-from app.services.alerts import trigger_alert
+from app.services.alerts import trigger_alert, LoggingNotifier, TelegramNotifier
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
             stalled = True
             
     if stalled:
-        from app.services.alerts import LoggingNotifier, TelegramNotifier
+        
         from app.core.i18n import translate
         from app.db.models import User
         
