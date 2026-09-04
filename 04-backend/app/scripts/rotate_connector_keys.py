@@ -44,6 +44,7 @@ async def rotate_keys(old_key: str, new_key: str, db=None, dry_run=False):
         except Exception as e:
             if not db: # only print if not in test
                 print(f"Failed to rotate key for connector {config.id} (Company: {config.company_id}): {e}")
+            await session.rollback()
             raise e
     
     if not dry_run:
