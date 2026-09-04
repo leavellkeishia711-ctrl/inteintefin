@@ -47,13 +47,17 @@ jobs:
     - name: Run Load Test (Asyncpg/SQLAlchemy pool)
       run: |
         docker compose -f 08-devops/docker-compose.ci.yml exec -T api python /app/scripts/load_test_ci.py 2>&1 | tee load_test.log
+
+    - name: Run Connectors Smoke Test
+      run: |
+        docker compose -f 08-devops/docker-compose.ci.yml exec -T api python /app/scripts/connectors_smoke_ci.py 2>&1 | tee connectors_smoke.log
         
     - name: Log Audit for Secrets
       run: |
         # Dump logs from all containers
         docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
         # Check for secrets
-        if [ -f all_containers.log ] && grep -iE "generate_a_strong_secret_key_here|dummy_key_for_ci|dummy_bot_token|12345|test_token" all_containers.log; then
+        if [ -f all_containers.log ] && grep -iE "generate_a_strong_secret_key_here|dummy_key_for_ci|dummy_bot_token|12345|test_token|super_secret_keitaro_smoke_key_12345" all_containers.log; then
           echo "Found secrets in logs!"
           exit 1
         else
@@ -74,4 +78,5 @@ jobs:
           celery_smoke.log
           redis_outage.log
           load_test.log
+          connectors_smoke.log
           all_containers.log
