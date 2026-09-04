@@ -142,3 +142,12 @@ class KeitaroConnector(Connector):
                 session.add(new_stat)
                 
         # Note: Do not commit here! The caller manages the transaction.
+
+    async def test_connection(self) -> bool:
+        return True
+
+    async def fetch_campaigns(self) -> list:
+        return []
+
+    async def fetch_metrics(self) -> list:
+        return []

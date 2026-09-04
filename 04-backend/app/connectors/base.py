@@ -86,6 +86,18 @@ class Connector(ABC):
         self.config = config
 
     @abstractmethod
+    @abstractmethod
+    async def test_connection(self) -> bool:
+        pass
+
+    @abstractmethod
+    async def fetch_campaigns(self) -> List[Dict[str, Any]]:
+        pass
+
+    @abstractmethod
+    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+        pass
+
     async def fetch(self) -> List[Dict[str, Any]]:
         """Fetches raw data from the external source."""
         pass

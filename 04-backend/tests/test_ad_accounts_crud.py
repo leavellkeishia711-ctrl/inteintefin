@@ -4,9 +4,7 @@ import uuid
 
 pytestmark = pytest.mark.asyncio
 
-async def test_ad_account_crud(async_client: AsyncClient, owner_token: str):
-    headers = {"Authorization": f"Bearer {owner_token}"}
-    
+async def test_ad_account_crud(client_a: AsyncClient):
     # Create
     create_payload = {
         "platform": "facebook",
@@ -14,7 +12,7 @@ async def test_ad_account_crud(async_client: AsyncClient, owner_token: str):
         "name": "Test FB Account",
         "status": "active"
     }
-    resp = await async_client.post("/api/v1/ad-accounts/", headers=headers, json=create_payload)
+    resp = await client_a.post("/api/v1/ad-accounts/", json=create_payload)
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert data["name"] == "Test FB Account"
@@ -22,10 +20,10 @@ async def test_ad_account_crud(async_client: AsyncClient, owner_token: str):
     acc_id = data["id"]
     
     # Read
-    resp = await async_client.get(f"/api/v1/ad-accounts/{acc_id}", headers=headers)
+    resp = await client_a.get(f"/api/v1/ad-accounts/{acc_id}")
     assert resp.status_code == 200
     
     # Update
-    resp = await async_client.patch(f"/api/v1/ad-accounts/{acc_id}", headers=headers, json={"status": "paused"})
+    resp = await client_a.patch(f"/api/v1/ad-accounts/{acc_id}", json={"status": "paused"})
     assert resp.status_code == 200
     assert resp.json()["status"] == "paused"
