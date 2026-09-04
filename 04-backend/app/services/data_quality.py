@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.db.models import Transaction, CampaignRunStat
-from app.services.alerts import trigger_alert
+from app.services.alerts import trigger_alert, LoggingNotifier, TelegramNotifier
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
             stalled = True
             
     if stalled:
-        from app.services.alerts import LoggingNotifier, TelegramNotifier
+        
         from app.core.i18n import translate
         from app.db.models import User
         
@@ -79,16 +79,24 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
                     cooldown_hours=24,
                     notifiers=[LoggingNotifier(), TelegramNotifier(db)]
                 )
-            elif conn.last_successful_sync < threshold_date:
-                await trigger_alert(
-                    db, company_id,
-                    type='operational',
-                    risk_level='warning',
-                    message=f"Connector {conn.connector_name} is stale. No successful sync in {days_threshold} days.",
-                    dedup_key=f"connector_stale_{conn.id}",
-                    cooldown_hours=24,
-                    notifiers=[LoggingNotifier(), TelegramNotifier(db)]
-                )
+            else:
+                # DQ alert: consider it stale if 3x the interval has passed without a successful sync
+                stale_threshold_minutes = conn.sync_interval_minutes * 3
+                # Minimum threshold of 2 hours just to avoid false positives on quick intervals
+                stale_threshold_minutes = max(stale_threshold_minutes, 120)
+                
+                delta_minutes = (now - conn.last_successful_sync).total_seconds() / 60
+                
+                if delta_minutes > stale_threshold_minutes:
+                    await trigger_alert(
+                        db, company_id,
+                        type='operational',
+                        risk_level='warning',
+                        message=f"Data Quality Alert: Connector {conn.connector_name} is stale. Last successful sync was {int(delta_minutes/60)} hours ago.",
+                        dedup_key=f"connector_stale_dq_{conn.id}",
+                        cooldown_hours=24,
+                        notifiers=[LoggingNotifier(), TelegramNotifier(db)]
+                    )
         elif conn.status in ('failing', 'unauthorized'):
             await trigger_alert(
                 db, company_id,

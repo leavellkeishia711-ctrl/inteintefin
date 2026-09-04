@@ -4,6 +4,7 @@ from typing import Optional
 from datetime import date, datetime
 import uuid
 class AdAccountBase(BaseModel):
+    name: Optional[str] = None
     platform: str
     external_account_id: Optional[str] = None
     status: str = "active"

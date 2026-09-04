@@ -8,7 +8,8 @@ import os
 
 from app.db.session import system_session, tenant_session
 from app.db.models.connectors import ConnectorConfig
-from app.connectors.keitaro import KeitaroConnector, UnauthorizedError
+from app.connectors.keitaro import KeitaroConnector
+from app.connectors.base import UnauthorizedError
 from app.connectors.credentials import decrypt_secret
 
 logger = logging.getLogger(__name__)

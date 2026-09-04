@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import asyncio
 import logging
 
-from .base import Connector, NormalizedRecord
+from .base import Connector, NormalizedRecord, with_retry, ConnectorError, UnauthorizedError, RateLimitError
 from app.db.session import async_session_maker, system_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
@@ -15,61 +15,30 @@ from sqlalchemy import select, and_
 
 logger = logging.getLogger(__name__)
 
-class ConnectorError(Exception):
-    pass
-
-class UnauthorizedError(ConnectorError):
-    pass
-
 class KeitaroConnector(Connector):
     def __init__(self, config: Any, decrypted_api_key: str):
         super().__init__(config)
         self.api_key = decrypted_api_key
         self.base_url = "https://api.keitaro.io/v1" # Would be from config in reality
 
-    async def _fetch_with_retry(self, client: httpx.AsyncClient) -> List[Dict[str, Any]]:
+    async def _do_fetch(self, client: httpx.AsyncClient) -> List[Dict[str, Any]]:
         headers = {"Api-Key": self.api_key}
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                # In real life, we would pass date ranges here
-                response = await client.get(f"{self.base_url}/report", headers=headers, timeout=15.0)
-                
-                if response.status_code in (401, 403):
-                    raise UnauthorizedError("Invalid Keitaro API Key")
-                    
-                if response.status_code == 429 or response.status_code >= 500:
-                    if attempt == max_retries - 1:
-                        raise ConnectorError(f"HTTP {response.status_code} after {max_retries} attempts")
-                    await asyncio.sleep(2 ** attempt)
-                    continue
-                    
-                response.raise_for_status()
-                
-                try:
-                    data = response.json()
-                except ValueError:
-                    raise ConnectorError("Malformed JSON in response")
-                    
-                if not isinstance(data, list):
-                    raise ConnectorError("Unexpected response format, expected a list")
-                    
-                return data
-
-            except httpx.TimeoutException:
-                if attempt == max_retries - 1:
-                    raise ConnectorError("Timeout fetching data from Keitaro")
-                await asyncio.sleep(2 ** attempt)
-            except httpx.RequestError as e:
-                if attempt == max_retries - 1:
-                    raise ConnectorError(f"Connection error: {e}")
-                await asyncio.sleep(2 ** attempt)
-
-        return []
+        response = await client.get(f"{self.base_url}/report", headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        try:
+            data = response.json()
+        except ValueError:
+            raise ConnectorError("Malformed JSON in response")
+            
+        if not isinstance(data, list):
+            raise ConnectorError("Unexpected response format, expected a list")
+            
+        return data
 
     async def fetch(self) -> List[Dict[str, Any]]:
         async with httpx.AsyncClient() as client:
-            return await self._fetch_with_retry(client)
+            return await with_retry(lambda: self._do_fetch(client))
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
         normalized = []
@@ -174,13 +143,11 @@ class KeitaroConnector(Connector):
                 
         # Note: Do not commit here! The caller manages the transaction.
 
-    async def sync(self, session: AsyncSession) -> None:
-        try:
-            raw_data = await self.fetch()
-            normalized = self.normalize(raw_data)
-            await self.upsert(session, normalized)
-        except UnauthorizedError:
-            raise
-        except ConnectorError as e:
-            logger.error(f"Keitaro sync failed: {e}")
-            raise
+    async def test_connection(self) -> bool:
+        return True
+
+    async def fetch_campaigns(self) -> list:
+        return []
+
+    async def fetch_metrics(self) -> list:
+        return []

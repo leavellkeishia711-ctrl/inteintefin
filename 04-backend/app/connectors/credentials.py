@@ -11,7 +11,7 @@ def get_cipher() -> Fernet:
     if not key:
         raise ValueError("CONNECTOR_SECRET_KEY environment variable is not set")
     try:
-        return Fernet(key.encode('utf-8'))
+        return Fernet(key.strip().encode('utf-8'))
     except Exception:
         raise ValueError("CONNECTOR_SECRET_KEY is invalid")
 
