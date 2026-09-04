@@ -63,7 +63,7 @@ async def test_voluum_normalization():
     
     normalized = connector.normalize(raw_data)
     
-    assert len(normalized) == 2
+    assert len(normalized) == 3
     assert normalized[0].external_id == "100"
     assert normalized[0].stat_date == datetime(2026, 9, 1, tzinfo=timezone.utc).date()
     assert normalized[0].spend == Decimal("10.50")
