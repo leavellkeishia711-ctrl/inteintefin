@@ -23,13 +23,12 @@ async def test_api_persistence_create(client_a):
     company_id = payload.get("company_id")
     
     async with tenant_session(company_id) as db:
-        async with db.begin():
-            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
-            res = await db.execute(stmt)
-            config = res.scalars().first()
-            assert config is not None
-            assert config.connector_name == "keitaro"
-            assert config.sync_interval_minutes == 60
+        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+        res = await db.execute(stmt)
+        config = res.scalars().first()
+        assert config is not None
+        assert config.connector_name == "keitaro"
+        assert config.sync_interval_minutes == 60
 
 @pytest.mark.asyncio
 async def test_api_persistence_patch_status(client_a):
@@ -54,12 +53,11 @@ async def test_api_persistence_patch_status(client_a):
     company_id = payload.get("company_id")
 
     async with tenant_session(company_id) as db:
-        async with db.begin():
-            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
-            res = await db.execute(stmt)
-            config = res.scalars().first()
-            assert config.status == "paused"
-            assert config.sync_interval_minutes == 120
+        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+        res = await db.execute(stmt)
+        config = res.scalars().first()
+        assert config.status == "paused"
+        assert config.sync_interval_minutes == 120
 
 @pytest.mark.asyncio
 async def test_api_persistence_soft_delete(client_a):
@@ -82,10 +80,9 @@ async def test_api_persistence_soft_delete(client_a):
 
     # DB verify
     async with tenant_session(company_id) as db:
-        async with db.begin():
-            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
-            res = await db.execute(stmt)
-            config = res.scalars().first()
-            assert config is not None
-            assert config.deleted_at is not None
-            assert config.status == "paused"
+        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+        res = await db.execute(stmt)
+        config = res.scalars().first()
+        assert config is not None
+        assert config.deleted_at is not None
+        assert config.status == "paused"
