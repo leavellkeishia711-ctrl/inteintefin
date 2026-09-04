@@ -23,7 +23,8 @@ async def test_api_persistence_create(client_a):
     company_id = payload.get("company_id")
     
     async with tenant_session(company_id) as db:
-        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+        import uuid
+        stmt = select(ConnectorConfig).where(ConnectorConfig.id == uuid.UUID(conn_id))
         res = await db.execute(stmt)
         config = res.scalars().first()
         assert config is not None
@@ -53,7 +54,8 @@ async def test_api_persistence_patch_status(client_a):
     company_id = payload.get("company_id")
 
     async with tenant_session(company_id) as db:
-        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+        import uuid
+        stmt = select(ConnectorConfig).where(ConnectorConfig.id == uuid.UUID(conn_id))
         res = await db.execute(stmt)
         config = res.scalars().first()
         assert config.status == "paused"
@@ -80,7 +82,8 @@ async def test_api_persistence_soft_delete(client_a):
 
     # DB verify
     async with tenant_session(company_id) as db:
-        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+        import uuid
+        stmt = select(ConnectorConfig).where(ConnectorConfig.id == uuid.UUID(conn_id))
         res = await db.execute(stmt)
         config = res.scalars().first()
         assert config is not None
