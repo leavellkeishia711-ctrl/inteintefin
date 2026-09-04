@@ -28,7 +28,7 @@ async def test_api_create_connector(client_a: AsyncClient):
         "secret": "my_secret",
         "sync_interval_minutes": 60
     })
-    assert res.status_code == 200
+    assert res.status_code == 201
     data = res.json()
     assert "secret" not in data
     assert "encrypted_secret" not in data
