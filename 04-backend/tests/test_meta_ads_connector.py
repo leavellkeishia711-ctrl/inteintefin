@@ -217,7 +217,7 @@ async def test_meta_ad_accounts_parsing_and_isolation(company_b_fixtures):
         assert norm_accs[0].external_account_id == "123"
         assert norm_accs[0].status == "active"
         assert norm_accs[1].external_account_id == "456"
-        assert norm_accs[1].status == "disabled"
+        assert norm_accs[1].status == "banned"
         
         await connector.upsert_ad_accounts(db_session, norm_accs)
         await db_session.commit()

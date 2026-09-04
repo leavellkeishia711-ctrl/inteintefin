@@ -68,7 +68,7 @@ class MetaAdsConnector(Connector):
             # Meta status: 1 = ACTIVE, 2 = DISABLED, 3 = UNSETTLED, 7 = PENDING_RISK_REVIEW, 8 = PENDING_SETTLEMENT, 9 = IN_GRACE_PERIOD, 100 = PENDING_CLOSURE, 101 = CLOSED, 201 = ANY_ACTIVE, 202 = ANY_CLOSED
             raw_status = row.get("account_status", 0)
             status_map = {1: "active"}
-            mapped_status = status_map.get(raw_status, "disabled")
+            mapped_status = status_map.get(raw_status, "banned")
             
             normalized.append(NormalizedAdAccount(
                 platform="meta",
