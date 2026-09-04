@@ -133,6 +133,7 @@ async def test_binom_tenant_isolation(company_b_fixtures):
             base_currency="USD"
         )
         db_session.add(comp_a)
+        await db_session.flush()
         
         user_a = User(
             id=user_id_a,
@@ -143,6 +144,7 @@ async def test_binom_tenant_isolation(company_b_fixtures):
             role="admin"
         )
         db_session.add(user_a)
+        await db_session.flush()
         
         run_a = CampaignRun(
             company_id=company_id_a,
