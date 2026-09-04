@@ -1,58 +1,91 @@
 import pytest
-from httpx import AsyncClient
+from app.db.session import tenant_session
+from app.db.models.connectors import ConnectorConfig
+from sqlalchemy import select
 
 @pytest.mark.asyncio
-async def test_api_persistence_create(client_a: AsyncClient):
-    create_res = await client_a.post('/api/v1/connectors/', json={
-        'connector_name': 'keitaro_pers',
-        'secret': 'some_secret_persist',
-        'sync_interval_minutes': 15
+async def test_api_persistence_create(client_a):
+    resp = await client_a.post("/api/v1/connectors/", json={
+        "connector_name": "keitaro",
+        "secret": "my-secret-key-123",
+        "sync_interval_minutes": 60
     })
-    assert create_res.status_code == 200
-    connector_id = create_res.json()['id']
+    assert resp.status_code == 200
+    data = resp.json()
+    conn_id = data["id"]
     
-    list_res = await client_a.get('/api/v1/connectors/')
-    assert list_res.status_code == 200
-    connectors = list_res.json()
+    # Read directly from DB in a new connection
+    from jose import jwt
+    from app.core.config import settings
+    # decode the client token to find company_id
+    token = client_a.headers["Authorization"].split(" ")[1]
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    company_id = payload.get("company_id")
     
-    found = [c for c in connectors if c['id'] == connector_id]
-    assert len(found) == 1
-    assert found[0]['connector_name'] == 'keitaro_pers'
-    assert found[0]['sync_interval_minutes'] == 15
+    async with tenant_session(company_id) as db:
+        async with db.begin():
+            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+            res = await db.execute(stmt)
+            config = res.scalars().first()
+            assert config is not None
+            assert config.connector_name == "keitaro"
+            assert config.sync_interval_minutes == 60
 
 @pytest.mark.asyncio
-async def test_api_persistence_patch_status(client_a: AsyncClient):
-    create_res = await client_a.post('/api/v1/connectors/', json={
-        'connector_name': 'patch_test_pers',
-        'secret': 'sec',
-        'sync_interval_minutes': 10
+async def test_api_persistence_patch_status(client_a):
+    resp = await client_a.post("/api/v1/connectors/", json={
+        "connector_name": "keitaro-patch",
+        "secret": "my-secret",
+        "sync_interval_minutes": 60
     })
-    assert create_res.status_code == 200
-    connector_id = create_res.json()['id']
+    assert resp.status_code == 200
+    conn_id = resp.json()["id"]
 
-    patch_res = await client_a.patch(f'/api/v1/connectors/{connector_id}', json={
-        'status': 'paused'
+    resp2 = await client_a.patch(f"/api/v1/connectors/{conn_id}", json={
+        "status": "paused",
+        "sync_interval_minutes": 120
     })
-    assert patch_res.status_code == 200
-    assert patch_res.json()['status'] == 'paused'
+    assert resp2.status_code == 200
 
-    list_res = await client_a.get('/api/v1/connectors/')
-    found = [c for c in list_res.json() if c['id'] == connector_id]
-    assert found[0]['status'] == 'paused'
+    token = client_a.headers["Authorization"].split(" ")[1]
+    from jose import jwt
+    from app.core.config import settings
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    company_id = payload.get("company_id")
+
+    async with tenant_session(company_id) as db:
+        async with db.begin():
+            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+            res = await db.execute(stmt)
+            config = res.scalars().first()
+            assert config.status == "paused"
+            assert config.sync_interval_minutes == 120
 
 @pytest.mark.asyncio
-async def test_api_persistence_soft_delete(client_a: AsyncClient):
-    create_res = await client_a.post('/api/v1/connectors/', json={
-        'connector_name': 'delete_test_pers',
-        'secret': 'del',
-        'sync_interval_minutes': 10
+async def test_api_persistence_soft_delete(client_a):
+    resp = await client_a.post("/api/v1/connectors/", json={
+        "connector_name": "keitaro-del",
+        "secret": "my-secret",
+        "sync_interval_minutes": 60
     })
-    assert create_res.status_code == 200
-    connector_id = create_res.json()['id']
+    assert resp.status_code == 200
+    conn_id = resp.json()["id"]
 
-    del_res = await client_a.delete(f'/api/v1/connectors/{connector_id}')
-    assert del_res.status_code == 204
+    resp2 = await client_a.delete(f"/api/v1/connectors/{conn_id}")
+    assert resp2.status_code == 204
 
-    list_res = await client_a.get('/api/v1/connectors/')
-    found = [c for c in list_res.json() if c['id'] == connector_id]
-    assert len(found) == 0
+    token = client_a.headers["Authorization"].split(" ")[1]
+    from jose import jwt
+    from app.core.config import settings
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    company_id = payload.get("company_id")
+
+    # DB verify
+    async with tenant_session(company_id) as db:
+        async with db.begin():
+            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn_id)
+            res = await db.execute(stmt)
+            config = res.scalars().first()
+            assert config is not None
+            assert config.deleted_at is not None
+            assert config.status == "paused"
