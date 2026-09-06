@@ -559,7 +559,7 @@ async def test_meta_scheduler_unauthorized_state(mock_sync):
         conn = ConnectorConfig(
             company_id=company_id,
             connector_name="meta",
-            is_active=True,
+            
             status="active",
             encrypted_secret=b"fake"
         )
@@ -572,4 +572,4 @@ async def test_meta_scheduler_unauthorized_state(mock_sync):
             await sync_connector_instance(str(company_id), str(conn.id))
         
         await db_session.refresh(conn)
-        assert conn.status == "unauthorized
+        assert conn.status == "unauthorized"
