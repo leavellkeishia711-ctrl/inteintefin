@@ -23,6 +23,35 @@ class MetaAdsConnector(Connector):
         """Meta Graph API strictly uses Bearer token in Authorization header."""
         return {"Authorization": f"Bearer {self.api_key}"}
 
+    async def _fetch_all_pages(self, url: str) -> List[Dict[str, Any]]:
+        """Helper to fetch all pages following Meta Graph API paging.next."""
+        results = []
+        current_url = url
+        async with httpx.AsyncClient() as client:
+            headers = self._get_headers()
+            while current_url:
+                response = await with_retry(lambda: client.get(
+                    current_url,
+                    headers=headers,
+                    timeout=15
+                ))
+                response.raise_for_status()
+                data = response.json()
+                
+                if isinstance(data, dict) and "data" in data:
+                    results.extend(data["data"])
+                elif isinstance(data, list):
+                    results.extend(data)
+                
+                # Check for next page
+                paging = data.get("paging", {}) if isinstance(data, dict) else {}
+                current_url = paging.get("next")
+                
+                # Safety check to prevent infinite loops if API is misbehaving
+                if current_url and current_url == url:
+                    break
+        return results
+
     async def test_connection(self) -> bool:
         async with httpx.AsyncClient() as client:
             try:
@@ -42,18 +71,8 @@ class MetaAdsConnector(Connector):
                 return False
 
     async def fetch_ad_accounts(self) -> List[Dict[str, Any]]:
-        async with httpx.AsyncClient() as client:
-            headers = self._get_headers()
-            response = await with_retry(lambda: client.get(
-                f"{self.base_url}/me/adaccounts?fields=account_id,name,account_status",
-                headers=headers,
-                timeout=15
-            ))
-            response.raise_for_status()
-            data = response.json()
-            if isinstance(data, dict) and "data" in data:
-                return data["data"]
-            return data if isinstance(data, list) else []
+        url = f"{self.base_url}/me/adaccounts?fields=account_id,name,account_status"
+        return await self._fetch_all_pages(url)
 
     def normalize_ad_accounts(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedAdAccount]:
         normalized = []
@@ -67,7 +86,7 @@ class MetaAdsConnector(Connector):
                 
             # Meta status: 1 = ACTIVE, 2 = DISABLED, 3 = UNSETTLED, 7 = PENDING_RISK_REVIEW, 8 = PENDING_SETTLEMENT, 9 = IN_GRACE_PERIOD, 100 = PENDING_CLOSURE, 101 = CLOSED, 201 = ANY_ACTIVE, 202 = ANY_CLOSED
             raw_status = row.get("account_status", 0)
-            status_map = {1: "active"}
+            status_map = {1: "active", 3: "suspended", 7: "suspended", 8: "suspended", 9: "suspended", 2: "banned", 100: "banned", 101: "banned"}
             mapped_status = status_map.get(raw_status, "banned")
             
             normalized.append(NormalizedAdAccount(
@@ -79,38 +98,38 @@ class MetaAdsConnector(Connector):
         return normalized
 
     async def fetch_campaigns(self) -> List[Dict[str, Any]]:
-        async with httpx.AsyncClient() as client:
-            headers = self._get_headers()
-            response = await with_retry(lambda: client.get(
-                f"{self.base_url}/me/adaccounts?fields=campaigns{{id,name}}",
-                headers=headers,
-                timeout=15
-            ))
-            response.raise_for_status()
-            data = response.json()
-            if isinstance(data, dict) and "data" in data:
-                return data["data"]
-            return data if isinstance(data, list) else []
+        url = f"{self.base_url}/me/adaccounts?fields=campaigns{{id,name}}"
+        accounts = await self._fetch_all_pages(url)
+        
+        flat_campaigns = []
+        for account in accounts:
+            if not isinstance(account, dict):
+                continue
+            acc_id = account.get("id")
+            campaigns_data = account.get("campaigns", {}).get("data", [])
+            for camp in campaigns_data:
+                if isinstance(camp, dict):
+                    camp_copy = dict(camp)
+                    camp_copy["account_id"] = acc_id
+                    flat_campaigns.append(camp_copy)
+                    
+        return flat_campaigns
 
     async def fetch_metrics(self) -> List[Dict[str, Any]]:
-        async with httpx.AsyncClient() as client:
-            headers = self._get_headers()
-            response = await with_retry(lambda: client.get(
-                f"{self.base_url}/me/adaccounts?fields=insights.level(campaign){{campaign_id,spend,date_start}}",
-                headers=headers,
-                timeout=15
-            ))
-            response.raise_for_status()
-            data = response.json()
+        url = f"{self.base_url}/me/adaccounts?fields=insights.level(campaign){{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
+        accounts = await self._fetch_all_pages(url)
+        
+        metrics = []
+        for account in accounts:
+            if not isinstance(account, dict):
+                continue
+            insights_data = account.get("insights", {}).get("data", [])
             
-            metrics = []
-            if isinstance(data, dict) and "data" in data:
-                for account in data["data"]:
-                    insights = account.get("insights", {}).get("data", [])
-                    metrics.extend(insights)
-                return metrics
+            # Insights can have their own paging inside the nested structure in real life,
+            # but for this scale we'll extract the immediate nested data returned by the API wrapper.
+            metrics.extend(insights_data)
             
-            return data if isinstance(data, list) else []
+        return metrics
 
     async def fetch(self) -> List[Dict[str, Any]]:
         return await self.fetch_metrics()
@@ -141,12 +160,22 @@ class MetaAdsConnector(Connector):
                 
             try:
                 spend = Decimal(str(row.get("spend", "0")))
-                # Revenue in Meta is complex (action_values etc). We assume 0 or it's mapped by an aggregator
-                revenue = Decimal(str(row.get("revenue", "0"))) 
-                if spend < 0 or revenue < 0:
+                if spend < 0:
                     raise InvalidOperation
             except (InvalidOperation, TypeError, ValueError):
                 continue
+                
+            revenue = Decimal("0")
+            action_values = row.get("action_values")
+            if isinstance(action_values, list):
+                for action in action_values:
+                    if isinstance(action, dict) and action.get("action_type") in ("purchase", "omni_purchase"):
+                        try:
+                            val = Decimal(str(action.get("value", "0")))
+                            if val > 0:
+                                revenue += val
+                        except (InvalidOperation, TypeError, ValueError):
+                            pass
 
             normalized.append(NormalizedRecord(
                 source="meta",
