@@ -561,7 +561,7 @@ async def test_meta_scheduler_unauthorized_state(mock_sync):
             connector_name="meta",
             
             status="active",
-            encrypted_secret=b"fake"
+            encrypted_secret="fake"
         )
         db_session.add(conn)
         await db_session.commit()
