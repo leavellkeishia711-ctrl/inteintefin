@@ -37,16 +37,115 @@ async def test_meta_test_connection_success(mock_get):
     assert "secret_token" not in mock_get.call_args[0][0]
 
 @pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_meta_secret_stripping_on_paging(mock_get):
+    config = DummyConfig(uuid.uuid4())
+    connector = MetaAdsConnector(config, "secret_token")
+    
+    resp_page_1 = MagicMock()
+    resp_page_1.status_code = 200
+    resp_page_1.json.return_value = {
+        "data": [{"account_id": "1"}],
+        "paging": {"next": "https://graph.facebook.test/v19.0/me/page2?limit=10&access_token=SECRET_TOKEN&appsecret_proof=PROOF"}
+    }
+    
+    resp_page_2 = MagicMock()
+    resp_page_2.status_code = 200
+    resp_page_2.json.return_value = {
+        "data": [{"account_id": "2"}]
+    }
+    
+    def get_side_effect(*args, **kwargs):
+        url = args[0]
+        if "page2" in url:
+            return resp_page_2
+        return resp_page_1
+        
+    mock_get.side_effect = get_side_effect
+    
+    accs = await connector.fetch_ad_accounts()
+    assert len(accs) == 2
+    
+    page2_call = mock_get.call_args_list[1]
+    url_used = page2_call[0][0]
+    
+    assert "SECRET_TOKEN" not in url_used
+    assert "access_token" not in url_used
+    assert "PROOF" not in url_used
+    assert "limit=10" in url_used
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_meta_nested_insights_paging(mock_get):
+    config = DummyConfig(uuid.uuid4())
+    connector = MetaAdsConnector(config, "secret_token")
+    
+    resp_accounts = MagicMock()
+    resp_accounts.status_code = 200
+    resp_accounts.json.return_value = {
+        "data": [
+            {
+                "id": "act_1",
+                "insights": {
+                    "data": [{"campaign_id": "c1"}],
+                    "paging": {"next": "https://graph.facebook.test/v19.0/act_1/page2?access_token=SEC"}
+                }
+            },
+            {
+                "id": "act_2",
+                "insights": {
+                    "data": [{"campaign_id": "c2"}]
+                }
+            }
+        ]
+    }
+    
+    resp_insights_page2 = MagicMock()
+    resp_insights_page2.status_code = 200
+    resp_insights_page2.json.return_value = {
+        "data": [{"campaign_id": "c1_p2"}],
+        "paging": {"next": "https://graph.facebook.test/v19.0/act_1/page3?access_token=SEC"}
+    }
+
+    resp_insights_page3 = MagicMock()
+    resp_insights_page3.status_code = 200
+    resp_insights_page3.json.return_value = {
+        "data": [{"campaign_id": "c1_p3"}]
+    }
+    
+    def get_side_effect(*args, **kwargs):
+        url = args[0]
+        if "page2" in url:
+            return resp_insights_page2
+        elif "page3" in url:
+            return resp_insights_page3
+        return resp_accounts
+        
+    mock_get.side_effect = get_side_effect
+    
+    metrics = await connector.fetch_metrics()
+    
+    assert len(metrics) == 4
+    ids = [m["campaign_id"] for m in metrics]
+    assert "c1" in ids
+    assert "c1_p2" in ids
+    assert "c1_p3" in ids
+    assert "c2" in ids
+    
+    page2_call = mock_get.call_args_list[1]
+    page3_call = mock_get.call_args_list[2]
+    
+    assert "SEC" not in page2_call[0][0]
+    assert "SEC" not in page3_call[0][0]
+
+@pytest.mark.asyncio
 async def test_meta_normalization_with_action_values():
     config = DummyConfig(uuid.uuid4())
     connector = MetaAdsConnector(config, "secret_token")
     
     raw_data = [
-        # Normal purchase
         {"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.50", "action_values": [{"action_type": "purchase", "value": "15.25"}]},
-        # No revenue
         {"campaign_id": "101", "date_start": "2026-09-02", "spend": "5.0"},
-        # omni_purchase + other events
         {"campaign_id": "102", "date_start": "2026-09-03", "spend": "1.0", "action_values": [{"action_type": "omni_purchase", "value": "100.00"}, {"action_type": "link_click", "value": "0.50"}]},
     ]
     
@@ -55,13 +154,10 @@ async def test_meta_normalization_with_action_values():
     assert len(normalized) == 3
     assert normalized[0].external_id == "100"
     assert normalized[0].revenue == Decimal("15.25")
-    
     assert normalized[1].external_id == "101"
     assert normalized[1].revenue == Decimal("0")
-    
     assert normalized[2].external_id == "102"
     assert normalized[2].revenue == Decimal("100.00")
-
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
@@ -97,40 +193,6 @@ async def test_meta_fetch_campaigns_flattening(mock_get):
     assert campaigns[1]["account_id"] == "act_1"
 
 @pytest.mark.asyncio
-@patch("httpx.AsyncClient.get")
-async def test_meta_fetch_metrics_paging(mock_get):
-    config = DummyConfig(uuid.uuid4())
-    connector = MetaAdsConnector(config, "secret_token")
-    
-    # Mocking two pages
-    resp_page_1 = MagicMock()
-    resp_page_1.status_code = 200
-    resp_page_1.json.return_value = {
-        "data": [{"id": "act_1", "insights": {"data": [{"campaign_id": "c1", "spend": "10"}]}}],
-        "paging": {"next": "https://graph.facebook.test/v19.0/me/page2"}
-    }
-    
-    resp_page_2 = MagicMock()
-    resp_page_2.status_code = 200
-    resp_page_2.json.return_value = {
-        "data": [{"id": "act_2", "insights": {"data": [{"campaign_id": "c2", "spend": "20"}]}}]
-    }
-    
-    # Use side_effect to return different responses based on the URL
-    def get_side_effect(*args, **kwargs):
-        url = args[0]
-        if "page2" in url:
-            return resp_page_2
-        return resp_page_1
-        
-    mock_get.side_effect = get_side_effect
-    
-    metrics = await connector.fetch_metrics()
-    assert len(metrics) == 2
-    assert metrics[0]["campaign_id"] == "c1"
-    assert metrics[1]["campaign_id"] == "c2"
-
-@pytest.mark.asyncio
 async def test_meta_ad_accounts_status_mapping(company_b_fixtures):
     company_id_a = uuid.uuid4()
     
@@ -144,12 +206,12 @@ async def test_meta_ad_accounts_status_mapping(company_b_fixtures):
         connector = MetaAdsConnector(config, "secret_token")
         
         raw_accounts = [
-            {"account_id": "1", "account_status": 1}, # ACTIVE -> active
-            {"account_id": "2", "account_status": 2}, # DISABLED -> banned
-            {"account_id": "3", "account_status": 3}, # UNSETTLED -> suspended
-            {"account_id": "7", "account_status": 7}, # PENDING -> suspended
-            {"account_id": "100", "account_status": 100}, # PENDING_CLOSURE -> banned
-            {"account_id": "999", "account_status": 999} # UNKNOWN -> banned
+            {"account_id": "1", "account_status": 1},
+            {"account_id": "2", "account_status": 2},
+            {"account_id": "3", "account_status": 3},
+            {"account_id": "7", "account_status": 7},
+            {"account_id": "100", "account_status": 100},
+            {"account_id": "999", "account_status": 999}
         ]
         
         norm_accs = connector.normalize_ad_accounts(raw_accounts)
@@ -249,7 +311,6 @@ async def test_meta_upsert_idempotency(company_b_fixtures):
         ]
         
         normalized = connector.normalize(raw_data)
-        
         await connector.upsert(db_session, normalized)
         await db_session.commit()
         

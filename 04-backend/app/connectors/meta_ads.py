@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 import httpx
 from datetime import datetime, timezone
 import logging
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from .base import Connector, NormalizedRecord, NormalizedAdAccount, with_retry
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
@@ -22,6 +23,16 @@ class MetaAdsConnector(Connector):
     def _get_headers(self) -> Dict[str, str]:
         """Meta Graph API strictly uses Bearer token in Authorization header."""
         return {"Authorization": f"Bearer {self.api_key}"}
+        
+    def _sanitize_url(self, url: str) -> str:
+        """Removes credential query parameters from paging URLs."""
+        if not url:
+            return url
+        parsed = urlparse(url)
+        qsl = parse_qsl(parsed.query, keep_blank_values=True)
+        clean_qsl = [(k, v) for k, v in qsl if k.lower() not in ("access_token", "token", "appsecret_proof")]
+        new_query = urlencode(clean_qsl)
+        return urlunparse(parsed._replace(query=new_query))
 
     async def _fetch_all_pages(self, url: str) -> List[Dict[str, Any]]:
         """Helper to fetch all pages following Meta Graph API paging.next."""
@@ -30,8 +41,9 @@ class MetaAdsConnector(Connector):
         async with httpx.AsyncClient() as client:
             headers = self._get_headers()
             while current_url:
-                response = await with_retry(lambda: client.get(
-                    current_url,
+                clean_url = self._sanitize_url(current_url)
+                response = await with_retry(lambda u=clean_url: client.get(
+                    u,
                     headers=headers,
                     timeout=15
                 ))
@@ -45,11 +57,12 @@ class MetaAdsConnector(Connector):
                 
                 # Check for next page
                 paging = data.get("paging", {}) if isinstance(data, dict) else {}
-                current_url = paging.get("next")
+                next_url = paging.get("next")
                 
                 # Safety check to prevent infinite loops if API is misbehaving
-                if current_url and current_url == url:
+                if next_url and next_url == current_url:
                     break
+                current_url = next_url
         return results
 
     async def test_connection(self) -> bool:
@@ -84,7 +97,6 @@ class MetaAdsConnector(Connector):
             if not acc_id:
                 continue
                 
-            # Meta status: 1 = ACTIVE, 2 = DISABLED, 3 = UNSETTLED, 7 = PENDING_RISK_REVIEW, 8 = PENDING_SETTLEMENT, 9 = IN_GRACE_PERIOD, 100 = PENDING_CLOSURE, 101 = CLOSED, 201 = ANY_ACTIVE, 202 = ANY_CLOSED
             raw_status = row.get("account_status", 0)
             status_map = {1: "active", 3: "suspended", 7: "suspended", 8: "suspended", 9: "suspended", 2: "banned", 100: "banned", 101: "banned"}
             mapped_status = status_map.get(raw_status, "banned")
@@ -120,15 +132,38 @@ class MetaAdsConnector(Connector):
         accounts = await self._fetch_all_pages(url)
         
         metrics = []
-        for account in accounts:
-            if not isinstance(account, dict):
-                continue
-            insights_data = account.get("insights", {}).get("data", [])
-            
-            # Insights can have their own paging inside the nested structure in real life,
-            # but for this scale we'll extract the immediate nested data returned by the API wrapper.
-            metrics.extend(insights_data)
-            
+        async with httpx.AsyncClient() as client:
+            headers = self._get_headers()
+            for account in accounts:
+                if not isinstance(account, dict):
+                    continue
+                insights = account.get("insights", {})
+                insights_data = insights.get("data", [])
+                metrics.extend(insights_data)
+                
+                paging = insights.get("paging", {})
+                next_url = paging.get("next")
+                
+                while next_url:
+                    clean_next = self._sanitize_url(next_url)
+                    response = await with_retry(lambda u=clean_next: client.get(
+                        u,
+                        headers=headers,
+                        timeout=15
+                    ))
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if isinstance(data, dict) and "data" in data:
+                        metrics.extend(data["data"])
+                    
+                    new_paging = data.get("paging", {}) if isinstance(data, dict) else {}
+                    new_next_url = new_paging.get("next")
+                    
+                    if new_next_url == next_url:
+                        break
+                    next_url = new_next_url
+                    
         return metrics
 
     async def fetch(self) -> List[Dict[str, Any]]:
