@@ -66,6 +66,7 @@ class MetaAdsConnector(Connector):
         return results
 
     async def test_connection(self) -> bool:
+        from .base import UnauthorizedError
         async with httpx.AsyncClient() as client:
             try:
                 headers = self._get_headers()
@@ -76,6 +77,8 @@ class MetaAdsConnector(Connector):
                 ))
                 response.raise_for_status()
                 return True
+            except UnauthorizedError:
+                raise
             except httpx.HTTPStatusError as e:
                 logger.error(f"MetaAds test_connection HTTP error: {type(e).__name__} status={e.response.status_code}")
                 return False
@@ -114,16 +117,49 @@ class MetaAdsConnector(Connector):
         accounts = await self._fetch_all_pages(url)
         
         flat_campaigns = []
-        for account in accounts:
-            if not isinstance(account, dict):
-                continue
-            acc_id = account.get("id")
-            campaigns_data = account.get("campaigns", {}).get("data", [])
-            for camp in campaigns_data:
-                if isinstance(camp, dict):
-                    camp_copy = dict(camp)
-                    camp_copy["account_id"] = acc_id
-                    flat_campaigns.append(camp_copy)
+        async with httpx.AsyncClient() as client:
+            headers = self._get_headers()
+            for account in accounts:
+                if not isinstance(account, dict):
+                    continue
+                acc_id = account.get("id")
+                campaigns = account.get("campaigns", {})
+                campaigns_data = campaigns.get("data", [])
+                for camp in campaigns_data:
+                    if isinstance(camp, dict):
+                        camp_copy = dict(camp)
+                        camp_copy["account_id"] = acc_id
+                        flat_campaigns.append(camp_copy)
+                        
+                paging = campaigns.get("paging", {})
+                next_url = paging.get("next")
+                
+                while next_url:
+                    clean_next = self._sanitize_url(next_url)
+                    response = await with_retry(lambda u=clean_next: client.get(
+                        u,
+                        headers=headers,
+                        timeout=15
+                    ))
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if isinstance(data, dict) and "data" in data:
+                        for camp in data["data"]:
+                            if isinstance(camp, dict):
+                                camp_copy = dict(camp)
+                                camp_copy["account_id"] = acc_id
+                                flat_campaigns.append(camp_copy)
+                    
+                    new_paging = data.get("paging", {}) if isinstance(data, dict) else {}
+                    new_next_url = new_paging.get("next")
+                    
+                    if new_next_url:
+                        clean_new_next = self._sanitize_url(new_next_url)
+                        if clean_new_next == clean_next:
+                            break
+                            
+                    next_url = new_next_url
                     
         return flat_campaigns
 
@@ -160,8 +196,11 @@ class MetaAdsConnector(Connector):
                     new_paging = data.get("paging", {}) if isinstance(data, dict) else {}
                     new_next_url = new_paging.get("next")
                     
-                    if new_next_url == next_url:
-                        break
+                    if new_next_url:
+                        clean_new_next = self._sanitize_url(new_next_url)
+                        if clean_new_next == clean_next:
+                            break
+                            
                     next_url = new_next_url
                     
         return metrics
@@ -257,8 +296,9 @@ class MetaAdsConnector(Connector):
 
             try:
                 fx_rate = await resolve_fx_rate(session, record.currency, base_currency, record.stat_date)
-            except ValueError:
-                fx_rate = Decimal("1.0")
+            except ValueError as e:
+                logger.error(f"MetaAds upsert FX rate error for source={record.source} external_id={record.external_id} date={record.stat_date}: {e}")
+                raise
                 
             stmt_stat = select(CampaignRunStat).where(and_(
                 CampaignRunStat.company_id == self.config.company_id,
