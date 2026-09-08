@@ -470,8 +470,21 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         db_session.add(comp_a)
         await db_session.flush()
         
+        from app.db.models.users import User
+        u = User(id=user_id_a, email="testfx@test.com", password_hash="hash", company_id=company_id_a, role="admin")
+        db_session.add(u)
+        await db_session.flush()
+        
+        from app.db.models.campaigns import Campaign
+        c1 = Campaign(id=uuid.uuid4(), company_id=company_id_a, external_campaign_id="fx_camp_1", name="fx_camp_1", status="active", buyer_id=user_id_a)
+        c2 = Campaign(id=uuid.uuid4(), company_id=company_id_a, external_campaign_id="fx_camp_2", name="fx_camp_2", status="active", buyer_id=user_id_a)
+        db_session.add(c1)
+        db_session.add(c2)
+        await db_session.flush()
+        
         run_a = CampaignRun(
             company_id=company_id_a,
+            campaign_id=c1.id,
             buyer_id=user_id_a,
             started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
             note="fx_camp_1"
@@ -480,6 +493,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         
         run_b = CampaignRun(
             company_id=company_id_a,
+            campaign_id=c2.id,
             buyer_id=user_id_a,
             started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
             note="fx_camp_2"
