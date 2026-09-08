@@ -471,7 +471,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         await db_session.flush()
         
         from app.db.models.users import User
-        u = User(id=user_id_a, email="testfx@test.com", password_hash="hash", company_id=company_id_a, role="admin")
+        u = User(id=user_id_a, name="testfx", email="testfx@test.com", password_hash="hash", company_id=company_id_a, role="admin")
         db_session.add(u)
         await db_session.flush()
         
@@ -559,7 +559,7 @@ async def test_meta_test_connection_401_403(mock_get, monkeypatch):
         await connector.test_connection()
 
 @pytest.mark.asyncio
-@patch("app.connectors.meta_ads.MetaAdsConnector.sync")
+@patch("app.connectors.base.Connector.sync")
 async def test_meta_scheduler_unauthorized_state(mock_sync):
     from app.connectors.scheduler import sync_connector_instance
     from app.db.models.connectors import ConnectorConfig
