@@ -476,8 +476,8 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         await db_session.flush()
         
         from app.db.models.campaigns import Campaign
-        c1 = Campaign(id=uuid.uuid4(), company_id=company_id_a, external_id="fx_camp_1", name="fx_camp_1", status="active", buyer_id=user_id_a)
-        c2 = Campaign(id=uuid.uuid4(), company_id=company_id_a, external_id="fx_camp_2", name="fx_camp_2", status="active", buyer_id=user_id_a)
+        c1 = Campaign(id=uuid.uuid4(), company_id=company_id_a, assigned_user_id=user_id_a)
+        c2 = Campaign(id=uuid.uuid4(), company_id=company_id_a, assigned_user_id=user_id_a)
         db_session.add(c1)
         db_session.add(c2)
         await db_session.flush()
@@ -586,7 +586,8 @@ async def test_meta_scheduler_unauthorized_state(mock_sync):
              patch("app.connectors.scheduler.acquire_lock", return_value=True):
             await sync_connector_instance(str(company_id), str(conn.id))
         
-        stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn.id)
-        res = await db_session.execute(stmt)
-        conn_fresh = res.scalars().first()
-        assert conn_fresh.status == "unauthorized", f"Expected unauthorized, got {conn_fresh.status}"
+        async with system_session() as new_session:
+            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn.id)
+            res = await new_session.execute(stmt)
+            conn_fresh = res.scalars().first()
+            assert conn_fresh.status == "unauthorized", f"Expected unauthorized, got {conn_fresh.status}"
