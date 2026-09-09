@@ -44,6 +44,10 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(last_attempted_sync=now_utc))
             await db.commit()
             
+        async with tenant_session(company_id) as db:
+            result = await db.execute(select(ConnectorConfig).where(ConnectorConfig.id == connector_id))
+            config = result.scalars().first()
+            
             try:
                 decrypted = decrypt_secret(config.encrypted_secret)
                 
