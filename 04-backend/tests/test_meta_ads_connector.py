@@ -506,7 +506,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         
         # 1. Success FX rate test
         from app.db.models import FxRate
-        rate = FxRate(rate_date=datetime(2026, 9, 1, tzinfo=timezone.utc).date(), base_currency="USD", quote_currency="EUR", rate=Decimal("0.85"))
+        rate = FxRate(rate_date=datetime(2026, 9, 1, tzinfo=timezone.utc).date(), from_currency="USD", to_currency="EUR", rate=Decimal("0.85"), source="manual")
         db_session.add(rate)
         await db_session.commit()
         
@@ -587,7 +587,8 @@ async def test_meta_scheduler_unauthorized_state(mock_sync):
             await sync_connector_instance(str(company_id), str(conn.id))
         
         async with system_session() as new_session:
-            stmt = select(ConnectorConfig).where(ConnectorConfig.id == conn.id)
-            res = await new_session.execute(stmt)
-            conn_fresh = res.scalars().first()
-            assert conn_fresh.status == "unauthorized", f"Expected unauthorized, got {conn_fresh.status}"
+            from sqlalchemy import text
+            stmt = text("SELECT status FROM connector_configs WHERE id = :id")
+            res = await new_session.execute(stmt, {"id": conn.id})
+            status = res.scalar()
+            assert status == "unauthorized", f"Expected unauthorized, got {status}"
