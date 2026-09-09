@@ -391,3 +391,204 @@ async def test_meta_unauthorized(mock_get, monkeypatch):
     
     with pytest.raises(UnauthorizedError):
         await connector.fetch_metrics()
+
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_meta_fetch_campaigns_nested_paging_and_safety(mock_get):
+    config = DummyConfig(uuid.uuid4())
+    connector = MetaAdsConnector(config, "secret_token")
+    
+    resp_accounts = MagicMock()
+    resp_accounts.status_code = 200
+    resp_accounts.json.return_value = {
+        "data": [
+            {
+                "id": "act_1",
+                "campaigns": {
+                    "data": [{"id": "camp_1"}],
+                    "paging": {"next": "https://graph.facebook.test/v19.0/act_1/camp_page2?access_token=SEC&token=TOK&appsecret_proof=PROOF"}
+                }
+            },
+            {
+                "id": "act_2",
+                "campaigns": {
+                    "data": [{"id": "camp_3"}]
+                }
+            }
+        ]
+    }
+    
+    resp_camp_page2 = MagicMock()
+    resp_camp_page2.status_code = 200
+    resp_camp_page2.json.return_value = {
+        "data": [{"id": "camp_2"}],
+        "paging": {"next": "https://graph.facebook.test/v19.0/act_1/camp_page2?access_token=SEC"}  # simulates repeating URL, should break infinite loop
+    }
+    
+    def get_side_effect(*args, **kwargs):
+        url = args[0]
+        if "camp_page2" in url:
+            return resp_camp_page2
+        return resp_accounts
+        
+    mock_get.side_effect = get_side_effect
+    
+    campaigns = await connector.fetch_campaigns()
+    assert len(campaigns) == 3
+    
+    # 1. Check all IDs
+    c_ids = [c["id"] for c in campaigns]
+    assert set(c_ids) == {"camp_1", "camp_2", "camp_3"}
+    
+    # 2. Check account_id separation
+    act1_camps = [c for c in campaigns if c["account_id"] == "act_1"]
+    assert len(act1_camps) == 2
+    
+    act2_camps = [c for c in campaigns if c["account_id"] == "act_2"]
+    assert len(act2_camps) == 1
+    assert act2_camps[0]["id"] == "camp_3"
+    
+    # 3. Check secrets stripping from paging.next
+    page2_call = mock_get.call_args_list[1]
+    url_used = page2_call[0][0]
+    assert "SEC" not in url_used
+    assert "TOK" not in url_used
+    assert "PROOF" not in url_used
+
+@pytest.mark.asyncio
+async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
+    company_id_a = uuid.uuid4()
+    user_id_a = uuid.uuid4()
+    
+    async with system_session() as db_session:
+        comp_a = Company(
+            id=company_id_a,
+            name="Company FX Test",
+            base_currency="EUR"
+        )
+        db_session.add(comp_a)
+        await db_session.flush()
+        
+        from app.db.models.users import User
+        u = User(id=user_id_a, name="testfx", email="testfx@test.com", password_hash="hash", company_id=company_id_a, role="admin")
+        db_session.add(u)
+        await db_session.flush()
+        
+        from app.db.models.campaigns import Campaign
+        c1 = Campaign(id=uuid.uuid4(), company_id=company_id_a, assigned_user_id=user_id_a)
+        c2 = Campaign(id=uuid.uuid4(), company_id=company_id_a, assigned_user_id=user_id_a)
+        db_session.add(c1)
+        db_session.add(c2)
+        await db_session.flush()
+        
+        run_a = CampaignRun(
+            company_id=company_id_a,
+            campaign_id=c1.id,
+            buyer_id=user_id_a,
+            started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+            note="fx_camp_1"
+        )
+        db_session.add(run_a)
+        
+        run_b = CampaignRun(
+            company_id=company_id_a,
+            campaign_id=c2.id,
+            buyer_id=user_id_a,
+            started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+            note="fx_camp_2"
+        )
+        db_session.add(run_b)
+        await db_session.commit()
+        
+        config = DummyConfig(company_id_a)
+        connector = MetaAdsConnector(config, "secret_token")
+        
+        # 1. Success FX rate test
+        from app.db.models import FxRate
+        rate = FxRate(rate_date=datetime(2026, 9, 1, tzinfo=timezone.utc).date(), from_currency="USD", to_currency="EUR", rate=Decimal("0.85"), source="manual")
+        db_session.add(rate)
+        await db_session.commit()
+        
+        raw_data = [
+            {"campaign_id": "fx_camp_1", "date_start": "2026-09-01", "spend": "100.00"}
+        ]
+        norm = connector.normalize(raw_data)
+        await connector.upsert(db_session, norm)
+        await db_session.commit()
+        
+        stmt = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run_a.id)
+        stat = (await db_session.execute(stmt)).scalars().first()
+        assert stat is not None
+        assert stat.fx_rate_to_base == Decimal("0.85")
+        
+        # 2. Failure FX rate test
+        raw_data_2 = [
+            {"campaign_id": "fx_camp_2", "date_start": "2026-09-10", "spend": "50.00"}
+        ]
+        norm_2 = connector.normalize(raw_data_2)
+        with pytest.raises(ValueError):
+            await connector.upsert(db_session, norm_2)
+        
+        stmt_2 = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run_b.id)
+        stat_2 = (await db_session.execute(stmt_2)).scalars().first()
+        assert stat_2 is None
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_meta_test_connection_401_403(mock_get, monkeypatch):
+    from app.connectors.base import UnauthorizedError
+    config = DummyConfig(uuid.uuid4())
+    connector = MetaAdsConnector(config, "secret_token")
+    monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
+    
+    # 401
+    resp_401 = MagicMock()
+    resp_401.status_code = 401
+    mock_get.side_effect = httpx.HTTPStatusError("401", request=MagicMock(), response=resp_401)
+    
+    with pytest.raises(UnauthorizedError):
+        await connector.test_connection()
+        
+    # 403
+    resp_403 = MagicMock()
+    resp_403.status_code = 403
+    mock_get.side_effect = httpx.HTTPStatusError("403", request=MagicMock(), response=resp_403)
+    
+    with pytest.raises(UnauthorizedError):
+        await connector.test_connection()
+
+@pytest.mark.asyncio
+@patch("app.connectors.base.Connector.sync")
+async def test_meta_scheduler_unauthorized_state(mock_sync):
+    from app.connectors.scheduler import sync_connector_instance
+    from app.db.models.connectors import ConnectorConfig
+    from app.connectors.base import UnauthorizedError
+    
+    company_id = uuid.uuid4()
+    async with system_session() as db_session:
+        comp = Company(id=company_id, name="Sched Test", base_currency="USD")
+        db_session.add(comp)
+        
+        conn = ConnectorConfig(
+            company_id=company_id,
+            connector_name="meta",
+            
+            status="active",
+            encrypted_secret="fake"
+        )
+        db_session.add(conn)
+        await db_session.commit()
+        
+        mock_sync.side_effect = UnauthorizedError("Token invalid")
+        
+        with patch("app.connectors.scheduler.decrypt_secret", return_value="fake_secret"), \
+             patch("app.connectors.scheduler.acquire_lock", return_value=True):
+            await sync_connector_instance(str(company_id), str(conn.id))
+        
+        async with system_session() as new_session:
+            from sqlalchemy import text
+            stmt = text("SELECT status FROM connector_configs WHERE id = :id")
+            res = await new_session.execute(stmt, {"id": conn.id})
+            status = res.scalar()
+            assert status == "unauthorized", f"Expected unauthorized, got {status}"

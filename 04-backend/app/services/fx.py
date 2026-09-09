@@ -16,8 +16,8 @@ async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: st
     stmt = (
         select(FxRate)
         .where(
-            FxRate.base_currency == from_currency,
-            FxRate.quote_currency == to_currency,
+            FxRate.from_currency == from_currency,
+            FxRate.to_currency == to_currency,
             FxRate.rate_date <= target_date,
             FxRate.rate_date >= target_date - timedelta(days=7)
         )
@@ -34,8 +34,8 @@ async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: st
     stmt_inverse = (
         select(FxRate)
         .where(
-            FxRate.base_currency == to_currency,
-            FxRate.quote_currency == from_currency,
+            FxRate.from_currency == to_currency,
+            FxRate.to_currency == from_currency,
             FxRate.rate_date <= target_date,
             FxRate.rate_date >= target_date - timedelta(days=7)
         )
