@@ -524,7 +524,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         
         # 2. Failure FX rate test
         raw_data_2 = [
-            {"campaign_id": "fx_camp_2", "date_start": "2026-09-02", "spend": "50.00"}
+            {"campaign_id": "fx_camp_2", "date_start": "2026-09-10", "spend": "50.00"}
         ]
         norm_2 = connector.normalize(raw_data_2)
         with pytest.raises(ValueError):
