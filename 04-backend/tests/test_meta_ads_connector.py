@@ -505,8 +505,8 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         connector = MetaAdsConnector(config, "secret_token")
         
         # 1. Success FX rate test
-        from app.db.models.fx import FXRate
-        rate = FXRate(date=datetime(2026, 9, 1, tzinfo=timezone.utc).date(), base_currency="EUR", target_currency="USD", rate=Decimal("0.85"))
+        from app.db.models import FxRate
+        rate = FxRate(rate_date=datetime(2026, 9, 1, tzinfo=timezone.utc).date(), base_currency="USD", quote_currency="EUR", rate=Decimal("0.85"))
         db_session.add(rate)
         await db_session.commit()
         

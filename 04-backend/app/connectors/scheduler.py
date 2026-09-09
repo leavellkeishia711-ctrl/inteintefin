@@ -40,7 +40,8 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             if not config or config.status not in ('active', 'failing'):
                 return
 
-            config.last_attempted_sync = datetime.now(timezone.utc)
+            now_utc = datetime.now(timezone.utc)
+            await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(last_attempted_sync=now_utc))
             await db.commit()
             
             try:
@@ -67,21 +68,26 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 await connector.sync(db)
                 
                 # Success
-                config.last_successful_sync = datetime.now(timezone.utc)
-                config.status = 'active'
-                config.retry_count = 0
+                now_utc = datetime.now(timezone.utc)
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
+                    last_successful_sync=now_utc,
+                    status='active',
+                    retry_count=0
+                ))
                 await db.commit()
                 
             except UnauthorizedError as e:
                 logger.error(f"Connector sync unauthorized: {e}")
-                config.status = 'unauthorized'
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(status='unauthorized'))
                 await db.commit()
             except Exception as e:
                 logger.error(f"Connector sync failed: {e}")
-                # Failure logic
                 config.retry_count += 1
-                if config.retry_count > 3:
-                    config.status = 'failing'
+                new_status = 'failing' if config.retry_count > 3 else config.status
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
+                    retry_count=config.retry_count,
+                    status=new_status
+                ))
                 await db.commit()
                 
     finally:
