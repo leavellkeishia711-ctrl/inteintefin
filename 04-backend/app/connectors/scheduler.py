@@ -2,8 +2,8 @@ import asyncio
 import logging
 from typing import Optional
 import redis.asyncio as redis
-from sqlalchemy import select, update
-from datetime import datetime, timezone
+from sqlalchemy import select, update, or_
+from datetime import datetime, timezone, timedelta
 import os
 
 from app.db.session import system_session, tenant_session
@@ -73,24 +73,33 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 
                 # Success
                 now_utc = datetime.now(timezone.utc)
+                next_sync = now_utc + timedelta(minutes=config.sync_interval_minutes)
                 await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
                     last_successful_sync=now_utc,
                     status='active',
-                    retry_count=0
+                    retry_count=0,
+                    next_sync_at=next_sync
                 ))
                 await db.commit()
                 
             except UnauthorizedError as e:
                 logger.error(f"Connector sync unauthorized: {e}")
-                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(status='unauthorized'))
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
+                    status='unauthorized',
+                    next_sync_at=None
+                ))
                 await db.commit()
             except Exception as e:
                 logger.error(f"Connector sync failed: {e}")
                 config.retry_count += 1
                 new_status = 'failing' if config.retry_count > 3 else config.status
+                now_utc = datetime.now(timezone.utc)
+                retry_interval = max(config.sync_interval_minutes, 5)
+                next_sync = now_utc + timedelta(minutes=retry_interval)
                 await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
                     retry_count=config.retry_count,
-                    status=new_status
+                    status=new_status,
+                    next_sync_at=next_sync
                 ))
                 await db.commit()
                 
@@ -100,14 +109,20 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
 async def run_scheduled_syncs():
     """Finds all connectors that need to be synced and launches them."""
     async with system_session() as db:
-        # Simplistic: grab all active/failing
-        stmt = select(ConnectorConfig).where(ConnectorConfig.status.in_(['active', 'failing']))
+        now_utc = datetime.now(timezone.utc)
+        stmt = select(ConnectorConfig).where(
+            ConnectorConfig.status.in_(['active', 'failing']),
+            ConnectorConfig.deleted_at.is_(None),
+            or_(
+                ConnectorConfig.next_sync_at.is_(None),
+                ConnectorConfig.next_sync_at <= now_utc
+            )
+        )
         result = await db.execute(stmt)
         configs = result.scalars().all()
         
         tasks = []
         for c in configs:
-            # Add simple interval check or just run all for MVP
             tasks.append(sync_connector_instance(str(c.company_id), str(c.id)))
             
         if tasks:

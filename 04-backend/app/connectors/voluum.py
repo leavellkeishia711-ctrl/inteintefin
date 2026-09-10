@@ -91,12 +91,11 @@ class VoluumConnector(Connector):
                 
             date_str = row.get("date")
             if not date_str:
-                stat_date = datetime.now(timezone.utc).date()
-            else:
-                try:
-                    stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
-                except ValueError:
-                    continue
+                continue
+            try:
+                stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
+            except ValueError:
+                continue
                 
             try:
                 spend = Decimal(str(row.get("cost", "0")))
@@ -151,8 +150,9 @@ class VoluumConnector(Connector):
 
             try:
                 fx_rate = await resolve_fx_rate(session, record.currency, base_currency, record.stat_date)
-            except ValueError:
-                fx_rate = Decimal("1.0")
+            except ValueError as e:
+                logger.error(f"Voluum upsert FX rate error for external_id={record.external_id} date={record.stat_date}: {e}")
+                raise
                 
             stmt_stat = select(CampaignRunStat).where(and_(
                 CampaignRunStat.company_id == self.config.company_id,

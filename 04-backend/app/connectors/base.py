@@ -42,7 +42,7 @@ async def with_retry(
             return await func()
         except httpx.HTTPStatusError as e:
             if e.response.status_code in (401, 403):
-                raise UnauthorizedError(f"Unauthorized: {e.response.status_code} {e.response.text}")
+                raise UnauthorizedError(f"Unauthorized: HTTP {e.response.status_code}")
             
             if e.response.status_code in retry_statuses:
                 if attempt == max_retries - 1:
@@ -56,7 +56,7 @@ async def with_retry(
                 continue
             
             # Other HTTP errors (e.g., 400, 404) do not retry
-            raise ConnectorError(f"HTTP Error: {e.response.status_code} {e.response.text}")
+            raise ConnectorError(f"HTTP Error: {e.response.status_code}")
             
         except (httpx.TimeoutException, httpx.RequestError) as e:
             if attempt == max_retries - 1:
@@ -85,7 +85,6 @@ class Connector(ABC):
     def __init__(self, config: Any):
         self.config = config
 
-    @abstractmethod
     @abstractmethod
     async def test_connection(self) -> bool:
         pass

@@ -19,30 +19,35 @@ This document outlines the phased delivery plan for FinanceIntel.
 ---
 
 ## 📍 МЫ ЗДЕСЬ: Stage 2 - Data Connectors
-**Status:** IN PROGRESS (Foundational Slice Merged)
+**Status:** IN PROGRESS (Foundational Slice + Tracker/Meta Connectors Merged)
 
 **Goal:** Automated ingestion of costs, revenues, and campaigns.
 
-**Completed (Foundational Slice):**
+**Completed (Merged & Post-Merge Verified):**
 - [x] `connectors/base.py` abstract class.
 - [x] Encrypted credentials storage.
-- [x] Keitaro implementation.
+- [x] Keitaro implementation (stub-grade; `test_connection`/`fetch_campaigns`/`fetch_metrics` not production-ready).
 - [x] Sync scheduling (Celery beat).
 - [x] Connector API endpoints & DB models.
 - [x] Tenant isolation and persistence testing.
 - [x] Production Smoke Test.
+- [x] Shared rate-limit/retry/backoff policy (`with_retry`).
+- [x] Binom integration.
+- [x] Voluum integration.
+- [x] Affise integration.
+- [x] Meta Ads integration (hardened: pagination, secret stripping, ad accounts).
+- [x] `ad_accounts` mapping (Meta only — Binom/Voluum/Affise pending).
 
 **Open (Pending Implementation):**
-- [ ] `ad_accounts` mapping and synchronization.
-- [ ] Shared rate-limit/retry/backoff policy.
-- [ ] Credential rotation.
+- [ ] Cross-source conflict resolution / reconciliation.
+- [ ] Credential rotation endpoint.
 - [ ] Stale-source DQ alert.
-- [ ] Binom integration.
-- [ ] Voluum integration.
-- [ ] Affise integration.
-- [ ] Meta Ads integration.
+- [ ] `CampaignRunStat` soft delete.
+- [ ] ECB FX rate auto-fetch.
+- [ ] Expanded observability (structured logging, metrics).
 - [ ] Google Ads integration.
 - [ ] TikTok Ads integration.
+- [ ] Production validation with real API credentials.
 
 ---
 
