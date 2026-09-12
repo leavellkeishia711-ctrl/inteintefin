@@ -1,0 +1,61 @@
+[САМАЯ НОВАЯ ВЕРСИЯ - АКТУАЛЬНЫЙ ПЛАН ПРОЕКТА]
+Дата обновления: 2026-09-12
+Фактический Verified Main SHA: a4b4288ebc8de6d246b8b25610e478a410d9cc58
+
+Большой план проекта FinanceIntel (САМАЯ НОВАЯ версия v5)
+
+---------------------------------------------------------
+1. ЧТО БЫЛО СДЕЛАНО ДО ЭТОГО (Stage 1 & Начало Stage 2)
+---------------------------------------------------------
+[Stage 1: FOUNDATION & CORE - COMPLETED]
+- Архитектура и База Данных: спроектирована и внедрена нормализованная БД (PostgreSQL) с использованием SQLAlchemy 2.0 и Alembic.
+- Инварианты: внедрены строгие правила работы с деньгами (только Decimal/NUMERIC, float полностью исключен). Даты строго в UTC/TIMESTAMPTZ. Soft-delete (deleted_at).
+- Безопасность и Мультитенантность: реализована жесткая изоляция данных по tenant (RLS на уровне БД + логика в приложении). company_id берется исключительно из JWT токена.
+- MVP-Функционал: реализован P&L, Cashflow, ручной ввод транзакций и базовая AI-аналитика (Text-to-SQL агент).
+
+[Stage 2: DATA CONNECTORS - ПЕРВЫЕ ИНТЕГРАЦИИ]
+- Создана базовая архитектура коннекторов (`connectors/base.py`, `with_retry`).
+- Настроено хранение зашифрованных credentials с использованием Fernet (без утечек в plaintext).
+- Создан планировщик фоновых синхронизаций (Celery beat).
+
+---------------------------------------------------------
+2. ЧТО СДЕЛАНО СЕЙЧАС (Stage 2 Hardening & Tracker Merges)
+---------------------------------------------------------
+В рамках PR #6 - #13 были успешно вмержены и верифицированы следующие элементы (Verified on main `a4b4288e`):
+- Интеграция Binom (PR #8) - полностью рабочая.
+- Интеграция Voluum (PR #9) - полностью рабочая.
+- Интеграция Affise (PR #10) - полностью рабочая.
+- Интеграция Meta Ads (PR #11) - базовая реализация + маппинг ad_accounts.
+- Hardening (Укрепление системы, PR #12, PR #13):
+  * Security: полностью вырезан `response.text` из текстов исключений для предотвращения утечек токенов в логи.
+  * FX (Валюты): удалён опасный `silent fallback` (когда при отсутствии курса система считала 1:1), теперь система безопасно падает (пробрасывает ValueError).
+  * Данные (Dates): коннекторы Voluum, Affise, Meta Ads теперь корректно пропускают записи без дат, как это делал Binom.
+  * Планировщик: настроена строгая фильтрация по `next_sync_at` и `deleted_at IS NULL`. Коннекторы теперь соблюдают заданный интервал синхронизации.
+- Интеграция Keitaro: переведена в статус STUB / NOT PRODUCTION-READY (тесты заглушены).
+- CI/CD: все тесты проходят (Backend: 34682962952, Frontend: 34682962942, Prod Gate: 34682962944).
+
+---------------------------------------------------------
+3. ЧТО НАДО ДЕЛАТЬ В БУДУЩЕМ (Pending Implementation)
+---------------------------------------------------------
+[Остаток Stage 2 - IN PROGRESS / NOT COMPLETE]
+- Google Ads integration: NOT IMPLEMENTED (ожидает реализации).
+- TikTok Ads integration: NOT IMPLEMENTED (ожидает реализации).
+- Cross-source conflict resolution (Разрешение конфликтов между трекерами и Facebook/Google): NOT IMPLEMENTED.
+- Credential rotation (Ротация и перешифровка токенов): OPEN.
+- Stale-source DQ alerts (Алерты на зависшие источники данных): OPEN.
+- CampaignRunStat soft delete (`deleted_at`): OPEN.
+- ECB FX rate auto-fetch (Авто-загрузка курсов валют): OPEN.
+- Production validation с реальными API-ключами: NOT DONE.
+- Полная реализация Keitaro: OPEN.
+
+[Stage 3 - Cashflow & Budget Planning]
+- Budget Requests & Approvals.
+- Payroll (расчёт зарплат и бонусов баерам).
+- Partner / Affiliate Payouts.
+
+[Stage 4 - Market Intelligence]
+- AI мониторинг внешних источников (Telegram, форумы) с обязательным Human Review (модерацией).
+
+[Stage 5 - Decision & Scale]
+- AI-рекомендации (Decision Recommendation Engine).
+- Сценарное моделирование (What-If).
