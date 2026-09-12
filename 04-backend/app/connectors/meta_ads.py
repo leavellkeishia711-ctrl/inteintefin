@@ -225,12 +225,11 @@ class MetaAdsConnector(Connector):
                 
             date_str = row.get("date_start")
             if not date_str:
-                stat_date = datetime.now(timezone.utc).date()
-            else:
-                try:
-                    stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
-                except ValueError:
-                    continue
+                continue
+            try:
+                stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
+            except ValueError:
+                continue
                 
             try:
                 spend = Decimal(str(row.get("spend", "0")))
