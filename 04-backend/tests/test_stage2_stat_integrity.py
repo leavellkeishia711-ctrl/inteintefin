@@ -1,11 +1,7 @@
 import pytest
-from decimal import Decimal
-from datetime import date
-from sqlalchemy.exc import IntegrityError
-import pytest
 import uuid
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime, timezone
 from sqlalchemy.exc import IntegrityError
 import sqlalchemy as sa
 from app.db.models.campaigns import CampaignRunStat, CampaignRun
@@ -27,7 +23,7 @@ async def test_campaign_run_stat_soft_delete():
         run = CampaignRun(
             company_id=company.id,
             buyer_id=user.id,
-            started_at=date(2026, 1, 1),
+            started_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )
         db.add(run)
         await db.flush()
@@ -53,7 +49,7 @@ async def test_campaign_run_stat_soft_delete():
         stat = res.scalars().first()
         assert stat is not None
         
-        stat.deleted_at = date(2026, 1, 2)
+        stat.deleted_at = datetime(2026, 1, 2, tzinfo=timezone.utc)
         db.add(stat)
         await db.commit()
 
@@ -71,7 +67,7 @@ async def test_campaign_run_stat_uniqueness_external_id_null():
         run = CampaignRun(
             company_id=company.id,
             buyer_id=user.id,
-            started_at=date(2026, 1, 1),
+            started_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )
         db.add(run)
         await db.commit()
@@ -122,8 +118,8 @@ async def test_tenant_isolation_campaign_run_stats():
         db.add_all([ca, cb, ua, ub])
         await db.flush()
         
-        run_a = CampaignRun(company_id=company_a_id, buyer_id=ua.id, started_at=date(2026,1,1))
-        run_b = CampaignRun(company_id=company_b_id, buyer_id=ub.id, started_at=date(2026,1,1))
+        run_a = CampaignRun(company_id=company_a_id, buyer_id=ua.id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+        run_b = CampaignRun(company_id=company_b_id, buyer_id=ub.id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
         db.add_all([run_a, run_b])
         await db.flush()
         
