@@ -91,7 +91,7 @@ async def test_connector_error_no_response_body(mock_get, monkeypatch):
 # 2. FX rate: no silent Decimal("1.0") fallback
 # ============================================================
 
-async def _create_company_and_run(db_session, company_id, user_id, note, base_currency="EUR"):
+async def _create_company_and_run(db_session, company_id, user_id, note, base_currency="JPY"):
     """Helper: create company + user + campaign_run for FX tests."""
     comp = Company(id=company_id, name=f"FX Test {company_id}", base_currency=base_currency)
     db_session.add(comp)
@@ -125,9 +125,9 @@ async def test_binom_upsert_fx_rate_missing_raises(company_b_fixtures):
     async with system_session() as db:
         run = await _create_company_and_run(db, company_id, user_id, "binom_fx_test")
 
-        config = DummyConfig(company_id)
+        config = DummyConfig(company_id, currency="GBP")
         connector = BinomConnector(config, "secret")
-        raw = [{"camp_id": "binom_fx_test", "date": "2026-09-01", "cost": "50.00", "revenue": "100.00"}]
+        raw = [{"camp_id": "binom_fx_test", "date": "2099-01-01", "cost": "50.00", "revenue": "100.00"}]
         normalized = connector.normalize(raw)
 
         with pytest.raises(ValueError):
@@ -148,9 +148,9 @@ async def test_voluum_upsert_fx_rate_missing_raises(company_b_fixtures):
     async with system_session() as db:
         run = await _create_company_and_run(db, company_id, user_id, "vol_fx_test")
 
-        config = DummyConfig(company_id)
+        config = DummyConfig(company_id, currency="GBP")
         connector = VoluumConnector(config, "secret")
-        raw = [{"campaignId": "vol_fx_test", "date": "2026-09-01", "cost": "50.00", "revenue": "100.00"}]
+        raw = [{"campaignId": "vol_fx_test", "date": "2099-01-01", "cost": "50.00", "revenue": "100.00"}]
         normalized = connector.normalize(raw)
 
         with pytest.raises(ValueError):
@@ -170,9 +170,9 @@ async def test_affise_upsert_fx_rate_missing_raises(company_b_fixtures):
     async with system_session() as db:
         run = await _create_company_and_run(db, company_id, user_id, "aff_fx_test")
 
-        config = DummyConfig(company_id)
+        config = DummyConfig(company_id, currency="GBP")
         connector = AffiseConnector(config, "secret")
-        raw = [{"offer_id": "aff_fx_test", "date": "2026-09-01", "cost": "50.00", "revenue": "100.00"}]
+        raw = [{"offer_id": "aff_fx_test", "date": "2099-01-01", "cost": "50.00", "revenue": "100.00"}]
         normalized = connector.normalize(raw)
 
         with pytest.raises(ValueError):
