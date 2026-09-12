@@ -44,7 +44,7 @@ async def list_campaign_run_stats(
     db: AsyncSession = Depends(get_tenant_session),
     company_id: str = Depends(get_current_user_company_id)
 ):
-    query = select(CampaignRunStat)
+    query = select(CampaignRunStat).where(CampaignRunStat.deleted_at.is_(None))
     if campaign_run_id:
         query = query.where(CampaignRunStat.campaign_run_id == campaign_run_id)
         
