@@ -23,10 +23,10 @@ This document outlines the phased delivery plan for FinanceIntel.
 
 **Goal:** Automated ingestion of costs, revenues, and campaigns.
 
-**Completed (Merged & Post-Merge Verified):**
+**Completed (Merged & Post-Merge Verified on main `a4b4288e`):**
 - [x] `connectors/base.py` abstract class.
 - [x] Encrypted credentials storage.
-- [x] Keitaro implementation (stub-grade; `test_connection`/`fetch_campaigns`/`fetch_metrics` not production-ready).
+- [x] Keitaro implementation (STUB / NOT PRODUCTION-READY).
 - [x] Sync scheduling (Celery beat).
 - [x] Connector API endpoints & DB models.
 - [x] Tenant isolation and persistence testing.
@@ -45,8 +45,8 @@ This document outlines the phased delivery plan for FinanceIntel.
 - [ ] `CampaignRunStat` soft delete.
 - [ ] ECB FX rate auto-fetch.
 - [ ] Expanded observability (structured logging, metrics).
-- [ ] Google Ads integration.
-- [ ] TikTok Ads integration.
+- [ ] Google Ads integration (NOT IMPLEMENTED).
+- [ ] TikTok Ads integration (NOT IMPLEMENTED).
 - [ ] Production validation with real API credentials.
 
 ---

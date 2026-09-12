@@ -10,10 +10,10 @@ SaaS финансового учёта для медиабаинговых ко�
 📍 **Stage 2 (Data Connectors): IN PROGRESS** — see [STAGE2_STATUS.md](02-product-docs/STAGE2_STATUS.md)
 
 ## Главные документы
-- [Большой план проекта (новая версия v4)](<Большой план проекта (новая версия v4)_ FinanceIntel после Stage 1-20260807.txt>)
-- [КОНТЕКСТ-ОПИСАНИЕ ПРОЕКТА (самая новая 6 версия)](<КОНТЕКСТ-ОПИСАНИЕ ПРОЕКТА (самая новая 6 версия).txt>)
-- [Большой план проекта (прошлая версия v3)](<Большой план проекта (прошлая версия v3)_ FinanceIntel после Stage 1-20260807.txt>)
-- [КОНТЕКСТ-ОПИСАНИЕ ПРОЕКТА (прошлая 5 версия)](<КОНТЕКСТ-ОПИСАНИЕ ПРОЕКТА (прошлая 5 версия).txt>)
+- **[MVP_STATUS.md](02-product-docs/MVP_STATUS.md)**
+- **[STAGE2_STATUS.md](02-product-docs/STAGE2_STATUS.md)**
+- **[ROADMAP.md](02-product-docs/ROADMAP.md)**
+- **[PRD.md](02-product-docs/PRD.md)**
 
 ## Структура проекта
 

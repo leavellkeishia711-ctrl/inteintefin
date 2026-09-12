@@ -1,0 +1,58 @@
+[ВОССТАНОВЛЕННЫЙ АКТУАЛЬНЫЙ ДОКУМЕНТ - РЕПОЗИТОРИЙ СИНХРОНИЗИРОВАН]
+Дата восстановления: 2026-09-12
+Фактический Verified Main SHA: a4b4288ebc8de6d246b8b25610e478a410d9cc58
+
+ВНИМАНИЕ: Оригинальный текстовый файл был утерян или перемещен из корня репозитория в ходе рефакторинга документации на Markdown. Это актуальная восстановленная версия, собранная из 02-product-docs/ROADMAP.md и 02-product-docs/STAGE2_STATUS.md с точным отражением текущего состояния кодовой базы на ветке main.
+
+Большой план проекта FinanceIntel (версия v4 - актуализировано после Stage 1)
+
+Stage 1 - Foundation & Core (MVP)
+Статус: COMPLETED
+- Реализованы: Мультитенантность (RLS, JWT), Схема БД, Транзакции (CRUD, CSV импорт), P&L, фоновые задачи (Celery), Базовый AI (SQL), Telegram Alerts, Базовый Frontend.
+
+МЫ ЗДЕСЬ: Stage 2 - Data Connectors
+Статус: PARTIAL / IN PROGRESS
+Цель: Автоматический сбор расходов, доходов и статистики из рекламных кабинетов и трекеров.
+
+MERGED AND VERIFIED (подтверждено на main a4b4288e):
+- Абстрактный интерфейс (connectors/base.py)
+- Хранение зашифрованных credentials
+- Планировщик (Celery beat)
+- Интеграция Binom (PR #8)
+- Интеграция Voluum (PR #9)
+- Интеграция Affise (PR #10)
+- Интеграция Meta Ads и hardening (PR #11, PR #12)
+- Тесты на tenant isolation и idempotency
+- Keitaro: STUB / NOT PRODUCTION-READY (тесты проходят, но методы fetch_campaigns и fetch_metrics возвращают пустые списки).
+
+ОТКРЫТЫЕ ПРОБЕЛЫ (Full Stage 2: NOT COMPLETE):
+- Google Ads integration: NOT IMPLEMENTED
+- TikTok Ads integration: NOT IMPLEMENTED
+- Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
+- Credential rotation (safe update, re-encryption endpoint): OPEN
+- Stale-source Data Quality (DQ) alerts: OPEN
+- CampaignRunStat soft delete (deleted_at): OPEN
+- ECB FX rate auto-fetch: OPEN
+- Production validation с реальными credentials: NOT DONE
+
+Инварианты проекта, которые соблюдаются:
+- company_id устанавливается ТОЛЬКО из JWT / авторизованного контекста, обязательный RLS.
+- Все деньги хранятся строго в Decimal / NUMERIC (float ЗАПРЕЩЁН).
+- Секреты хранятся зашифрованными в БД и передаются только в headers, токены и response.text НЕ ЛОГИРУЮТСЯ.
+- soft delete: запросы используют deleted_at IS NULL.
+- Даты хранятся в UTC/TIMESTAMPTZ.
+- Идемпотентность импорта: UNIQUE(company_id, source, external_id).
+
+Stage 3 - Cashflow & Budget Planning (PLANNED)
+- Budget Requests
+- Payroll
+- Partner/Affiliate Payouts
+
+Stage 4a & 4b - Market Intelligence (PLANNED)
+- AI мониторинг Telegram и форумов
+- Human Review Layer
+- Каскад LLM
+
+Stage 5 - Decision & Scale (PLANNED)
+- AI Рекомендации
+- Scenario Modeling (What-If)
