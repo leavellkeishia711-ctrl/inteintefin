@@ -38,8 +38,9 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Google Ads integration: NOT IMPLEMENTED
 - TikTok Ads integration: NOT IMPLEMENTED
 - Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
-- Credential rotation (safe update, re-encryption endpoint)
-- Stale-source Data Quality (DQ) alerts
+- Credential rotation (safe update, re-encryption endpoint) - **OPEN**
+- Stale-source Data Quality (DQ) alerts - **OPEN**
+- CampaignRunStat upsert race: IntegrityError not handled (SELECT-then-INSERT), needs ON CONFLICT or retry — **OPEN**
 - `CampaignRunStat` soft delete (`deleted_at`)
 - ECB FX rate auto-fetch
 - Expanded observability (structured logging, metrics)
