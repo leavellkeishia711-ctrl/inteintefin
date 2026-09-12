@@ -3,7 +3,7 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `9a1b62aaf87149a046bd60a44eb5acbde42ca586`
+**Current main SHA:** `a4b4288ebc8de6d246b8b25610e478a410d9cc58`
 
 ## Verified Implementation (Post-Merge)
 
@@ -15,7 +15,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Encrypted credentials (Fernet) | Done | `04-backend/app/connectors/credentials.py` |
 | Sync scheduling | Done | `04-backend/app/connectors/scheduler.py` |
 | Shared retry/backoff (`with_retry`) | Done | `04-backend/app/connectors/base.py` |
-| Keitaro integration | **Stub / Not Production-Ready** | `test_connection`/`fetch_campaigns`/`fetch_metrics` return stubs |
+| Keitaro integration | **STUB / NOT PRODUCTION-READY** | `test_connection` returns True; `fetch_campaigns` and `fetch_metrics` return empty lists |
 | Binom integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/binom.py` |
 | Voluum integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/voluum.py` |
 | Affise integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/affise.py` |
@@ -25,7 +25,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
 | Idempotency tests | Done | `test_meta_upsert_idempotency`, `test_binom_upsert_idempotency` |
 | Production smoke | Done | `.github/workflows/prod-gate.yml` |
-| Post-merge CI (main) | Done | Backend: 34341326240, Frontend: 34341326184, Prod Gate: 34341326236 (on main `9a1b62aa`) |
+| Post-merge CI (main) | Done | Backend: 34682962952, Frontend: 34682962942, Prod Gate: 34682962944 (on main `a4b4288e`) |
 
 ## Source Data Storage Design
 
@@ -35,9 +35,9 @@ Data from different sources (e.g., Meta spend + Binom tracker revenue) for the s
 
 The following requirements remain OPEN and must be implemented before full Stage 2 completion:
 
-- Google Ads integration
-- TikTok Ads integration
-- Cross-source conflict resolution / reconciliation layer
+- Google Ads integration: NOT IMPLEMENTED
+- TikTok Ads integration: NOT IMPLEMENTED
+- Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
 - Credential rotation (safe update, re-encryption endpoint)
 - Stale-source Data Quality (DQ) alerts
 - `CampaignRunStat` soft delete (`deleted_at`)
