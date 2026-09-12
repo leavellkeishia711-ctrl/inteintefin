@@ -3,7 +3,7 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `a4b4288ebc8de6d246b8b25610e478a410d9cc58`
+**Current main SHA:** `4baafb9ba8e1f888e339beb0a409150b037b8b4c`
 
 ## Verified Implementation (Post-Merge)
 
@@ -25,7 +25,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
 | Idempotency tests | Done | `test_meta_upsert_idempotency`, `test_binom_upsert_idempotency` |
 | Production smoke | Done | `.github/workflows/prod-gate.yml` |
-| Post-merge CI (main) | Done | Backend: 34682962952, Frontend: 34682962942, Prod Gate: 34682962944 (on main `a4b4288e`) |
+| Post-merge CI (main) | Done | Backend: 34687338307, Frontend: 34687338292, Prod Gate: 34687338289 (on main `4baafb9b`) |
 
 ## Source Data Storage Design
 

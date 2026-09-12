@@ -23,7 +23,7 @@ This document outlines the phased delivery plan for FinanceIntel.
 
 **Goal:** Automated ingestion of costs, revenues, and campaigns.
 
-**Completed (Merged & Post-Merge Verified on main `a4b4288e`):**
+**Completed (Merged & Post-Merge Verified on main `4baafb9b`):**
 - [x] `connectors/base.py` abstract class.
 - [x] Encrypted credentials storage.
 - [x] Keitaro implementation (STUB / NOT PRODUCTION-READY).

@@ -96,7 +96,8 @@ async def get_spend_discrepancy(
     actual_spend = pnl.ad_spend
     
     query = sa.select(sa.func.sum(CampaignRunStat.spend * CampaignRunStat.fx_rate_to_base))\
-        .where(CampaignRunStat.company_id == company_id)
+        .where(CampaignRunStat.company_id == company_id)\
+        .where(CampaignRunStat.deleted_at.is_(None))
         
     if start_date:
         query = query.where(CampaignRunStat.stat_date >= start_date)

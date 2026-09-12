@@ -33,7 +33,8 @@ async def get_ad_account_cost(db: AsyncSession, company_id: uuid.UUID, ad_accoun
         CampaignRun.ad_account_id == ad_account_id,
         CampaignRun.company_id == company_id,
         CampaignRunStat.company_id == company_id,
-        CampaignRun.deleted_at.is_(None)
+        CampaignRun.deleted_at.is_(None),
+        CampaignRunStat.deleted_at.is_(None)
     )
     if date_from:
         spend_stmt = spend_stmt.where(CampaignRunStat.stat_date >= date_from)
@@ -75,15 +76,26 @@ async def upsert_campaign_run_stat(
         external_id=external_id
     )
     
-    update_stmt = stmt.on_conflict_do_update(
-        index_elements=["company_id", "campaign_run_id", "stat_date", "source", "external_id"],
-        index_where=sa.text("external_id IS NOT NULL"),
-        set_={
-            "spend": stmt.excluded.spend,
-            "revenue": stmt.excluded.revenue,
-            "fx_rate_to_base": stmt.excluded.fx_rate_to_base
-        }
-    ).returning(CampaignRunStat)
+    if external_id is not None:
+        update_stmt = stmt.on_conflict_do_update(
+            index_elements=["company_id", "campaign_run_id", "stat_date", "source", "external_id"],
+            index_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL"),
+            set_={
+                "spend": stmt.excluded.spend,
+                "revenue": stmt.excluded.revenue,
+                "fx_rate_to_base": stmt.excluded.fx_rate_to_base
+            }
+        ).returning(CampaignRunStat)
+    else:
+        update_stmt = stmt.on_conflict_do_update(
+            index_elements=["company_id", "campaign_run_id", "stat_date", "source"],
+            index_where=sa.text("external_id IS NULL AND deleted_at IS NULL"),
+            set_={
+                "spend": stmt.excluded.spend,
+                "revenue": stmt.excluded.revenue,
+                "fx_rate_to_base": stmt.excluded.fx_rate_to_base
+            }
+        ).returning(CampaignRunStat)
     
     result = await db.execute(update_stmt.execution_options(populate_existing=True))
     stat = result.scalar_one()
@@ -113,6 +125,7 @@ async def get_campaign_stats(
 ):
     stmt = sa.select(CampaignRunStat).where(
         CampaignRunStat.company_id == company_id,
+        CampaignRunStat.deleted_at.is_(None),
         CampaignRunStat.stat_date >= date_from,
         CampaignRunStat.stat_date <= date_to
     )

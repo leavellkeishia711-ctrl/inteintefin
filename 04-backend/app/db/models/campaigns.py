@@ -65,7 +65,7 @@ class CampaignRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         CheckConstraint("ended_at IS NULL OR started_at <= ended_at", name="check_campaign_run_dates"),
     )
 
-class CampaignRunStat(Base, TimestampMixin, CompanyScoped):
+class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "campaign_run_stats"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
@@ -83,7 +83,15 @@ class CampaignRunStat(Base, TimestampMixin, CompanyScoped):
             "uq_campaign_run_stats",
             "company_id", "campaign_run_id", "stat_date", "source", "external_id",
             unique=True,
-            postgresql_where=sa.text("external_id IS NOT NULL")
+            postgresql_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL"),
+            sqlite_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL")
+        ),
+        sa.Index(
+            "uq_campaign_run_stats_null_ext",
+            "company_id", "campaign_run_id", "stat_date", "source",
+            unique=True,
+            postgresql_where=sa.text("external_id IS NULL AND deleted_at IS NULL"),
+            sqlite_where=sa.text("external_id IS NULL AND deleted_at IS NULL")
         ),
         Index("ix_campaign_run_stats_company_date", "company_id", "stat_date"),
     )
