@@ -71,11 +71,9 @@ async def test_voluum_normalization():
     assert normalized[0].source == "voluum"
     assert normalized[0].currency == "USD"
 
-    # The 4th item "102" is parsed but has no date string, so it falls back to today
-    # We expect 3 normalized items
-    assert len(normalized) == 3
-    assert normalized[2].external_id == "102"
-    assert normalized[2].stat_date == datetime.now(timezone.utc).date()
+    # The 4th item "102" is parsed but has no date string, so it is skipped.
+    # We expect 2 normalized items
+    assert len(normalized) == 2
 
 
 @pytest.mark.asyncio

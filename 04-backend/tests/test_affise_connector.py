@@ -63,7 +63,7 @@ async def test_affise_normalization():
     
     normalized = connector.normalize(raw_data)
     
-    assert len(normalized) == 3
+    assert len(normalized) == 2
     assert normalized[0].external_id == "100"
     assert normalized[0].stat_date == datetime(2026, 9, 1, tzinfo=timezone.utc).date()
     assert normalized[0].spend == Decimal("10.50")
@@ -73,9 +73,7 @@ async def test_affise_normalization():
     
     assert normalized[1].external_id == "101"
 
-    # The item "102" is parsed but has no date string, so it falls back to today
-    assert normalized[2].external_id == "102"
-    assert normalized[2].stat_date == datetime.now(timezone.utc).date()
+    # The item "102" is parsed but has no date string, so it is skipped
 
 
 @pytest.mark.asyncio
