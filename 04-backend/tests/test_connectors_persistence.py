@@ -34,7 +34,7 @@ async def test_api_persistence_create(client_a):
 @pytest.mark.asyncio
 async def test_api_persistence_patch_status(client_a):
     resp = await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro-patch",
+        "connector_name": "keitaro",
         "secret": "my-secret",
         "sync_interval_minutes": 60
     })
@@ -64,7 +64,7 @@ async def test_api_persistence_patch_status(client_a):
 @pytest.mark.asyncio
 async def test_api_persistence_soft_delete(client_a):
     resp = await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro-del",
+        "connector_name": "keitaro",
         "secret": "my-secret",
         "sync_interval_minutes": 60
     })

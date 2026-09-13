@@ -17,7 +17,7 @@ async def db_session():
 
 @pytest.mark.asyncio
 async def test_scheduler_max_concurrency(db_session, monkeypatch):
-    company = Company(name="Test Co")
+    company = Company(name="Test Co", base_currency="USD")
     db_session.add(company)
     await db_session.commit()
     await db_session.refresh(company)
@@ -60,7 +60,7 @@ async def test_scheduler_max_concurrency(db_session, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_scheduler_batch_continues_on_error(db_session, monkeypatch):
-    company = Company(name="Test Co")
+    company = Company(name="Test Co", base_currency="USD")
     db_session.add(company)
     await db_session.commit()
     await db_session.refresh(company)

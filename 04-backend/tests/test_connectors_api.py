@@ -33,6 +33,7 @@ async def test_rotate_secret_revives_unauthorized_connector(client_a: AsyncClien
     )
     assert response.status_code == 200
     
+    db_session.expire_all()
     res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == config_id))
     db_config = res.scalars().first()
     assert db_config.status == "active"
