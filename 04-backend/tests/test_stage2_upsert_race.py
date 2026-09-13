@@ -18,7 +18,8 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
     UPSERT race: two tasks simultaneously attempt INSERT with same (company_id, campaign_run_id, stat_date, source, external_id).
     Expected: exactly one row in DB, no duplicate key error, updated values reflect last write (deterministic due to ON CONFLICT DO UPDATE).
     """
-    company_id = client_a.company_id
+    me = await client_a.get("/api/v1/auth/me")
+    company_id = uuid.UUID(me.json()["company_id"])
     campaign_run_id = uuid.uuid4()
     stat_date = date(2026, 9, 1)
     source = "binom"
@@ -102,7 +103,8 @@ async def test_upsert_idempotent_multiple_calls(client_a):
     Call upsert_campaign_run_stat_atomic 5 times with identical inputs.
     Expected: exactly 1 row, all metrics identical to input, no errors.
     """
-    company_id = client_a.company_id
+    me = await client_a.get("/api/v1/auth/me")
+    company_id = uuid.UUID(me.json()["company_id"])
     campaign_run_id = uuid.uuid4()
     stat_date = date(2026, 9, 2)
     source = "voluum"
@@ -153,7 +155,8 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
     Insert row A, mark as deleted_at=now(), then upsert same keys with new data.
     Expected: new row inserted (not updated), both A (deleted) and B (active) in DB.
     """
-    company_id = client_a.company_id
+    me = await client_a.get("/api/v1/auth/me")
+    company_id = uuid.UUID(me.json()["company_id"])
     campaign_run_id = uuid.uuid4()
     stat_date = date(2026, 9, 3)
     source = "affise"
@@ -245,8 +248,10 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
     Company A and Company B attempt concurrent upsert with same keys.
     Expected: 2 separate rows in DB, no cross-tenant contamination.
     """
-    company_a = client_a.company_id
-    company_b = client_b.company_id
+    me_a = await client_a.get("/api/v1/auth/me")
+    company_a = uuid.UUID(me_a.json()["company_id"])
+    me_b = await client_b.get("/api/v1/auth/me")
+    company_b = uuid.UUID(me_b.json()["company_id"])
     campaign_run_id = uuid.uuid4()
     stat_date = date(2026, 9, 4)
     source = "meta_ads"
@@ -330,7 +335,8 @@ async def test_upsert_all_fields_updated_correctly(client_a):
     Insert row with v1 data, then upsert same keys with v2 data.
     Expected: row is updated, ALL mutable fields reflect v2 data, updated_at refreshed.
     """
-    company_id = client_a.company_id
+    me = await client_a.get("/api/v1/auth/me")
+    company_id = uuid.UUID(me.json()["company_id"])
     campaign_run_id = uuid.uuid4()
     stat_date = date(2026, 9, 5)
     source = "binom"
