@@ -168,7 +168,10 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
             )
             
         stmt = stmt.returning(CampaignRunStat)
-        result = await session.execute(stmt)
+        result = await session.execute(
+            stmt,
+            execution_options={"populate_existing": True}
+        )
         return result.scalars().first()
 
 class Consumable(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
