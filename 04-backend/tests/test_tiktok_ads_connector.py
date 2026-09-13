@@ -268,12 +268,12 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
     user1_id = uuid.UUID(company_b_fixtures.ids["user_id"])
     
     async with system_session() as db_session:
-        c2 = Company(name="T2")
+        c2 = Company(name="T2", base_currency="USD")
         db_session.add(c2)
         await db_session.commit()
         await db_session.refresh(c2)
         
-        user2 = User(email="t2@test.com", password_hash="h", company_id=c2.id)
+        user2 = User(email="t2@test.com", password_hash="h", company_id=c2.id, name="User T2", role="owner")
         db_session.add(user2)
         await db_session.commit()
         await db_session.refresh(user2)
