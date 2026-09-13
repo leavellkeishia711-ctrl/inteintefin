@@ -96,6 +96,81 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         Index("ix_campaign_run_stats_company_date", "company_id", "stat_date"),
     )
 
+    @staticmethod
+    async def upsert_campaign_run_stat_atomic(
+        session: "AsyncSession",
+        company_id: uuid.UUID,
+        campaign_run_id: uuid.UUID,
+        stat_date: date,
+        source: str,
+        external_id: str | None,
+        normalized_record,
+        connector_name: str,
+        fx_rate_to_base: Decimal,
+        currency: str
+    ) -> "CampaignRunStat":
+        """
+        Atomic upsert using PostgreSQL ON CONFLICT DO UPDATE.
+        Preconditions:
+        - session is tied to company_id via RLS (tenant isolation enforced).
+        - partial unique index exists on (company_id, campaign_run_id, stat_date, source, external_id) WHERE deleted_at IS NULL.
+        """
+        from sqlalchemy.dialects.postgresql import insert
+        
+        stmt = (
+            insert(CampaignRunStat)
+            .values(
+                company_id=company_id,
+                campaign_run_id=campaign_run_id,
+                stat_date=stat_date,
+                source=source,
+                external_id=external_id,
+                spend=normalized_record.spend,
+                revenue=normalized_record.revenue,
+                currency=currency,
+                fx_rate_to_base=fx_rate_to_base,
+                deleted_at=None,
+            )
+        )
+        
+        if external_id is not None:
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[
+                    CampaignRunStat.company_id,
+                    CampaignRunStat.campaign_run_id,
+                    CampaignRunStat.stat_date,
+                    CampaignRunStat.source,
+                    CampaignRunStat.external_id,
+                ],
+                index_where=CampaignRunStat.deleted_at.is_(None),
+                set_={
+                    CampaignRunStat.spend: stmt.excluded.spend,
+                    CampaignRunStat.revenue: stmt.excluded.revenue,
+                    CampaignRunStat.fx_rate_to_base: stmt.excluded.fx_rate_to_base,
+                    CampaignRunStat.updated_at: sa.func.now(),
+                }
+            )
+        else:
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[
+                    CampaignRunStat.company_id,
+                    CampaignRunStat.campaign_run_id,
+                    CampaignRunStat.stat_date,
+                    CampaignRunStat.source,
+                ],
+                index_where=sa.text("external_id IS NULL AND deleted_at IS NULL"),
+                set_={
+                    CampaignRunStat.spend: stmt.excluded.spend,
+                    CampaignRunStat.revenue: stmt.excluded.revenue,
+                    CampaignRunStat.fx_rate_to_base: stmt.excluded.fx_rate_to_base,
+                    CampaignRunStat.updated_at: sa.func.now(),
+                }
+            )
+            
+        stmt = stmt.returning(CampaignRunStat)
+        result = await session.execute(stmt)
+        return result.scalars().first()
+
 class Consumable(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "consumables"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

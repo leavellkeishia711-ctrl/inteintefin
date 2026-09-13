@@ -3,7 +3,7 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `99763f95f17918fda46e0b6fd098293e0373749b`
+**Current main SHA:** `6c1bbab2bce54b5e2d2558726f5bf41994a1f3a6`
 
 ## Verified Implementation (Post-Merge)
 
@@ -28,6 +28,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Post-merge CI (main) | Done | Backend: 34758172904, Frontend: 34758172903, Prod Gate: 34758172899 (on main `99763f95f17918fda46e0b6fd098293e0373749b`) |
 | `CampaignRunStat` soft delete (`deleted_at`) | Done | `SoftDeleteMixin`, API read query filters |
 | `CampaignRunStat` uniqueness | Done | Два partial unique index, включая ключ при `external_id IS NULL`, с `deleted_at IS NULL` |
+| Atomic upsert (ON CONFLICT) | Done | `campaigns.py:upsert_campaign_run_stat_atomic` |
 
 ## Source Data Storage Design
 
@@ -42,7 +43,6 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
 - Credential rotation (safe update, re-encryption endpoint) - **OPEN**
 - Stale-source Data Quality (DQ) alerts - **OPEN**
-- CampaignRunStat upsert race: IntegrityError not handled (SELECT-then-INSERT), needs ON CONFLICT or retry - **OPEN**
 - ECB FX rate auto-fetch
 - Expanded observability (structured logging, metrics)
 - Production validation with real external API credentials
