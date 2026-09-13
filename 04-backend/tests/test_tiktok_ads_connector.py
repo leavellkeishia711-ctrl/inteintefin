@@ -224,9 +224,8 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
         run = CampaignRun(
             company_id=company_id,
             buyer_id=user_id,
-            source="tiktok_ads",
-            note="12345",  # Matches external_id
-            name="TK Run"
+            started_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            note="12345"  # Matches external_id
         )
         db_session.add(run)
         await db_session.commit()
@@ -279,8 +278,8 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
         await db_session.commit()
         await db_session.refresh(user2)
         
-        run1 = CampaignRun(company_id=c1_id, buyer_id=user1_id, source="tiktok_ads", note="ext1")
-        run2 = CampaignRun(company_id=c2.id, buyer_id=user2.id, source="tiktok_ads", note="ext1")
+        run1 = CampaignRun(company_id=c1_id, buyer_id=user1_id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc), note="ext1")
+        run2 = CampaignRun(company_id=c2.id, buyer_id=user2.id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc), note="ext1")
         db_session.add_all([run1, run2])
         await db_session.commit()
         
