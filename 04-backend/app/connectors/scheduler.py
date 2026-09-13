@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import logging
 from typing import Optional
 import redis.asyncio as redis
@@ -29,17 +29,17 @@ end
 """
 
 async def acquire_lock(lock_key: str, ttl: int = 300) -> str | None:
-    \"\"\"Acquires a redis lock with a TTL and returns a token.\"\"\"
+    """Acquires a redis lock with a TTL and returns a token."""
     token = str(uuid.uuid4())
     acquired = await redis_client.set(lock_key, token, nx=True, ex=ttl)
     return token if acquired else None
 
 async def release_lock(lock_key: str, token: str) -> None:
-    \"\"\"Releases a redis lock safely using a Lua script.\"\"\"
+    """Releases a redis lock safely using a Lua script."""
     await redis_client.eval(RELEASE_LOCK_SCRIPT, 1, lock_key, token)
 
 async def sync_connector_instance(company_id: str, connector_id: str) -> None:
-    \"\"\"Runs the sync for a single connector config within tenant context.\"\"\"
+    """Runs the sync for a single connector config within tenant context."""
     lock_key = f"sync_lock:{company_id}:{connector_id}"
     
     token = await acquire_lock(lock_key)
@@ -115,7 +115,7 @@ async def _bounded_sync(sem: asyncio.Semaphore, company_id: str, connector_id: s
             logger.error(f"Unhandled exception in sync task for connector {connector_id}: {e}")
 
 async def run_scheduled_syncs():
-    \"\"\"Finds all connectors that need to be synced and launches them.\"\"\"
+    """Finds all connectors that need to be synced and launches them."""
     async with system_session() as db:
         now_utc = datetime.now(timezone.utc)
         stmt = select(ConnectorConfig).where(

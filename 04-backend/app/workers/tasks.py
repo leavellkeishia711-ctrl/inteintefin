@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import logging
 from sqlalchemy import select
 from celery.schedules import crontab
@@ -11,18 +11,18 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def tenant_task_session(company_id: str):
-    "\""
+    """
     Context manager for background tasks to ensure they only access data
     for a specific company with proper RLS enforced.
-    "\""
+    """
     async with tenant_session(company_id) as db:
         yield db
 
 async def execute_for_all_tenants(task_func):
-    "\""
+    """
     Executes a given async function for all active companies.
     Ensures that each company is handled in its own isolated RLS context.
-    "\""
+    """
     try:
         async with system_session() as db:
             result = await db.execute(select(Company.id))
