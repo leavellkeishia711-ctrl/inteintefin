@@ -142,7 +142,7 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                     CampaignRunStat.source,
                     CampaignRunStat.external_id,
                 ],
-                index_where=CampaignRunStat.deleted_at.is_(None),
+                index_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL"),
                 set_={
                     CampaignRunStat.spend: stmt.excluded.spend,
                     CampaignRunStat.revenue: stmt.excluded.revenue,
