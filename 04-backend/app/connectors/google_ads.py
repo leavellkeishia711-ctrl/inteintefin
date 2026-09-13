@@ -15,7 +15,8 @@ from app.services.fx import resolve_fx_rate
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_ADS_API_VERSION = "v25"
+from app.core.config import settings
+GOOGLE_ADS_API_VERSION = settings.GOOGLE_ADS_API_VERSION
 GOOGLE_OAUTH2_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 class GoogleAdsConnector(Connector):

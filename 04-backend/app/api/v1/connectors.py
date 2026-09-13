@@ -1,17 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from pydantic import BaseModel
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
+import redis.asyncio as redis
 
 from app.core.deps import get_db, require_roles
 from app.db.models.connectors import ConnectorConfig
 from app.connectors.credentials import encrypt_secret
-from app.connectors.scheduler import sync_connector_instance
+from app.connectors.registry import CONNECTOR_REGISTRY
+from app.connectors.base import UnauthorizedError
+from app.services.audit import record_user_audit
+from app.workers.tasks import manual_sync_connector_task
 
 router = APIRouter()
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 class ConnectorCreate(BaseModel):
     connector_name: str
@@ -40,9 +46,13 @@ async def create_connector(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_roles("owner"))
 ):
+    if config_in.connector_name not in CONNECTOR_REGISTRY:
+        raise HTTPException(status_code=422, detail=f"Unknown connector type. Allowed: {list(CONNECTOR_REGISTRY.keys())}")
+
     stmt = select(ConnectorConfig).where(
         ConnectorConfig.connector_name == config_in.connector_name,
-        ConnectorConfig.company_id == user.company_id
+        ConnectorConfig.company_id == user.company_id,
+        ConnectorConfig.deleted_at.is_(None)
     )
     res = await db.execute(stmt)
     if res.scalars().first():
@@ -75,6 +85,7 @@ async def list_connectors(
 async def update_connector(
     connector_id: uuid.UUID,
     config_in: ConnectorUpdate,
+    validate: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     user=Depends(require_roles("owner"))
 ):
@@ -88,7 +99,39 @@ async def update_connector(
         raise HTTPException(status_code=404, detail="Connector not found")
         
     if config_in.secret is not None:
+        if validate:
+            connector_cls = CONNECTOR_REGISTRY.get(config.connector_name)
+            if connector_cls:
+                # Use a dummy config just for validation
+                dummy_config = ConnectorConfig(
+                    company_id=config.company_id,
+                    connector_name=config.connector_name,
+                    sync_interval_minutes=config.sync_interval_minutes
+                )
+                connector = connector_cls(dummy_config, config_in.secret)
+                try:
+                    await connector.test_connection()
+                except UnauthorizedError:
+                    raise HTTPException(status_code=400, detail="Invalid credentials")
+                except Exception:
+                    raise HTTPException(status_code=502, detail="Connection test failed")
+                    
         config.encrypted_secret = encrypt_secret(config_in.secret)
+        if config.status in ('unauthorized', 'failing'):
+            config.status = 'active'
+        config.retry_count = 0
+        config.next_sync_at = datetime.now(timezone.utc)
+        
+        await record_user_audit(
+            session=db,
+            user=user,
+            entity_type="connector",
+            entity_id=config.id,
+            action="connector.credentials_rotated",
+            old_state={},
+            new_state={"connector_id": str(config.id), "connector_name": config.connector_name}
+        )
+
     if config_in.sync_interval_minutes is not None:
         config.sync_interval_minutes = config_in.sync_interval_minutes
     if config_in.status is not None:
@@ -115,13 +158,12 @@ async def delete_connector(
     if not config:
         raise HTTPException(status_code=404, detail="Connector not found")
         
-    from datetime import datetime, timezone
     config.deleted_at = datetime.now(timezone.utc)
     config.status = "paused"
     await db.flush()
     return None
 
-@router.post("/{connector_id}/sync")
+@router.post("/{connector_id}/sync", status_code=202)
 async def manual_sync(
     connector_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -136,9 +178,16 @@ async def manual_sync(
     if not config:
         raise HTTPException(status_code=404, detail="Connector not found")
         
-    import asyncio
-    from datetime import datetime, timezone
+    # Rate limit check
+    rl_key = f"rl:manual_sync:{config.id}"
+    acquired = await redis_client.set(rl_key, "1", nx=True, ex=60)
+    if not acquired:
+        raise HTTPException(status_code=429, detail="Too many sync requests")
+        
     config.last_attempted_sync = datetime.now(timezone.utc)
-    asyncio.create_task(sync_connector_instance(str(user.company_id), str(config.id)))
+    await db.flush()
     
-    return {"status": "sync_started"}
+    # Spawn task via celery
+    task = manual_sync_connector_task.delay(str(user.company_id), str(config.id))
+    
+    return {"status": "sync_started", "task_id": task.id}

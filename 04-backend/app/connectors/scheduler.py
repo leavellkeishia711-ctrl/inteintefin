@@ -1,14 +1,15 @@
-import asyncio
+﻿import asyncio
 import logging
 from typing import Optional
 import redis.asyncio as redis
 from sqlalchemy import select, update, or_
 from datetime import datetime, timezone, timedelta
 import os
+import uuid
 
 from app.db.session import system_session, tenant_session
 from app.db.models.connectors import ConnectorConfig
-from app.connectors.keitaro import KeitaroConnector
+from app.connectors.registry import CONNECTOR_REGISTRY
 from app.connectors.base import UnauthorizedError
 from app.connectors.credentials import decrypt_secret
 
@@ -17,19 +18,32 @@ logger = logging.getLogger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
-async def acquire_lock(lock_key: str, ttl: int = 300) -> bool:
-    """Acquires a redis lock with a TTL."""
-    return await redis_client.set(lock_key, "locked", nx=True, ex=ttl)
+SYNC_MAX_CONCURRENCY = int(os.getenv("SYNC_MAX_CONCURRENCY", "5"))
 
-async def release_lock(lock_key: str) -> None:
-    """Releases a redis lock."""
-    await redis_client.delete(lock_key)
+RELEASE_LOCK_SCRIPT = """
+if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+else
+    return 0
+end
+"""
+
+async def acquire_lock(lock_key: str, ttl: int = 300) -> str | None:
+    \"\"\"Acquires a redis lock with a TTL and returns a token.\"\"\"
+    token = str(uuid.uuid4())
+    acquired = await redis_client.set(lock_key, token, nx=True, ex=ttl)
+    return token if acquired else None
+
+async def release_lock(lock_key: str, token: str) -> None:
+    \"\"\"Releases a redis lock safely using a Lua script.\"\"\"
+    await redis_client.eval(RELEASE_LOCK_SCRIPT, 1, lock_key, token)
 
 async def sync_connector_instance(company_id: str, connector_id: str) -> None:
-    """Runs the sync for a single connector config within tenant context."""
+    \"\"\"Runs the sync for a single connector config within tenant context.\"\"\"
     lock_key = f"sync_lock:{company_id}:{connector_id}"
     
-    if not await acquire_lock(lock_key):
+    token = await acquire_lock(lock_key)
+    if not token:
         logger.info(f"Sync for connector {connector_id} is already running. Skipping.")
         return
 
@@ -51,29 +65,10 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             try:
                 decrypted = decrypt_secret(config.encrypted_secret)
                 
-                # Instantiate correct connector class
-                if config.connector_name == "keitaro":
-                    connector = KeitaroConnector(config, decrypted)
-                elif config.connector_name == "binom":
-                    from app.connectors.binom import BinomConnector
-                    connector = BinomConnector(config, decrypted)
-                elif config.connector_name == "voluum":
-                    from app.connectors.voluum import VoluumConnector
-                    connector = VoluumConnector(config, decrypted)
-                elif config.connector_name == "affise":
-                    from app.connectors.affise import AffiseConnector
-                    connector = AffiseConnector(config, decrypted)
-                elif config.connector_name == "meta":
-                    from app.connectors.meta_ads import MetaAdsConnector
-                    connector = MetaAdsConnector(config, decrypted)
-                elif config.connector_name == "google_ads":
-                    from app.connectors.google_ads import GoogleAdsConnector
-                    connector = GoogleAdsConnector(config, decrypted)
-                elif config.connector_name == "tiktok_ads":
-                    from app.connectors.tiktok_ads import TikTokAdsConnector
-                    connector = TikTokAdsConnector(config, decrypted)
-                else:
+                connector_cls = CONNECTOR_REGISTRY.get(config.connector_name)
+                if not connector_cls:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
+                connector = connector_cls(config, decrypted)
 
                 await connector.sync(db)
                 
@@ -110,10 +105,17 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 await db.commit()
                 
     finally:
-        await release_lock(lock_key)
+        await release_lock(lock_key, token)
+
+async def _bounded_sync(sem: asyncio.Semaphore, company_id: str, connector_id: str):
+    async with sem:
+        try:
+            await sync_connector_instance(company_id, connector_id)
+        except Exception as e:
+            logger.error(f"Unhandled exception in sync task for connector {connector_id}: {e}")
 
 async def run_scheduled_syncs():
-    """Finds all connectors that need to be synced and launches them."""
+    \"\"\"Finds all connectors that need to be synced and launches them.\"\"\"
     async with system_session() as db:
         now_utc = datetime.now(timezone.utc)
         stmt = select(ConnectorConfig).where(
@@ -127,9 +129,7 @@ async def run_scheduled_syncs():
         result = await db.execute(stmt)
         configs = result.scalars().all()
         
-        tasks = []
-        for c in configs:
-            tasks.append(sync_connector_instance(str(c.company_id), str(c.id)))
-            
-        if tasks:
-            await asyncio.gather(*tasks)
+        if configs:
+            sem = asyncio.Semaphore(SYNC_MAX_CONCURRENCY)
+            tasks = [_bounded_sync(sem, str(c.company_id), str(c.id)) for c in configs]
+            await asyncio.gather(*tasks, return_exceptions=True)
