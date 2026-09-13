@@ -27,7 +27,7 @@ async def test_scheduler_max_concurrency(db_session, monkeypatch):
     for i in range(20):
         c = ConnectorConfig(
             company_id=company.id,
-            connector_name="meta",
+            connector_name=f"meta_{i}",
             encrypted_secret="enc1",
             status="active",
             next_sync_at=now_utc - timedelta(minutes=1)
@@ -70,7 +70,7 @@ async def test_scheduler_batch_continues_on_error(db_session, monkeypatch):
     for i in range(20):
         c = ConnectorConfig(
             company_id=company.id,
-            connector_name="meta",
+            connector_name=f"meta_{i}",
             encrypted_secret="enc1",
             status="active",
             next_sync_at=now_utc - timedelta(minutes=1)
