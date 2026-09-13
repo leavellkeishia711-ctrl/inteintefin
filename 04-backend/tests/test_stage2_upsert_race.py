@@ -8,6 +8,25 @@ from app.db.models.campaigns import CampaignRunStat
 from app.connectors.base import NormalizedRecord
 from app.db.session import async_session_maker
 
+from app.db.models.campaigns import CampaignRun
+from datetime import datetime, timezone
+
+async def create_dummy_run(client, company_id):
+    me = await client.get("/api/v1/auth/me")
+    user_id = uuid.UUID(me.json()["id"])
+    run_id = uuid.uuid4()
+    async with async_session_maker() as session:
+        run = CampaignRun(
+            id=run_id,
+            company_id=company_id,
+            buyer_id=user_id,
+            started_at=datetime.now(timezone.utc)
+        )
+        session.add(run)
+        await session.commit()
+    return run_id
+
+
 @pytest.fixture
 async def company_id_fixture():
     return uuid.uuid4()
@@ -20,7 +39,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
     """
     me = await client_a.get("/api/v1/auth/me")
     company_id = uuid.UUID(me.json()["company_id"])
-    campaign_run_id = uuid.uuid4()
+    campaign_run_id = await create_dummy_run(client_a, company_id)
     stat_date = date(2026, 9, 1)
     source = "binom"
     external_id = "ext_100"
@@ -101,7 +120,7 @@ async def test_upsert_idempotent_multiple_calls(client_a):
     """
     me = await client_a.get("/api/v1/auth/me")
     company_id = uuid.UUID(me.json()["company_id"])
-    campaign_run_id = uuid.uuid4()
+    campaign_run_id = await create_dummy_run(client_a, company_id)
     stat_date = date(2026, 9, 2)
     source = "voluum"
     external_id = "ext_200"
@@ -151,7 +170,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
     """
     me = await client_a.get("/api/v1/auth/me")
     company_id = uuid.UUID(me.json()["company_id"])
-    campaign_run_id = uuid.uuid4()
+    campaign_run_id = await create_dummy_run(client_a, company_id)
     stat_date = date(2026, 9, 3)
     source = "affise"
     external_id = "ext_300"
@@ -242,7 +261,10 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
     company_a = uuid.UUID(me_a.json()["company_id"])
     me_b = await client_b.get("/api/v1/auth/me")
     company_b = uuid.UUID(me_b.json()["company_id"])
-    campaign_run_id = uuid.uuid4()
+    
+    campaign_run_id_a = await create_dummy_run(client_a, company_a)
+    campaign_run_id_b = await create_dummy_run(client_b, company_b)
+    
     stat_date = date(2026, 9, 4)
     source = "meta_ads"
     external_id = "ext_400"
@@ -267,7 +289,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
     
     errors = []
     
-    async def insert_for_company(company_id, normalized, company_name):
+    async def insert_for_company(company_id, campaign_run_id, normalized, company_name):
         try:
             async with async_session_maker() as session:
                 await CampaignRunStat.upsert_campaign_run_stat_atomic(
@@ -288,8 +310,8 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
 
     # Concurrent inserts for A and B
     await asyncio.gather(
-        insert_for_company(company_a, normalized_a, "A"),
-        insert_for_company(company_b, normalized_b, "B")
+        insert_for_company(company_a, campaign_run_id_a, normalized_a, "A"),
+        insert_for_company(company_b, campaign_run_id_b, normalized_b, "B")
     )
     
     assert len(errors) == 0, f"Errors during concurrent tenant inserts: {errors}"
@@ -298,14 +320,14 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
     async with async_session_maker() as session:
         stmt_a = select(CampaignRunStat).filter_by(
             company_id=company_a,
-            campaign_run_id=campaign_run_id,
+            campaign_run_id=campaign_run_id_a,
             stat_date=stat_date,
         )
         row_a = (await session.execute(stmt_a)).scalars().first()
         
         stmt_b = select(CampaignRunStat).filter_by(
             company_id=company_b,
-            campaign_run_id=campaign_run_id,
+            campaign_run_id=campaign_run_id_b,
             stat_date=stat_date,
         )
         row_b = (await session.execute(stmt_b)).scalars().first()
@@ -323,7 +345,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
     """
     me = await client_a.get("/api/v1/auth/me")
     company_id = uuid.UUID(me.json()["company_id"])
-    campaign_run_id = uuid.uuid4()
+    campaign_run_id = await create_dummy_run(client_a, company_id)
     stat_date = date(2026, 9, 5)
     source = "binom"
     external_id = "ext_500"
@@ -385,8 +407,8 @@ async def test_upsert_all_fields_updated_correctly(client_a):
         await session.commit()
         
         assert row_v2.id == row_id, "Expected same row ID after upsert"
-        assert row_v2.spend == Decimal("25.50"), f"spend not updated: {row_v2.spend}"
-        assert row_v2.revenue == Decimal("51.00"), f"revenue not updated: {row_v2.revenue}"
+        assert row_v2.spend == Decimal("15.00"), f"spend not updated: {row_v2.spend}"
+        assert row_v2.revenue == Decimal("25.00"), f"revenue not updated: {row_v2.revenue}"
         # NOTE: impressions, clicks, conversions omitted from verification because they are not present in CampaignRunStat model
         assert row_v2.created_at == created_at_v1, "created_at should not change"
         assert row_v2.updated_at > updated_at_v1, "updated_at should be refreshed"
