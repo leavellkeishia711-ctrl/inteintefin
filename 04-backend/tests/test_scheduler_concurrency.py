@@ -3,7 +3,7 @@ import asyncio
 from unittest.mock import AsyncMock
 from app.connectors import scheduler
 from app.db.models.connectors import ConnectorConfig
-from app.db.models.company import Company
+from app.db.models import Company
 from sqlalchemy import select
 from datetime import datetime, timezone, timedelta
 import uuid

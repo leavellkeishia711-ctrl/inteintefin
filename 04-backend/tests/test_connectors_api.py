@@ -1,8 +1,8 @@
 import pytest
 from httpx import AsyncClient
 from app.db.models.connectors import ConnectorConfig
-from app.db.models.company import Company
-from app.db.models.users import User
+from app.db.models import Company
+from app.db.models import User
 from app.core.security import create_access_token
 from sqlalchemy import select, update
 import uuid
