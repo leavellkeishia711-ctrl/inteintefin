@@ -38,7 +38,7 @@ Data from different sources (e.g., Meta spend + Binom tracker revenue) for the s
 
 The following requirements remain OPEN and must be implemented before full Stage 2 completion:
 
-- Google Ads integration: NOT IMPLEMENTED
+- Google Ads integration: Implemented and CI-verified; real credential validation pending (app/connectors/google_ads.py, tests/test_google_ads_connector.py, no new dependencies (REST via httpx))
 - TikTok Ads integration: NOT IMPLEMENTED
 - Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
 - Credential rotation (safe update, re-encryption endpoint) - **OPEN**
