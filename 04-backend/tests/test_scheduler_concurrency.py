@@ -6,15 +6,21 @@ from app.db.models.connectors import ConnectorConfig
 from app.db.models import Company
 from sqlalchemy import select
 from datetime import datetime, timezone, timedelta
+from app.db.session import system_session
 import uuid
+import pytest_asyncio
+
+@pytest_asyncio.fixture
+async def db_session():
+    async with system_session() as session:
+        yield session
 
 @pytest.mark.asyncio
-async def test_scheduler_max_concurrency(system_session, monkeypatch):
-    # Setup test companies and configs
+async def test_scheduler_max_concurrency(db_session, monkeypatch):
     company = Company(name="Test Co")
-    system_session.add(company)
-    await system_session.commit()
-    await system_session.refresh(company)
+    db_session.add(company)
+    await db_session.commit()
+    await db_session.refresh(company)
     
     configs = []
     now_utc = datetime.now(timezone.utc)
@@ -27,8 +33,8 @@ async def test_scheduler_max_concurrency(system_session, monkeypatch):
             next_sync_at=now_utc - timedelta(minutes=1)
         )
         configs.append(c)
-        system_session.add(c)
-    await system_session.commit()
+        db_session.add(c)
+    await db_session.commit()
 
     in_flight = 0
     max_in_flight = 0
@@ -53,11 +59,11 @@ async def test_scheduler_max_concurrency(system_session, monkeypatch):
     assert max_in_flight > 0
 
 @pytest.mark.asyncio
-async def test_scheduler_batch_continues_on_error(system_session, monkeypatch):
+async def test_scheduler_batch_continues_on_error(db_session, monkeypatch):
     company = Company(name="Test Co")
-    system_session.add(company)
-    await system_session.commit()
-    await system_session.refresh(company)
+    db_session.add(company)
+    await db_session.commit()
+    await db_session.refresh(company)
     
     configs = []
     now_utc = datetime.now(timezone.utc)
@@ -70,8 +76,8 @@ async def test_scheduler_batch_continues_on_error(system_session, monkeypatch):
             next_sync_at=now_utc - timedelta(minutes=1)
         )
         configs.append(c)
-        system_session.add(c)
-    await system_session.commit()
+        db_session.add(c)
+    await db_session.commit()
 
     called = 0
     
@@ -84,14 +90,12 @@ async def test_scheduler_batch_continues_on_error(system_session, monkeypatch):
     monkeypatch.setattr(scheduler, "sync_connector_instance", mock_sync)
     monkeypatch.setattr(scheduler, "SYNC_MAX_CONCURRENCY", 5)
     
-    # Should not raise exception
     await scheduler.run_scheduled_syncs()
     
     assert called == 20
 
 @pytest.mark.asyncio
 async def test_safe_redis_lock_release(monkeypatch):
-    # Setup mock redis
     class MockRedis:
         def __init__(self):
             self.store = {}
@@ -103,7 +107,6 @@ async def test_safe_redis_lock_release(monkeypatch):
             return True
             
         async def eval(self, script, numkeys, key, arg):
-            # simulate lua
             if self.store.get(key) == arg:
                 del self.store[key]
                 return 1
@@ -116,10 +119,8 @@ async def test_safe_redis_lock_release(monkeypatch):
     assert token is not None
     assert mock_redis.store["test_key"] == token
     
-    # attempt release with wrong token
     await scheduler.release_lock("test_key", "wrong_token")
-    assert "test_key" in mock_redis.store # lock not released
+    assert "test_key" in mock_redis.store
     
-    # attempt release with right token
     await scheduler.release_lock("test_key", token)
-    assert "test_key" not in mock_redis.store # lock released
+    assert "test_key" not in mock_redis.store
