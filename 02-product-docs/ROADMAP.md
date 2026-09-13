@@ -23,7 +23,7 @@ This document outlines the phased delivery plan for FinanceIntel.
 
 **Goal:** Automated ingestion of costs, revenues, and campaigns.
 
-**Completed (Merged & Post-Merge Verified on main `4baafb9b`):**
+**Completed (Merged & Post-Merge Verified on main `99763f95f17918fda46e0b6fd098293e0373749b`):**
 - [x] `connectors/base.py` abstract class.
 - [x] Encrypted credentials storage.
 - [x] Keitaro implementation (STUB / NOT PRODUCTION-READY).
@@ -36,13 +36,13 @@ This document outlines the phased delivery plan for FinanceIntel.
 - [x] Voluum integration.
 - [x] Affise integration.
 - [x] Meta Ads integration (hardened: pagination, secret stripping, ad accounts).
-- [x] `ad_accounts` mapping (Meta only — Binom/Voluum/Affise pending).
+- [x] `ad_accounts` mapping (Meta only - Binom/Voluum/Affise pending).
+- [x] `CampaignRunStat` soft delete.
 
 **Open (Pending Implementation):**
 - [ ] Cross-source conflict resolution / reconciliation.
 - [ ] Credential rotation endpoint.
 - [ ] Stale-source DQ alert.
-- [ ] `CampaignRunStat` soft delete.
 - [ ] ECB FX rate auto-fetch.
 - [ ] Expanded observability (structured logging, metrics).
 - [ ] Google Ads integration (NOT IMPLEMENTED).
