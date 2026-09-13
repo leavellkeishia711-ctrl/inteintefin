@@ -20,6 +20,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Voluum integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/voluum.py` |
 | Affise integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/affise.py` |
 | Meta Ads integration (hardened) | **Merged & Post-Merge Verified** | `04-backend/app/connectors/meta_ads.py` |
+| TikTok Ads integration | **Implemented** | `04-backend/app/connectors/tiktok_ads.py` |
 | Ad accounts mapping (Meta only) | Done | `MetaAdsConnector.fetch_ad_accounts()` / `normalize_ad_accounts()` |
 | Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
@@ -39,7 +40,6 @@ Data from different sources (e.g., Meta spend + Binom tracker revenue) for the s
 The following requirements remain OPEN and must be implemented before full Stage 2 completion:
 
 - Google Ads integration: NOT IMPLEMENTED
-- TikTok Ads integration: NOT IMPLEMENTED
 - Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
 - Credential rotation (safe update, re-encryption endpoint) - **OPEN**
 - Stale-source Data Quality (DQ) alerts - **OPEN**

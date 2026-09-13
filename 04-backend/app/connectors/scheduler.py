@@ -66,6 +66,9 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 elif config.connector_name == "meta":
                     from app.connectors.meta_ads import MetaAdsConnector
                     connector = MetaAdsConnector(config, decrypted)
+                elif config.connector_name == "tiktok_ads":
+                    from app.connectors.tiktok_ads import TikTokAdsConnector
+                    connector = TikTokAdsConnector(config, decrypted)
                 else:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
 
