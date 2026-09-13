@@ -13,7 +13,7 @@ async def company_id_fixture():
     return uuid.uuid4()
 
 @pytest.mark.asyncio
-async def test_upsert_race_atomic_insert_or_update(client_a, company_a_fixtures):
+async def test_upsert_race_atomic_insert_or_update(client_a):
     """
     UPSERT race: two tasks simultaneously attempt INSERT with same (company_id, campaign_run_id, stat_date, source, external_id).
     Expected: exactly one row in DB, no duplicate key error, updated values reflect last write (deterministic due to ON CONFLICT DO UPDATE).
@@ -97,7 +97,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a, company_a_fixtures)
             f"Unexpected spend value: {row.spend}"
 
 @pytest.mark.asyncio
-async def test_upsert_idempotent_multiple_calls(client_a, company_a_fixtures):
+async def test_upsert_idempotent_multiple_calls(client_a):
     """
     Call upsert_campaign_run_stat_atomic 5 times with identical inputs.
     Expected: exactly 1 row, all metrics identical to input, no errors.
@@ -148,7 +148,7 @@ async def test_upsert_idempotent_multiple_calls(client_a, company_a_fixtures):
         assert count == 1, f"Expected 1 row after 5 idempotent upserts, found {count}"
 
 @pytest.mark.asyncio
-async def test_upsert_soft_delete_respects_index_predicate(client_a, company_a_fixtures):
+async def test_upsert_soft_delete_respects_index_predicate(client_a):
     """
     Insert row A, mark as deleted_at=now(), then upsert same keys with new data.
     Expected: new row inserted (not updated), both A (deleted) and B (active) in DB.
@@ -240,7 +240,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a, company_a_f
         assert active_row.spend == Decimal("80.00"), "Row B should have new data"
 
 @pytest.mark.asyncio
-async def test_upsert_tenant_isolation_race(client_a, client_b, company_a_fixtures, company_b_fixtures):
+async def test_upsert_tenant_isolation_race(client_a, client_b):
     """
     Company A and Company B attempt concurrent upsert with same keys.
     Expected: 2 separate rows in DB, no cross-tenant contamination.
@@ -325,7 +325,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b, company_a_fixtur
         assert row_b.spend == Decimal("300.00"), "Company B data incorrect"
 
 @pytest.mark.asyncio
-async def test_upsert_all_fields_updated_correctly(client_a, company_a_fixtures):
+async def test_upsert_all_fields_updated_correctly(client_a):
     """
     Insert row with v1 data, then upsert same keys with v2 data.
     Expected: row is updated, ALL mutable fields reflect v2 data, updated_at refreshed.
