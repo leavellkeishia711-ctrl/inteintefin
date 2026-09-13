@@ -3,7 +3,7 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `4baafb9ba8e1f888e339beb0a409150b037b8b4c`
+**Current main SHA:** `99763f95f17918fda46e0b6fd098293e0373749b`
 
 ## Verified Implementation (Post-Merge)
 
@@ -25,7 +25,9 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
 | Idempotency tests | Done | `test_meta_upsert_idempotency`, `test_binom_upsert_idempotency` |
 | Production smoke | Done | `.github/workflows/prod-gate.yml` |
-| Post-merge CI (main) | Done | Backend: 34687338307, Frontend: 34687338292, Prod Gate: 34687338289 (on main `4baafb9b`) |
+| Post-merge CI (main) | Done | Backend: 34758172904, Frontend: 34758172903, Prod Gate: 34758172899 (on main `99763f95f17918fda46e0b6fd098293e0373749b`) |
+| `CampaignRunStat` soft delete (`deleted_at`) | Done | `SoftDeleteMixin`, API read query filters |
+| `CampaignRunStat` uniqueness | Done | Два partial unique index, включая ключ при `external_id IS NULL`, с `deleted_at IS NULL` |
 
 ## Source Data Storage Design
 
@@ -40,8 +42,7 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
 - Credential rotation (safe update, re-encryption endpoint) - **OPEN**
 - Stale-source Data Quality (DQ) alerts - **OPEN**
-- CampaignRunStat upsert race: IntegrityError not handled (SELECT-then-INSERT), needs ON CONFLICT or retry — **OPEN**
-- `CampaignRunStat` soft delete (`deleted_at`)
+- CampaignRunStat upsert race: IntegrityError not handled (SELECT-then-INSERT), needs ON CONFLICT or retry - **OPEN**
 - ECB FX rate auto-fetch
 - Expanded observability (structured logging, metrics)
 - Production validation with real external API credentials
