@@ -152,33 +152,18 @@ class BinomConnector(Connector):
                 logger.error(f"Binom upsert FX rate error for external_id={record.external_id} date={record.stat_date}: {e}")
                 raise
                 
-            stmt_stat = select(CampaignRunStat).where(and_(
-                CampaignRunStat.company_id == self.config.company_id,
-                CampaignRunStat.campaign_run_id == run.id,
-                CampaignRunStat.stat_date == record.stat_date,
-                CampaignRunStat.source == record.source,
-                CampaignRunStat.external_id == record.external_id
-           ))
-            stat_res = await session.execute(stmt_stat)
-            stat = stat_res.scalars().first()
-            
-            if stat:
-                stat.spend = record.spend
-                stat.revenue = record.revenue
-                stat.fx_rate_to_base = fx_rate
-            else:
-                new_stat = CampaignRunStat(
-                    company_id=self.config.company_id,
-                    campaign_run_id=run.id,
-                    stat_date=record.stat_date,
-                    spend=record.spend,
-                    revenue=record.revenue,
-                    currency=record.currency,
-                    fx_rate_to_base=fx_rate,
-                    source=record.source,
-                    external_id=record.external_id
-                )
-                session.add(new_stat)
+            await CampaignRunStat.upsert_campaign_run_stat_atomic(
+                session=session,
+                company_id=self.config.company_id,
+                campaign_run_id=run.id,
+                stat_date=record.stat_date,
+                source=record.source,
+                external_id=record.external_id,
+                normalized_record=record,
+                connector_name=self.__class__.__name__,
+                fx_rate_to_base=fx_rate,
+                currency=record.currency
+            )
                 
         if skipped > 0:
             logger.warning(f"Binom upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")
