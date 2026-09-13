@@ -26,23 +26,19 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
     external_id = "ext_100"
     
     normalized_v1 = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("100.00"),
         revenue=Decimal("200.00"),
         currency="USD",
-        impressions=1000,
-        clicks=50,
-        conversions=5,
         source=source,
         external_id=external_id,
     )
     
     normalized_v2 = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("150.00"),
         revenue=Decimal("250.00"),
         currency="USD",
-        impressions=1200,
-        clicks=60,
-        conversions=6,
         source=source,
         external_id=external_id,
     )
@@ -111,12 +107,10 @@ async def test_upsert_idempotent_multiple_calls(client_a):
     external_id = "ext_200"
     
     normalized = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("50.00"),
         revenue=Decimal("100.00"),
         currency="EUR",
-        impressions=500,
-        clicks=25,
-        conversions=2,
         source=source,
         external_id=external_id,
     )
@@ -163,23 +157,19 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
     external_id = "ext_300"
     
     normalized_v1 = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("75.00"),
         revenue=Decimal("150.00"),
         currency="GBP",
-        impressions=750,
-        clicks=30,
-        conversions=3,
         source=source,
         external_id=external_id,
     )
     
     normalized_v2 = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("80.00"),
         revenue=Decimal("160.00"),
         currency="GBP",
-        impressions=800,
-        clicks=35,
-        conversions=3,
         source=source,
         external_id=external_id,
     )
@@ -258,23 +248,19 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
     external_id = "ext_400"
     
     normalized_a = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("200.00"),
         revenue=Decimal("400.00"),
         currency="USD",
-        impressions=2000,
-        clicks=100,
-        conversions=10,
         source=source,
         external_id=external_id,
     )
     
     normalized_b = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("300.00"),
         revenue=Decimal("600.00"),
         currency="USD",
-        impressions=3000,
-        clicks=150,
-        conversions=15,
         source=source,
         external_id=external_id,
     )
@@ -343,23 +329,19 @@ async def test_upsert_all_fields_updated_correctly(client_a):
     external_id = "ext_500"
     
     normalized_v1 = NormalizedRecord(
+        stat_date=stat_date,
         spend=Decimal("10.00"),
         revenue=Decimal("20.00"),
         currency="USD",
-        impressions=100,
-        clicks=5,
-        conversions=0,
         source=source,
         external_id=external_id,
     )
     
     normalized_v2 = NormalizedRecord(
-        spend=Decimal("25.50"),
-        revenue=Decimal("51.00"),
-        currency="USD",
-        impressions=255,
-        clicks=12,
-        conversions=2,
+        stat_date=stat_date,
+        spend=Decimal("15.00"),
+        revenue=Decimal("25.00"),
+        currency="EUR",
         source=source,
         external_id=external_id,
     )
