@@ -3,13 +3,13 @@ from typing import Type
 from app.connectors.base import Connector
 
 _REGISTRY_MAP = {
-    \'keitaro\': (\'app.connectors.keitaro\', \'KeitaroConnector\'),
-    \'binom\': (\'app.connectors.binom\', \'BinomConnector\'),
-    \'voluum\': (\'app.connectors.voluum\', \'VoluumConnector\'),
-    \'affise\': (\'app.connectors.affise\', \'AffiseConnector\'),
-    \'meta\': (\'app.connectors.meta_ads\', \'MetaAdsConnector\'),
-    \'google_ads\': (\'app.connectors.google_ads\', \'GoogleAdsConnector\'),
-    \'tiktok_ads\': (\'app.connectors.tiktok_ads\', \'TikTokAdsConnector\'),
+    'keitaro': ('app.connectors.keitaro', 'KeitaroConnector'),
+    'binom': ('app.connectors.binom', 'BinomConnector'),
+    'voluum': ('app.connectors.voluum', 'VoluumConnector'),
+    'affise': ('app.connectors.affise', 'AffiseConnector'),
+    'meta': ('app.connectors.meta_ads', 'MetaAdsConnector'),
+    'google_ads': ('app.connectors.google_ads', 'GoogleAdsConnector'),
+    'tiktok_ads': ('app.connectors.tiktok_ads', 'TikTokAdsConnector'),
 }
 
 class LazyConnectorRegistry(dict):
