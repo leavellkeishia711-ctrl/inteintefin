@@ -47,8 +47,8 @@ def upgrade() -> None:
         CREATE POLICY tenant_isolation_external_campaign_mappings
         ON external_campaign_mappings
         FOR ALL
-        USING (company_id = current_setting('app.current_company_id')::uuid)
-        WITH CHECK (company_id = current_setting('app.current_company_id')::uuid);
+        USING (company_id = nullif(current_setting('app.company_id', true), '')::uuid)
+        WITH CHECK (company_id = nullif(current_setting('app.company_id', true), '')::uuid);
     """)
 
 
