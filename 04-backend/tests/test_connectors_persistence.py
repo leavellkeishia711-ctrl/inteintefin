@@ -162,6 +162,7 @@ async def test_sync_finds_campaign_via_mapping(client_a, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_campaign_run_stat_persists_performance_metrics(client_a):
+    import uuid
     me = await client_a.get("/api/v1/auth/me")
     tenant_a_id = uuid.UUID(me.json()["company_id"])
     # Create CampaignRun and Mapping
@@ -220,6 +221,7 @@ async def test_campaign_run_stat_persists_performance_metrics(client_a):
 
 @pytest.mark.asyncio
 async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(client_a):
+    import uuid
     me = await client_a.get("/api/v1/auth/me")
     tenant_a_id = uuid.UUID(me.json()["company_id"])
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
@@ -291,6 +293,7 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(cli
 
 @pytest.mark.asyncio
 async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(client_a):
+    import uuid
     me = await client_a.get("/api/v1/auth/me")
     tenant_a_id = uuid.UUID(me.json()["company_id"])
     # This test verifies that inserting manually without specifying metrics defaults to 0
