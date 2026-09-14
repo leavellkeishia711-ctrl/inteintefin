@@ -16,7 +16,8 @@ from app.connectors.google_ads import GoogleAdsConnector
 from app.connectors.base import UnauthorizedError
 
 class DummyConfig:
-    def __init__(self, company_id):
+    def __init__(self, company_id, connector_name="dummy"):
+        self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {}
 
@@ -32,7 +33,7 @@ def create_valid_creds() -> str:
 
 @pytest.fixture
 def valid_connector():
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="google_ads")
     return GoogleAdsConnector(config, create_valid_creds())
 
 def mock_response(status_code: int, json_data: dict = None) -> MagicMock:
