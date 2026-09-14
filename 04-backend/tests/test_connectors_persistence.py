@@ -172,8 +172,10 @@ async def test_campaign_run_stat_persists_performance_metrics(client_a):
     import uuid
     from decimal import Decimal
     
+    user_id = uuid.UUID(me.json()["id"])
     run_id = uuid.uuid4()
-    run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Perf Metrics Test", status="active")
+    from datetime import datetime, timezone
+    run = CampaignRun(id=run_id, company_id=tenant_a_id, buyer_id=user_id, started_at=datetime.now(timezone.utc), status="active")
     from app.db.session import system_session
     mapping_id = uuid.uuid4()
     mapping = ExternalCampaignMapping(
@@ -230,8 +232,10 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(cli
     import uuid
     from decimal import Decimal
     
+    user_id = uuid.UUID(me.json()["id"])
     run_id = uuid.uuid4()
-    run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Perf Update Test", status="active")
+    from datetime import datetime, timezone
+    run = CampaignRun(id=run_id, company_id=tenant_a_id, buyer_id=user_id, started_at=datetime.now(timezone.utc), status="active")
     from app.db.session import system_session
     mapping = ExternalCampaignMapping(
         id=uuid.uuid4(),
@@ -303,8 +307,10 @@ async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(client_a):
     from decimal import Decimal
     from app.db.session import system_session
     
+    user_id = uuid.UUID(me.json()["id"])
     run_id = uuid.uuid4()
-    run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Legacy Default Test", status="active")
+    from datetime import datetime, timezone
+    run = CampaignRun(id=run_id, company_id=tenant_a_id, buyer_id=user_id, started_at=datetime.now(timezone.utc), status="active")
     async with system_session() as sys_db:
         sys_db.add(run)
         await sys_db.commit()
