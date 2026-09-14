@@ -31,7 +31,7 @@ class ExternalCampaignMappingResponse(BaseModel):
 async def create_mapping(
     mapping_in: ExternalCampaignMappingCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner"]))
+    user=Depends(require_roles("owner"))
 ):
     new_mapping = ExternalCampaignMapping(
         company_id=user.company_id,
@@ -53,7 +53,7 @@ async def get_mappings(
     platform: Optional[str] = Query(None),
     campaign_run_id: Optional[uuid.UUID] = Query(None),
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner"]))
+    user=Depends(require_roles("owner"))
 ):
     conditions = [
         ExternalCampaignMapping.company_id == user.company_id,
@@ -72,7 +72,7 @@ async def get_mappings(
 async def delete_mapping(
     mapping_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user=Depends(require_roles(["owner"]))
+    user=Depends(require_roles("owner"))
 ):
     stmt = select(ExternalCampaignMapping).where(
         and_(
