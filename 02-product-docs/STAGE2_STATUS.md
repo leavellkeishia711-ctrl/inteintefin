@@ -53,3 +53,10 @@ The following requirements remain OPEN and must be implemented before full Stage
 - **Idempotency**: All CampaignRunStat records upserted using ON CONFLICT DO UPDATE.
 - **Soft Delete**: Uses deleted_at instead of physical deletion.
 - **Mapping**: ExternalCampaignMapping table links (company_id, platform, external_id) to campaign_run_id (1-to-many: one CampaignRun can have many external_id).
+
+## Performance Metrics Updates (PR #25)
+- **clicks, impressions, conversions added** to \NormalizedRecord\ and \CampaignRunStat\.
+- **conversions** stored as \NUMERIC(20,4)\ (Decimal), never float. Protected from negative values via Pydantic \ge=Decimal("0")\.
+- **Default values**: If a source (e.g. Trackers) does not provide \conversions\, it defaults to \\ / \Decimal("0")\.
+- Stage 3 Analytics (ROI, CPM, forecasting) is **NOT** implemented yet (explicitly out of scope).
+- Reconciliation logic is **NOT** implemented yet.

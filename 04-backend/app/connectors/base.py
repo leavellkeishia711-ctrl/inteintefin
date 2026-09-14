@@ -76,7 +76,7 @@ class NormalizedRecord(BaseModel):
     currency: str
     clicks: int = Field(default=0, ge=0)
     impressions: int = Field(default=0, ge=0)
-    conversions: Decimal = Field(default_factory=lambda: Decimal("0"))
+    conversions: Decimal = Field(default_factory=lambda: Decimal("0"), ge=Decimal("0"))
 
 class NormalizedAdAccount(BaseModel):
     platform: str

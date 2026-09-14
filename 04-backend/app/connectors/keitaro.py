@@ -25,15 +25,15 @@ class KeitaroConnector(Connector):
         headers = {"Api-Key": self.api_key}
         response = await client.get(f"{self.base_url}/report", headers=headers, timeout=15)
         response.raise_for_status()
-        
+
         try:
             data = response.json()
         except ValueError:
             raise ConnectorError("Malformed JSON in response")
-            
+
         if not isinstance(data, list):
             raise ConnectorError("Unexpected response format, expected a list")
-            
+
         return data
 
     async def fetch(self) -> List[Dict[str, Any]]:
@@ -45,20 +45,20 @@ class KeitaroConnector(Connector):
         for row in raw_data:
             if not isinstance(row, dict):
                 continue
-                
+
             external_id = row.get("campaign_id")
             if external_id is None:
                 continue
-                
+
             date_str = row.get("date")
             if not date_str:
                 continue
-                
+
             try:
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
             except ValueError:
                 continue
-                
+
             try:
                 spend = Decimal(str(row.get("spend", "0")))
                 revenue = Decimal(str(row.get("revenue", "0")))
@@ -72,13 +72,13 @@ class KeitaroConnector(Connector):
                 if clicks < 0: clicks = 0
             except ValueError:
                 clicks = 0
-                
+
             try:
                 impressions = int(str(row.get("impressions", "0") or "0"))
                 if impressions < 0: impressions = 0
             except ValueError:
                 impressions = 0
-                
+
             try:
                 raw_conv = row.get("conversions") if "conversions" in row else row.get("leads")
                 conversions = Decimal(str(raw_conv or "0"))
@@ -97,13 +97,13 @@ class KeitaroConnector(Connector):
                 impressions=impressions,
                 conversions=conversions
             ))
-            
+
         # Deduplicate taking the latest if multiple rows have same external_id and date
         unique_records = {}
         for rec in normalized:
             key = (rec.external_id, rec.stat_date)
             unique_records[key] = rec
-            
+
         return list(unique_records.values())
 
     async def upsert(self, session: AsyncSession, normalized_data: List[NormalizedRecord]) -> None:
@@ -137,7 +137,7 @@ class KeitaroConnector(Connector):
             except ValueError as e:
                 logger.error(f"Keitaro upsert FX rate error for external_id={record.external_id} date={record.stat_date}: {e}")
                 raise
-                
+
             # Upsert stat
             stmt_stat = select(CampaignRunStat).where(and_(
                 CampaignRunStat.company_id == self.config.company_id,
@@ -148,7 +148,7 @@ class KeitaroConnector(Connector):
             ))
             stat_res = await session.execute(stmt_stat)
             stat = stat_res.scalars().first()
-            
+
             if stat:
                 stat.spend = record.spend
                 stat.revenue = record.revenue
@@ -166,7 +166,7 @@ class KeitaroConnector(Connector):
                     external_id=record.external_id
                 )
                 session.add(new_stat)
-                
+
         # Note: Do not commit here! The caller manages the transaction.
 
     async def test_connection(self) -> bool:

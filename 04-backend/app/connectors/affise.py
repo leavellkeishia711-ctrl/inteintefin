@@ -82,15 +82,15 @@ class AffiseConnector(Connector):
         currency = str(settings.get("currency", "USD"))
         if len(currency) != 3:
             currency = "USD"
-            
+
         for row in raw_data:
             if not isinstance(row, dict):
                 continue
-                
+
             external_id = row.get("offer_id") or row.get("campaign_id") or row.get("id")
             if external_id is None:
                 continue
-                
+
             date_str = row.get("date")
             if not date_str:
                 continue
@@ -98,7 +98,7 @@ class AffiseConnector(Connector):
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
             except ValueError:
                 continue
-                
+
             try:
                 spend = Decimal(str(row.get("cost", "0")))
                 revenue = Decimal(str(row.get("revenue", "0")))
@@ -112,13 +112,13 @@ class AffiseConnector(Connector):
                 if clicks < 0: clicks = 0
             except ValueError:
                 clicks = 0
-                
+
             try:
                 impressions = int(str(row.get("impressions", "0") or "0"))
                 if impressions < 0: impressions = 0
             except ValueError:
                 impressions = 0
-                
+
             try:
                 raw_conv = row.get("conversions") if "conversions" in row else row.get("leads")
                 conversions = Decimal(str(raw_conv or "0"))
@@ -137,12 +137,12 @@ class AffiseConnector(Connector):
                 impressions=impressions,
                 conversions=conversions
             ))
-            
+
         unique_records = {}
         for rec in normalized:
             key = (rec.external_id, rec.stat_date)
             unique_records[key] = rec
-            
+
         return list(unique_records.values())
 
     async def upsert(self, session: AsyncSession, normalized_data: List[NormalizedRecord]) -> None:
@@ -171,7 +171,7 @@ class AffiseConnector(Connector):
             if not run:
                 skipped += 1
                 continue
-                
+
             matched += 1
 
             try:
@@ -179,7 +179,7 @@ class AffiseConnector(Connector):
             except ValueError as e:
                 logger.error(f"Affise upsert FX rate error for external_id={record.external_id} date={record.stat_date}: {e}")
                 raise
-                
+
             await CampaignRunStat.upsert_campaign_run_stat_atomic(
                 session=session,
                 company_id=self.config.company_id,
@@ -191,6 +191,6 @@ class AffiseConnector(Connector):
                 fx_rate_to_base=fx_rate,
                 currency=record.currency
             )
-                
+
         if skipped > 0:
             logger.warning(f"Affise upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")

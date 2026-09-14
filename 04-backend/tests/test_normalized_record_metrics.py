@@ -1,6 +1,7 @@
 import pytest
 from decimal import Decimal
 from app.connectors.base import NormalizedRecord
+from pydantic import ValidationError
 from app.connectors.google_ads import GoogleAdsConnector
 from app.connectors.meta_ads import MetaAdsConnector
 from app.connectors.tiktok_ads import TikTokAdsConnector
@@ -31,6 +32,18 @@ def test_normalized_record_rejects_negative_clicks():
             revenue=Decimal("20.0"),
             currency="USD",
             clicks=-5
+        )
+
+def test_normalized_record_rejects_negative_conversions():
+    with pytest.raises(ValidationError):
+        NormalizedRecord(
+            source="test",
+            external_id="123",
+            stat_date=date.today(),
+            spend=Decimal("10"),
+            revenue=Decimal("20"),
+            currency="USD",
+            conversions=Decimal("-1.5")
         )
 
 def test_normalized_record_conversions_are_decimal():
@@ -136,25 +149,27 @@ def test_all_connectors_return_metrics():
     from app.connectors.voluum import VoluumConnector
     from app.connectors.affise import AffiseConnector
     from app.connectors.keitaro import KeitaroConnector
-    
+
     class DummyConfig:
         company_id = "test-co"
         connector_name = "test"
         settings = {"currency": "USD"}
-    
+
     connectors = [
-        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}}]),
-        (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01"}]),
-        (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}}]),
-        (BinomConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"camp_id": "1", "date": "2026-01-01"}]),
-        (VoluumConnector(DummyConfig(), '{"access_key":"a","access_token":"b"}'), [{"campaignId": "1", "date": "2026-01-01"}]),
-        (AffiseConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"offer_id": "1", "date": "2026-01-01"}]),
-        (KeitaroConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"campaign_id": "1", "date": "2026-01-01"}])
+        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"clicks": "10", "conversions": "2"}}]),
+        (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01", "clicks": "10", "actions": [{"action_type": "purchase", "value": "2"}]}]),
+        (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}, "metrics": {"clicks": "10", "conversion": "2"}}]),
+        (BinomConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"camp_id": "1", "date": "2026-01-01", "clicks": "10", "leads": "2"}]),
+        (VoluumConnector(DummyConfig(), '{"access_key":"a","access_token":"b"}'), [{"campaignId": "1", "date": "2026-01-01", "clicks": "10", "conversions": "2"}]),
+        (AffiseConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"offer_id": "1", "date": "2026-01-01", "clicks": "10", "conversions": "2"}]),
+        (KeitaroConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"campaign_id": "1", "date": "2026-01-01", "clicks": "10", "conversions": "2"}])
     ]
-    
-    for conn, raw in connectors:
-        res = conn.normalize(raw)
+
+    for conn, payload in connectors:
+        res = conn.normalize(payload)
         assert len(res) == 1, f"{conn.__class__.__name__} failed to normalize"
+        assert res[0].clicks == 10, f"{conn.__class__.__name__} failed to extract clicks"
+        assert res[0].conversions == Decimal("2"), f"{conn.__class__.__name__} failed to extract conversions"
         rec = res[0]
         assert isinstance(rec, NormalizedRecord)
         assert isinstance(rec.clicks, int)

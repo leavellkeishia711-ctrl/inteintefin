@@ -28,17 +28,17 @@ class GoogleAdsConnector(Connector):
             self.client_id = creds["client_id"]
             self.client_secret = creds["client_secret"]
             self.refresh_token = creds["refresh_token"]
-            
+
             # Normalize IDs (remove hyphens, spaces)
             c_id = str(creds["customer_id"]).replace("-", "").replace(" ", "")
             self.customer_id = c_id
-            
+
             l_id = creds.get("login_customer_id")
             if l_id:
                 self.login_customer_id = str(l_id).replace("-", "").replace(" ", "")
             else:
                 self.login_customer_id = None
-                
+
         except (json.JSONDecodeError, KeyError, TypeError):
             raise ValueError("Invalid Google Ads credentials")
 
@@ -74,15 +74,15 @@ class GoogleAdsConnector(Connector):
     async def _execute_gaql(self, query: str) -> List[Dict[str, Any]]:
         """Executes a GAQL query with pagination handling and automatic token refresh."""
         url = f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers/{self.customer_id}/googleAds:search"
-        
+
         async def fetch_page(page_token: Optional[str] = None):
             if not self.access_token:
                 await self._refresh_access_token()
-                
+
             payload = {"query": query}
             if page_token:
                 payload["pageToken"] = page_token
-                
+
             async with httpx.AsyncClient() as client:
                 try:
                     res = await with_retry(
@@ -111,16 +111,16 @@ class GoogleAdsConnector(Connector):
 
         all_results = []
         next_page_token = None
-        
+
         while True:
             data = await fetch_page(next_page_token)
             results = data.get("results", [])
             all_results.extend(results)
-            
+
             next_page_token = data.get("nextPageToken")
             if not next_page_token:
                 break
-                
+
         return all_results
 
     async def test_connection(self) -> bool:
@@ -148,7 +148,7 @@ class GoogleAdsConnector(Connector):
             c_id = customer.get("id")
             if not c_id:
                 continue
-                
+
             raw_status = customer.get("status", "")
             if raw_status == "ENABLED":
                 status = "active"
@@ -156,7 +156,7 @@ class GoogleAdsConnector(Connector):
                 status = "suspended"
             else:
                 status = "banned"
-                
+
             normalized.append(NormalizedAdAccount(
                 platform="google_ads",
                 external_account_id=str(c_id),
@@ -173,10 +173,10 @@ class GoogleAdsConnector(Connector):
         lookback_days = 7
         end_dt = datetime.now(timezone.utc).date()
         start_dt = end_dt - timedelta(days=lookback_days - 1)
-        
+
         start_str = start_dt.strftime("%Y-%m-%d")
         end_str = end_dt.strftime("%Y-%m-%d")
-        
+
         query = f"SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros, metrics.conversions_value, metrics.clicks, metrics.impressions, metrics.conversions, customer.id, customer.currency_code FROM campaign WHERE segments.date BETWEEN '{start_str}' AND '{end_str}' AND campaign.status != 'REMOVED'"
         return await self._execute_gaql(query)
 
@@ -185,62 +185,62 @@ class GoogleAdsConnector(Connector):
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
         normalized = []
-        
+
         for row in raw_data:
             campaign = row.get("campaign", {})
             segments = row.get("segments", {})
             metrics = row.get("metrics", {})
             customer = row.get("customer", {})
-            
+
             campaign_id = campaign.get("id")
             if not campaign_id:
                 continue
-                
+
             date_str = segments.get("date")
             if not date_str:
                 continue
-                
+
             currency_code = customer.get("currencyCode")
             if not currency_code or len(str(currency_code)) != 3:
                 logger.warning(f"Google Ads missing or invalid currency code: {currency_code}")
                 continue
-                
+
             try:
                 stat_date = date.fromisoformat(date_str)
             except ValueError:
                 continue
-                
+
             try:
                 cost_micros = metrics.get("costMicros", "0")
                 spend = Decimal(str(cost_micros)) / Decimal("1000000")
-                
+
                 conversions_value = metrics.get("conversionsValue", 0)
                 revenue = Decimal(str(conversions_value or 0))
-                
+
                 if spend < 0 or revenue < 0:
                     continue
-                    
+
             except (InvalidOperation, TypeError, ValueError):
                 continue
-                
+
             try:
                 clicks = int(str(metrics.get("clicks", "0") or "0"))
                 if clicks < 0: clicks = 0
             except ValueError:
                 clicks = 0
-                
+
             try:
                 impressions = int(str(metrics.get("impressions", "0") or "0"))
                 if impressions < 0: impressions = 0
             except ValueError:
                 impressions = 0
-                
+
             try:
                 conversions = Decimal(str(metrics.get("conversions", "0") or "0"))
                 if conversions < 0: conversions = Decimal("0")
             except (InvalidOperation, TypeError, ValueError):
                 conversions = Decimal("0")
-                
+
             normalized.append(NormalizedRecord(
                 source="google_ads",
                 external_id=str(campaign_id),
@@ -252,12 +252,12 @@ class GoogleAdsConnector(Connector):
                 impressions=impressions,
                 conversions=conversions
             ))
-            
+
         unique_records = {}
         for rec in normalized:
             key = (rec.external_id, rec.stat_date)
             unique_records[key] = rec
-            
+
         return list(unique_records.values())
 
     async def upsert(self, session: AsyncSession, normalized_data: List[NormalizedRecord]) -> None:
@@ -266,7 +266,7 @@ class GoogleAdsConnector(Connector):
         company = company_res.scalars().first()
         if not company:
             return
-            
+
         base_currency = company.base_currency
 
         matched = 0
@@ -287,7 +287,7 @@ class GoogleAdsConnector(Connector):
             if not run:
                 skipped += 1
                 continue
-                
+
             matched += 1
 
             try:
@@ -295,7 +295,7 @@ class GoogleAdsConnector(Connector):
             except ValueError as e:
                 logger.error(f"Google Ads upsert FX rate error for external_id={record.external_id} date={record.stat_date}: {e}")
                 raise
-                
+
             await CampaignRunStat.upsert_campaign_run_stat_atomic(
                 session=session,
                 company_id=self.config.company_id,
@@ -307,6 +307,6 @@ class GoogleAdsConnector(Connector):
                 fx_rate_to_base=fx_rate,
                 currency=record.currency
             )
-                
+
         if skipped > 0:
             logger.warning(f"Google Ads upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")

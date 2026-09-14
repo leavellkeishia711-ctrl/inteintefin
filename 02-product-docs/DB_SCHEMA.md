@@ -227,6 +227,9 @@ currency        CHAR(3) NOT NULL
 fx_rate_to_base NUMERIC(20,8) NOT NULL
 source          TEXT NOT NULL
 external_id     TEXT NULL
+clicks          INTEGER NOT NULL DEFAULT 0
+impressions     INTEGER NOT NULL DEFAULT 0
+conversions     NUMERIC(20,4) NOT NULL DEFAULT 0
 created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 
