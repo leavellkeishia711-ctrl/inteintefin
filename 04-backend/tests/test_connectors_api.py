@@ -103,7 +103,7 @@ async def test_rotate_with_validate_false_on_unauthorized(client_a: AsyncClient,
 async def test_soft_deleted_connector_can_be_recreated(client_a: AsyncClient):
     response = await client_a.post(
         "/api/v1/connectors/",
-        json={"connector_name": "binom", "secret": "s1"}
+        json={"connector_name": "meta", "secret": "s1"}
     )
     assert response.status_code == 201
     conn_id = response.json()["id"]
@@ -113,13 +113,13 @@ async def test_soft_deleted_connector_can_be_recreated(client_a: AsyncClient):
     
     response = await client_a.post(
         "/api/v1/connectors/",
-        json={"connector_name": "binom", "secret": "s2"}
+        json={"connector_name": "meta", "secret": "s2"}
     )
     assert response.status_code == 201
     
     response = await client_a.post(
         "/api/v1/connectors/",
-        json={"connector_name": "binom", "secret": "s3"}
+        json={"connector_name": "meta", "secret": "s3"}
     )
     assert response.status_code == 400
 
