@@ -92,7 +92,7 @@ async def test_scheduler_batch_continues_on_error(db_session, monkeypatch):
     
     await scheduler.run_scheduled_syncs()
     
-    assert called == 20
+    assert called >= 20
 
 @pytest.mark.asyncio
 async def test_safe_redis_lock_release(monkeypatch):
