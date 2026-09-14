@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import logging
 from .base import Connector, NormalizedRecord, with_retry
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import ExternalCampaignMapping, CampaignRunStat, CampaignRun
 from app.db.models.companies import Company
 from app.services.fx import resolve_fx_rate
 from sqlalchemy import select, and_
@@ -131,10 +131,12 @@ class BinomConnector(Connector):
         skipped = 0
 
         for record in normalized_data:
-            stmt = select(CampaignRun).where(
+            stmt = select(CampaignRun).join(ExternalCampaignMapping, CampaignRun.id == ExternalCampaignMapping.campaign_run_id).where(
                 and_(
-                    CampaignRun.company_id == self.config.company_id,
-                    CampaignRun.note == record.external_id,
+                    ExternalCampaignMapping.company_id == self.config.company_id,
+                    ExternalCampaignMapping.platform == self.config.connector_name,
+                    ExternalCampaignMapping.external_id == record.external_id,
+                    ExternalCampaignMapping.deleted_at.is_(None),
                     CampaignRun.deleted_at.is_(None)
                 )
             )
@@ -158,7 +160,6 @@ class BinomConnector(Connector):
                 campaign_run_id=run.id,
                 stat_date=record.stat_date,
                 source=record.source,
-                external_id=record.external_id,
                 normalized_record=record,
                 connector_name=self.__class__.__name__,
                 fx_rate_to_base=fx_rate,

@@ -89,3 +89,73 @@ async def test_api_persistence_soft_delete(client_a):
         assert config is not None
         assert config.deleted_at is not None
         assert config.status == "paused"
+
+@pytest.mark.asyncio
+async def test_sync_finds_campaign_via_mapping(client_a, monkeypatch):
+    from app.db.models.campaigns import ExternalCampaignMapping, CampaignRunStat, CampaignRun
+    from app.db.models.connectors import ConnectorConfig
+    from sqlalchemy import select
+    from app.connectors.meta_ads import MetaAdsConnector
+    import uuid
+    from decimal import Decimal
+    from datetime import date, datetime, timezone
+    from app.db.session import tenant_session, system_session
+    
+    me = await client_a.get("/api/v1/auth/me")
+    company_id = uuid.UUID(me.json()["company_id"])
+    user_id = uuid.UUID(me.json()["id"])
+    run_id = uuid.uuid4()
+    
+    async with system_session() as db:
+        run = CampaignRun(
+            id=run_id,
+            company_id=company_id,
+            buyer_id=user_id,
+            started_at=datetime.now(timezone.utc)
+        )
+        db.add(run)
+        await db.commit()
+
+    async with tenant_session(company_id) as db_session:
+        # 1. Setup
+        mapping = ExternalCampaignMapping(
+            company_id=company_id,
+            platform='meta',
+            external_id='test_mapped_camp_xyz',
+            campaign_run_id=run_id
+        )
+        db_session.add(mapping)
+        await db_session.commit()
+        
+        # 2. Config
+        config = ConnectorConfig(
+            company_id=company_id,
+            connector_name='meta',
+            
+            encrypted_secret='test',
+            status='active'
+        )
+        
+        # Mock fetch to return the specific external_id
+        class MockMeta(MetaAdsConnector):
+            async def fetch(self):
+                return [{"source": "meta", "external_id": "test_mapped_camp_xyz", "stat_date": "2024-01-01", "spend": 100.0, "revenue": 50.0, "currency": "USD"}]
+        
+        connector = MockMeta(config, "secret")
+        
+        # Run sync stats part manually (mocking sync ad accounts)
+        raw_data = await connector.fetch()
+        normalized = connector.normalize(raw_data)
+        await connector.upsert(db_session, normalized)
+        
+        # 3. Verify
+        stmt = select(CampaignRunStat).where(
+            CampaignRunStat.company_id == company_id,
+            CampaignRunStat.external_id == "test_mapped_camp_xyz"
+        )
+        res = await db_session.execute(stmt)
+        stat = res.scalars().first()
+        
+        assert stat is not None
+        assert stat.campaign_run_id == run_id
+        assert stat.spend == Decimal('100.0000')

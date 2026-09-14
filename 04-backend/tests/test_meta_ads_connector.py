@@ -7,20 +7,21 @@ from sqlalchemy import select
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.connectors.meta_ads import MetaAdsConnector
 from app.connectors.base import UnauthorizedError, RateLimitError
-from app.db.models.campaigns import CampaignRunStat, CampaignRun, AdAccount
+from app.db.models.campaigns import CampaignRun, CampaignRunStat, CampaignRun, ExternalCampaignMapping, AdAccount
 from app.db.models.companies import Company
 from app.db.models.users import User
 from app.db.session import system_session
 
 class DummyConfig:
-    def __init__(self, company_id):
+    def __init__(self, company_id, connector_name="meta"):
+        self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {"base_url": "https://graph.facebook.test/v19.0", "currency": "USD"}
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_test_connection_success(mock_get):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     mock_resp = MagicMock()
@@ -39,7 +40,7 @@ async def test_meta_test_connection_success(mock_get):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_secret_stripping_on_paging(mock_get):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     resp_page_1 = MagicMock()
@@ -77,7 +78,7 @@ async def test_meta_secret_stripping_on_paging(mock_get):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_nested_insights_paging(mock_get):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     resp_accounts = MagicMock()
@@ -140,7 +141,7 @@ async def test_meta_nested_insights_paging(mock_get):
 
 @pytest.mark.asyncio
 async def test_meta_normalization_with_action_values():
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     raw_data = [
@@ -162,7 +163,7 @@ async def test_meta_normalization_with_action_values():
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_fetch_campaigns_flattening(mock_get):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     mock_resp = MagicMock()
@@ -202,7 +203,7 @@ async def test_meta_ad_accounts_status_mapping(company_b_fixtures):
         await db_session.flush()
         await db_session.commit()
         
-        config = DummyConfig(company_id_a)
+        config = DummyConfig(company_id_a, connector_name="meta")
         connector = MetaAdsConnector(config, "secret_token")
         
         raw_accounts = [
@@ -257,6 +258,9 @@ async def test_meta_tenant_isolation(company_b_fixtures):
             note="500"
         )
         db_session.add(run_a)
+        await db_session.flush()
+        mapping_a = ExternalCampaignMapping(company_id=run_a.company_id, platform="meta", external_id=run_a.note, campaign_run_id=run_a.id)
+        db_session.add(mapping_a)
         
         run_b = CampaignRun(
             company_id=company_id_b,
@@ -266,9 +270,17 @@ async def test_meta_tenant_isolation(company_b_fixtures):
         )
         db_session.add(run_b)
         
+        await db_session.flush()
+        mapping_run_b = ExternalCampaignMapping(
+            company_id=company_id_b,
+            platform="meta",
+            external_id="500",
+            campaign_run_id=run_b.id
+        )
+        db_session.add(mapping_run_b)
         await db_session.commit()
         
-        config = DummyConfig(company_id_a)
+        config = DummyConfig(company_id_a, connector_name="meta")
         connector = MetaAdsConnector(config, "secret_token")
         
         raw_data = [
@@ -293,7 +305,7 @@ async def test_meta_tenant_isolation(company_b_fixtures):
 async def test_meta_upsert_idempotency(company_b_fixtures):
     company_id = uuid.UUID(company_b_fixtures.ids["company_id"])
     user_id = uuid.UUID(company_b_fixtures.ids["user_id"])
-    config = DummyConfig(company_id)
+    config = DummyConfig(company_id, connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     async with system_session() as db_session:
@@ -304,6 +316,14 @@ async def test_meta_upsert_idempotency(company_b_fixtures):
             note="200"
         )
         db_session.add(run)
+        await db_session.flush()
+        mapping = ExternalCampaignMapping(
+            company_id=company_id,
+            platform="meta",
+            external_id="200",
+            campaign_run_id=run.id
+        )
+        db_session.add(mapping)
         await db_session.commit()
         
         raw_data = [
@@ -335,7 +355,7 @@ async def test_meta_upsert_idempotency(company_b_fixtures):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_retry_429(mock_get, monkeypatch):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     resp_429 = MagicMock()
@@ -356,7 +376,7 @@ async def test_meta_retry_429(mock_get, monkeypatch):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_retry_5xx_success(mock_get, monkeypatch):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     resp_500 = MagicMock()
@@ -380,7 +400,7 @@ async def test_meta_retry_5xx_success(mock_get, monkeypatch):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_unauthorized(mock_get, monkeypatch):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     resp_401 = MagicMock()
@@ -396,7 +416,7 @@ async def test_meta_unauthorized(mock_get, monkeypatch):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_meta_fetch_campaigns_nested_paging_and_safety(mock_get):
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     
     resp_accounts = MagicMock()
@@ -490,6 +510,9 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
             note="fx_camp_1"
         )
         db_session.add(run_a)
+        await db_session.flush()
+        mapping_a = ExternalCampaignMapping(company_id=run_a.company_id, platform="meta", external_id=run_a.note, campaign_run_id=run_a.id)
+        db_session.add(mapping_a)
         
         run_b = CampaignRun(
             company_id=company_id_a,
@@ -499,9 +522,17 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
             note="fx_camp_2"
         )
         db_session.add(run_b)
+        await db_session.flush()
+        mapping_run_b = ExternalCampaignMapping(
+            company_id=company_id_a,
+            platform="meta",
+            external_id="fx_camp_2",
+            campaign_run_id=run_b.id
+        )
+        db_session.add(mapping_run_b)
         await db_session.commit()
         
-        config = DummyConfig(company_id_a)
+        config = DummyConfig(company_id_a, connector_name="meta")
         connector = MetaAdsConnector(config, "secret_token")
         
         # 1. Success FX rate test
@@ -538,7 +569,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
 @patch("httpx.AsyncClient.get")
 async def test_meta_test_connection_401_403(mock_get, monkeypatch):
     from app.connectors.base import UnauthorizedError
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret_token")
     monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
     

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
 from .base import Connector, NormalizedRecord, NormalizedAdAccount, with_retry, ConnectorError, UnauthorizedError, RateLimitError
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import ExternalCampaignMapping, CampaignRunStat, CampaignRun
 from app.db.models.companies import Company
 from app.services.fx import resolve_fx_rate
 
@@ -231,10 +231,12 @@ class TikTokAdsConnector(Connector):
         base_currency = company.base_currency or "USD"
         
         for record in normalized_data:
-            stmt = select(CampaignRun).where(
+            stmt = select(CampaignRun).join(ExternalCampaignMapping, CampaignRun.id == ExternalCampaignMapping.campaign_run_id).where(
                 and_(
-                    CampaignRun.company_id == company_id,
-                    CampaignRun.note == record.external_id,
+                    ExternalCampaignMapping.company_id == company_id,
+                    ExternalCampaignMapping.platform == self.config.connector_name,
+                    ExternalCampaignMapping.external_id == record.external_id,
+                    ExternalCampaignMapping.deleted_at.is_(None),
                     CampaignRun.deleted_at.is_(None)
                 )
             )
@@ -256,7 +258,6 @@ class TikTokAdsConnector(Connector):
                 campaign_run_id=run.id,
                 stat_date=record.stat_date,
                 source=record.source,
-                external_id=record.external_id,
                 normalized_record=record,
                 connector_name=self.__class__.__name__,
                 fx_rate_to_base=fx_rate,

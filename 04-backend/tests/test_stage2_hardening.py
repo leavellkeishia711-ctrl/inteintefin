@@ -21,7 +21,7 @@ from app.connectors.binom import BinomConnector
 from app.connectors.voluum import VoluumConnector
 from app.connectors.affise import AffiseConnector
 from app.connectors.meta_ads import MetaAdsConnector
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import CampaignRun, CampaignRunStat, CampaignRun, ExternalCampaignMapping
 from app.db.models.companies import Company
 from app.db.models.users import User
 from app.db.models.connectors import ConnectorConfig
@@ -29,7 +29,8 @@ from app.db.session import system_session
 
 
 class DummyConfig:
-    def __init__(self, company_id, currency="USD"):
+    def __init__(self, company_id, currency="USD", connector_name="dummy"):
+        self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {"base_url": "https://test.local", "currency": currency}
 
@@ -51,7 +52,7 @@ async def test_unauthorized_exception_no_response_body(mock_get, monkeypatch):
         "401", request=MagicMock(), response=mock_resp
     )
 
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
 
     with pytest.raises(UnauthorizedError) as exc_info:
@@ -76,7 +77,7 @@ async def test_connector_error_no_response_body(mock_get, monkeypatch):
         "400", request=MagicMock(), response=mock_resp
     )
 
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
 
     with pytest.raises(ConnectorError) as exc_info:
@@ -91,7 +92,7 @@ async def test_connector_error_no_response_body(mock_get, monkeypatch):
 # 2. FX rate: no silent Decimal("1.0") fallback
 # ============================================================
 
-async def _create_company_and_run(db_session, company_id, user_id, note, base_currency="JPY"):
+async def _create_company_and_run(db_session, company_id, user_id, note, connector_name="dummy", base_currency="JPY"):
     """Helper: create company + user + campaign_run for FX tests."""
     comp = Company(id=company_id, name=f"FX Test {company_id}", base_currency=base_currency)
     db_session.add(comp)
@@ -111,9 +112,19 @@ async def _create_company_and_run(db_session, company_id, user_id, note, base_cu
         started_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
         note=note
     )
+    
     db_session.add(run)
+    await db_session.flush()
+    mapping = ExternalCampaignMapping(
+        company_id=company_id,
+        platform=connector_name,
+        external_id=note,
+        campaign_run_id=run.id
+    )
+    db_session.add(mapping)
     await db_session.commit()
     return run
+
 
 
 @pytest.mark.asyncio
@@ -123,9 +134,9 @@ async def test_binom_upsert_fx_rate_missing_raises(company_b_fixtures):
     user_id = uuid.uuid4()
 
     async with system_session() as db:
-        run = await _create_company_and_run(db, company_id, user_id, "binom_fx_test")
+        run = await _create_company_and_run(db, company_id, user_id, "binom_fx_test", "binom")
 
-        config = DummyConfig(company_id, currency="GBP")
+        config = DummyConfig(company_id, currency="GBP", connector_name="binom")
         connector = BinomConnector(config, "secret")
         raw = [{"camp_id": "binom_fx_test", "date": "2099-01-01", "cost": "50.00", "revenue": "100.00"}]
         normalized = connector.normalize(raw)
@@ -146,9 +157,9 @@ async def test_voluum_upsert_fx_rate_missing_raises(company_b_fixtures):
     user_id = uuid.uuid4()
 
     async with system_session() as db:
-        run = await _create_company_and_run(db, company_id, user_id, "vol_fx_test")
+        run = await _create_company_and_run(db, company_id, user_id, "vol_fx_test", "voluum")
 
-        config = DummyConfig(company_id, currency="GBP")
+        config = DummyConfig(company_id, currency="GBP", connector_name="voluum")
         connector = VoluumConnector(config, "secret")
         raw = [{"campaignId": "vol_fx_test", "date": "2099-01-01", "cost": "50.00", "revenue": "100.00"}]
         normalized = connector.normalize(raw)
@@ -168,9 +179,9 @@ async def test_affise_upsert_fx_rate_missing_raises(company_b_fixtures):
     user_id = uuid.uuid4()
 
     async with system_session() as db:
-        run = await _create_company_and_run(db, company_id, user_id, "aff_fx_test")
+        run = await _create_company_and_run(db, company_id, user_id, "aff_fx_test", "affise")
 
-        config = DummyConfig(company_id, currency="GBP")
+        config = DummyConfig(company_id, currency="GBP", connector_name="affise")
         connector = AffiseConnector(config, "secret")
         raw = [{"offer_id": "aff_fx_test", "date": "2099-01-01", "cost": "50.00", "revenue": "100.00"}]
         normalized = connector.normalize(raw)
@@ -189,7 +200,7 @@ async def test_affise_upsert_fx_rate_missing_raises(company_b_fixtures):
 
 def test_voluum_normalize_no_date_skips():
     """Voluum must skip records without 'date' field."""
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="voluum")
     connector = VoluumConnector(config, "secret")
     raw = [{"campaignId": "100", "cost": "10.00", "revenue": "20.00"}]
     normalized = connector.normalize(raw)
@@ -198,7 +209,7 @@ def test_voluum_normalize_no_date_skips():
 
 def test_affise_normalize_no_date_skips():
     """Affise must skip records without 'date' field."""
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="affise")
     connector = AffiseConnector(config, "secret")
     raw = [{"offer_id": "100", "cost": "10.00", "revenue": "20.00"}]
     normalized = connector.normalize(raw)
@@ -207,7 +218,7 @@ def test_affise_normalize_no_date_skips():
 
 def test_meta_normalize_no_date_skips():
     """Meta Ads must skip records without 'date_start' field."""
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
     raw = [{"campaign_id": "100", "spend": "10.00"}]
     normalized = connector.normalize(raw)
@@ -216,7 +227,7 @@ def test_meta_normalize_no_date_skips():
 
 def test_voluum_normalize_with_date_works():
     """Voluum must normalize records WITH 'date' field correctly."""
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="voluum")
     connector = VoluumConnector(config, "secret")
     raw = [{"campaignId": "100", "date": "2026-09-01", "cost": "10.00", "revenue": "20.00"}]
     normalized = connector.normalize(raw)
@@ -226,7 +237,7 @@ def test_voluum_normalize_with_date_works():
 
 def test_affise_normalize_with_date_works():
     """Affise must normalize records WITH 'date' field correctly."""
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="affise")
     connector = AffiseConnector(config, "secret")
     raw = [{"offer_id": "100", "date": "2026-09-01", "cost": "10.00", "revenue": "20.00"}]
     normalized = connector.normalize(raw)
@@ -236,7 +247,7 @@ def test_affise_normalize_with_date_works():
 
 def test_meta_normalize_with_date_works():
     """Meta Ads must normalize records WITH 'date_start' field correctly."""
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
     raw = [{"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.00"}]
     normalized = connector.normalize(raw)

@@ -8,7 +8,7 @@ import logging
 from .base import Connector, NormalizedRecord, with_retry, ConnectorError, UnauthorizedError, RateLimitError
 from app.db.session import async_session_maker, system_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import ExternalCampaignMapping, CampaignRunStat, CampaignRun
 from app.db.models.companies import Company
 from app.services.fx import resolve_fx_rate
 from sqlalchemy import select, and_
@@ -94,11 +94,14 @@ class KeitaroConnector(Connector):
         base_currency = company.base_currency
 
         for record in normalized_data:
-            # Find campaign run by note (which maps to Keitaro campaign_id)
-            stmt = select(CampaignRun).where(
+            # Find campaign run by mapping
+            stmt = select(CampaignRun).join(ExternalCampaignMapping, CampaignRun.id == ExternalCampaignMapping.campaign_run_id).where(
                 and_(
-                    CampaignRun.company_id == self.config.company_id,
-                    CampaignRun.note == record.external_id
+                    ExternalCampaignMapping.company_id == self.config.company_id,
+                    ExternalCampaignMapping.platform == self.config.connector_name,
+                    ExternalCampaignMapping.external_id == record.external_id,
+                    ExternalCampaignMapping.deleted_at.is_(None),
+                    CampaignRun.deleted_at.is_(None)
                 )
             )
             run_res = await session.execute(stmt)

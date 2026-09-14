@@ -11,12 +11,13 @@ from sqlalchemy import select
 from app.db.session import system_session
 from app.db.models.companies import Company
 from app.db.models.users import User
-from app.db.models.campaigns import Campaign, CampaignRun, CampaignRunStat, AdAccount
+from app.db.models.campaigns import ExternalCampaignMapping, Campaign, CampaignRun, CampaignRunStat, AdAccount
 from app.connectors.google_ads import GoogleAdsConnector
 from app.connectors.base import UnauthorizedError
 
 class DummyConfig:
-    def __init__(self, company_id):
+    def __init__(self, company_id, connector_name="google_ads"):
+        self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {}
 
@@ -32,7 +33,7 @@ def create_valid_creds() -> str:
 
 @pytest.fixture
 def valid_connector():
-    config = DummyConfig(uuid.uuid4())
+    config = DummyConfig(uuid.uuid4(), connector_name="google_ads")
     return GoogleAdsConnector(config, create_valid_creds())
 
 def mock_response(status_code: int, json_data: dict = None) -> MagicMock:
@@ -287,6 +288,14 @@ async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             note="ga_camp_1"
         )
         db.add(run)
+        await db.flush()
+        mapping = ExternalCampaignMapping(
+            company_id=company_id,
+            platform="google_ads",
+            external_id="ga_camp_1",
+            campaign_run_id=run.id
+        )
+        db.add(mapping)
         await db.commit()
         
         connector = GoogleAdsConnector(DummyConfig(company_id), create_valid_creds())
@@ -362,6 +371,10 @@ async def test_google_ads_tenant_isolation():
             note="ga_shared_id"
         )
         db.add_all([run_a, run_b])
+        await db.flush()
+        mapping_a = ExternalCampaignMapping(company_id=run_a.company_id, platform="google_ads", external_id=run_a.note, campaign_run_id=run_a.id)
+        mapping_b = ExternalCampaignMapping(company_id=run_b.company_id, platform="google_ads", external_id=run_b.note, campaign_run_id=run_b.id)
+        db.add_all([mapping_a, mapping_b])
         await db.commit()
         
         connector_a = GoogleAdsConnector(DummyConfig(comp_a_id), create_valid_creds())

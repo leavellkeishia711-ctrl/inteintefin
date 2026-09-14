@@ -108,7 +108,11 @@ class Connector(ABC):
 
     @abstractmethod
     async def upsert(self, session: AsyncSession, normalized_data: List[NormalizedRecord]) -> None:
-        """Upserts the normalized data into the database."""
+        """
+        Upserts the normalized data into the database.
+        Upsert should find CampaignRun via ExternalCampaignMapping (not by note).
+        All connectors should rely on the scheduler to provide the mapped campaign_run_id if necessary, or do the mapping inside upsert.
+        """
         pass
 
     async def fetch_ad_accounts(self) -> List[Dict[str, Any]]:
