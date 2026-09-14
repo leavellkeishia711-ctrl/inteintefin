@@ -6,7 +6,7 @@ import logging
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from .base import Connector, NormalizedRecord, NormalizedAdAccount, with_retry
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import ExternalCampaignMapping, CampaignRunStat, CampaignRun
 from app.db.models.companies import Company
 from app.services.fx import resolve_fx_rate
 from sqlalchemy import select, and_
