@@ -78,6 +78,8 @@ app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["cha
 app.include_router(webhooks.router, prefix=f"{settings.API_V1_STR}/webhooks", tags=["webhooks"])
 app.include_router(alerts.router, prefix=f"{settings.API_V1_STR}/alerts", tags=["alerts"])
 app.include_router(connectors.router, prefix=f"{settings.API_V1_STR}/connectors", tags=["connectors"])
+app.include_router(external_campaign_mappings.router, prefix=f"{settings.API_V1_STR}/external-campaign-mappings", tags=["external_campaign_mappings"])
+
 
 @app.get("/health")
 async def health_check():

@@ -131,8 +131,8 @@ async def test_sync_finds_campaign_via_mapping(client_a, monkeypatch):
         config = ConnectorConfig(
             company_id=company_id,
             connector_name='meta',
-            name='meta_test',
-            encrypted_secret=b'test',
+            
+            encrypted_secret='test',
             status='active'
         )
         
