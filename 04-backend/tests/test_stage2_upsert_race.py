@@ -50,6 +50,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
         revenue=Decimal("200.00"),
         currency="USD",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -59,6 +60,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
         revenue=Decimal("250.00"),
         currency="USD",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -131,6 +133,7 @@ async def test_upsert_idempotent_multiple_calls(client_a):
         revenue=Decimal("100.00"),
         currency="EUR",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -181,6 +184,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
         revenue=Decimal("150.00"),
         currency="GBP",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -190,6 +194,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
         revenue=Decimal("160.00"),
         currency="GBP",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -275,6 +280,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
         revenue=Decimal("400.00"),
         currency="USD",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -284,6 +290,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
         revenue=Decimal("600.00"),
         currency="USD",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -356,6 +363,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
         revenue=Decimal("20.00"),
         currency="USD",
         source=source,
+        external_id=external_id,
         
     )
     
@@ -365,6 +373,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
         revenue=Decimal("25.00"),
         currency="EUR",
         source=source,
+        external_id=external_id,
         
     )
     
