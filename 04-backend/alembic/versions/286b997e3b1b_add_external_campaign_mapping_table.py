@@ -27,6 +27,7 @@ def upgrade() -> None:
         sa.Column('external_id', sa.String(), nullable=False),
         sa.Column('campaign_run_id', sa.UUID(), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()'), onupdate=sa.text('now()')),
         sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ),
         sa.ForeignKeyConstraint(['campaign_run_id'], ['campaign_runs.id'], ),
