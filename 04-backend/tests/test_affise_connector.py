@@ -7,7 +7,7 @@ from sqlalchemy import select
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.connectors.affise import AffiseConnector
 from app.connectors.base import UnauthorizedError, RateLimitError
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import CampaignRun, CampaignRunStat, CampaignRun, ExternalCampaignMapping
 from app.db.models.companies import Company
 from app.db.models.users import User
 from app.db.session import system_session
@@ -92,6 +92,14 @@ async def test_affise_upsert_idempotency(company_b_fixtures):
             note="200"
         )
         db_session.add(run)
+        await db_session.flush()
+        mapping = ExternalCampaignMapping(
+            company_id=company_id,
+            platform="affise",
+            external_id="200",
+            campaign_run_id=run.id
+        )
+        db_session.add(mapping)
         await db_session.commit()
         
         raw_data = [
@@ -168,6 +176,14 @@ async def test_affise_tenant_isolation(company_b_fixtures):
         )
         db_session.add(run_b)
         
+        await db_session.flush()
+        mapping_run_b = ExternalCampaignMapping(
+            company_id=company_id_b,
+            platform="affise",
+            external_id="500",
+            campaign_run_id=run_b.id
+        )
+        db_session.add(mapping_run_b)
         await db_session.commit()
         
         config = DummyConfig(company_id_a, connector_name="affise")

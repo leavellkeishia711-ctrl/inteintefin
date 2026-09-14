@@ -288,6 +288,14 @@ async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             note="ga_camp_1"
         )
         db.add(run)
+        await db.flush()
+        mapping = ExternalCampaignMapping(
+            company_id=company_id,
+            platform="google_ads",
+            external_id="ga_camp_1",
+            campaign_run_id=run.id
+        )
+        db.add(mapping)
         await db.commit()
         
         connector = GoogleAdsConnector(DummyConfig(company_id), create_valid_creds())

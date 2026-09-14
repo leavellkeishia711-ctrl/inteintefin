@@ -9,7 +9,7 @@ import json
 
 from app.connectors.tiktok_ads import TikTokAdsConnector
 from app.connectors.base import UnauthorizedError, RateLimitError, ConnectorError
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import CampaignRun, CampaignRunStat, CampaignRun, ExternalCampaignMapping
 from app.db.models.companies import Company
 from app.db.models.users import User
 from app.db.session import system_session
@@ -229,6 +229,14 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             note="12345"  # Matches external_id
         )
         db_session.add(run)
+        await db_session.flush()
+        mapping = ExternalCampaignMapping(
+            company_id=company_id,
+            platform="tiktok_ads",
+            external_id="12345",
+            campaign_run_id=run.id
+        )
+        db_session.add(mapping)
         await db_session.commit()
         
         # Mock resolve_fx_rate to avoid external calls

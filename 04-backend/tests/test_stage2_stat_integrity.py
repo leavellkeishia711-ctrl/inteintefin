@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 from sqlalchemy.exc import IntegrityError
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models.campaigns import CampaignRunStat, CampaignRun
+from app.db.models.campaigns import CampaignRun, CampaignRunStat, CampaignRun, ExternalCampaignMapping
 from app.db.session import system_session, tenant_engine
 from app.services.campaigns import get_campaign_stats, get_ad_account_cost
 from app.services.metrics import get_spend_discrepancy
