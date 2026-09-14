@@ -41,11 +41,12 @@ async def create_mapping(
     )
     db.add(new_mapping)
     try:
-        await db.commit()
-        await db.refresh(new_mapping)
+        await db.flush()
+        # Do not commit here, let tenant_session handle it
+        # flush is enough to trigger IntegrityError
+        # also we need to return the object which will be committed later
         return new_mapping
     except IntegrityError:
-        
         raise HTTPException(status_code=409, detail="Mapping already exists")
 
 @router.get("/", response_model=List[ExternalCampaignMappingResponse])
@@ -88,5 +89,5 @@ async def delete_mapping(
         raise HTTPException(status_code=404, detail="Mapping not found")
         
     mapping.deleted_at = datetime.now(timezone.utc)
-    await db.commit()
+    await db.flush()
     return None
