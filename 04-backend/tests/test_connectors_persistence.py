@@ -161,7 +161,9 @@ async def test_sync_finds_campaign_via_mapping(client_a, monkeypatch):
         assert stat.spend == Decimal('100.0000')
 
 @pytest.mark.asyncio
-async def test_campaign_run_stat_persists_performance_metrics(client_a, tenant_a_id):
+async def test_campaign_run_stat_persists_performance_metrics(client_a):
+    me = await client_a.get("/api/v1/auth/me")
+    tenant_a_id = uuid.UUID(me.json()["company_id"])
     # Create CampaignRun and Mapping
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
     from app.connectors.base import NormalizedRecord
@@ -217,7 +219,9 @@ async def test_campaign_run_stat_persists_performance_metrics(client_a, tenant_a
         assert stat.conversions == Decimal("5.5")
 
 @pytest.mark.asyncio
-async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(client_a, tenant_a_id):
+async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(client_a):
+    me = await client_a.get("/api/v1/auth/me")
+    tenant_a_id = uuid.UUID(me.json()["company_id"])
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
     from app.connectors.base import NormalizedRecord
     from datetime import date
@@ -286,7 +290,9 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(cli
         assert stat.conversions == Decimal("3")
 
 @pytest.mark.asyncio
-async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(client_a, tenant_a_id):
+async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(client_a):
+    me = await client_a.get("/api/v1/auth/me")
+    tenant_a_id = uuid.UUID(me.json()["company_id"])
     # This test verifies that inserting manually without specifying metrics defaults to 0
     from app.db.models.campaigns import CampaignRunStat, CampaignRun
     from datetime import date
