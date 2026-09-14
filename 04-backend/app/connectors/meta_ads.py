@@ -250,13 +250,40 @@ class MetaAdsConnector(Connector):
                         except (InvalidOperation, TypeError, ValueError):
                             pass
 
+            try:
+                clicks = int(str(row.get("clicks", "0") or "0"))
+                if clicks < 0: clicks = 0
+            except ValueError:
+                clicks = 0
+
+            try:
+                impressions = int(str(row.get("impressions", "0") or "0"))
+                if impressions < 0: impressions = 0
+            except ValueError:
+                impressions = 0
+
+            conversions = Decimal("0")
+            actions = row.get("actions")
+            if isinstance(actions, list):
+                for action in actions:
+                    if isinstance(action, dict) and action.get("action_type") in ("purchase", "omni_purchase"):
+                        try:
+                            val = Decimal(str(action.get("value", "0")))
+                            if val > 0:
+                                conversions += val
+                        except (InvalidOperation, TypeError, ValueError):
+                            pass
+
             normalized.append(NormalizedRecord(
                 source="meta",
                 external_id=str(external_id),
                 stat_date=stat_date,
                 spend=spend,
                 revenue=revenue,
-                currency=currency
+                currency=currency,
+                clicks=clicks,
+                impressions=impressions,
+                conversions=conversions
             ))
             
         unique_records = {}

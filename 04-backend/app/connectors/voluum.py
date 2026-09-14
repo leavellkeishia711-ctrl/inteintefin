@@ -80,15 +80,15 @@ class VoluumConnector(Connector):
         currency = str(settings.get("currency", "USD"))
         if len(currency) != 3:
             currency = "USD"
-            
+
         for row in raw_data:
             if not isinstance(row, dict):
                 continue
-                
+
             external_id = row.get("campaignId")
             if external_id is None:
                 continue
-                
+
             date_str = row.get("date")
             if not date_str:
                 continue
@@ -96,7 +96,7 @@ class VoluumConnector(Connector):
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
             except ValueError:
                 continue
-                
+
             try:
                 spend = Decimal(str(row.get("cost", "0")))
                 revenue = Decimal(str(row.get("revenue", "0")))
@@ -105,20 +105,42 @@ class VoluumConnector(Connector):
             except (InvalidOperation, TypeError, ValueError):
                 continue
 
+            try:
+                clicks = int(str(row.get("clicks", "0") or "0"))
+                if clicks < 0: clicks = 0
+            except ValueError:
+                clicks = 0
+
+            try:
+                impressions = int(str(row.get("impressions", "0") or "0"))
+                if impressions < 0: impressions = 0
+            except ValueError:
+                impressions = 0
+
+            try:
+                raw_conv = row.get("conversions") if "conversions" in row else row.get("leads")
+                conversions = Decimal(str(raw_conv or "0"))
+                if conversions < 0: conversions = Decimal("0")
+            except (InvalidOperation, TypeError, ValueError):
+                conversions = Decimal("0")
+
             normalized.append(NormalizedRecord(
                 source="voluum",
                 external_id=str(external_id),
                 stat_date=stat_date,
                 spend=spend,
                 revenue=revenue,
-                currency=currency
+                currency=currency,
+                clicks=clicks,
+                impressions=impressions,
+                conversions=conversions
             ))
-            
+
         unique_records = {}
         for rec in normalized:
             key = (rec.external_id, rec.stat_date)
             unique_records[key] = rec
-            
+
         return list(unique_records.values())
 
     async def upsert(self, session: AsyncSession, normalized_data: List[NormalizedRecord]) -> None:
@@ -147,7 +169,7 @@ class VoluumConnector(Connector):
             if not run:
                 skipped += 1
                 continue
-                
+
             matched += 1
 
             try:
@@ -155,7 +177,7 @@ class VoluumConnector(Connector):
             except ValueError as e:
                 logger.error(f"Voluum upsert FX rate error for external_id={record.external_id} date={record.stat_date}: {e}")
                 raise
-                
+
             await CampaignRunStat.upsert_campaign_run_stat_atomic(
                 session=session,
                 company_id=self.config.company_id,
@@ -167,6 +189,6 @@ class VoluumConnector(Connector):
                 fx_rate_to_base=fx_rate,
                 currency=record.currency
             )
-                
+
         if skipped > 0:
             logger.warning(f"Voluum upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")

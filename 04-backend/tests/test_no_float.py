@@ -2,7 +2,7 @@
 import pathlib
 import pytest
 
-FORBIDDEN_DIRS = ["app/services", "app/db/models", "app/api"]
+FORBIDDEN_DIRS = ["app/services", "app/db/models", "app/api", "app/connectors"]
 
 def test_no_float_in_financial_code():
     offenders = []

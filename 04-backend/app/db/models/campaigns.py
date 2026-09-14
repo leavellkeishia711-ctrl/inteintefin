@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, CHAR, ForeignKey, Date, Numeric, DateTime, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy import String, CHAR, ForeignKey, Date, Numeric, DateTime, UniqueConstraint, CheckConstraint, Index, Integer
 import sqlalchemy as sa
 from decimal import Decimal
 from datetime import date, datetime
@@ -97,6 +97,9 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     fx_rate_to_base: Mapped[Decimal] = mapped_column(Numeric(20, 8, asdecimal=True), nullable=False)
     source: Mapped[str] = mapped_column(String, nullable=False)
     external_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    clicks: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
+    impressions: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
+    conversions: Mapped[Decimal] = mapped_column(Numeric(20, 4, asdecimal=True), default=Decimal(0), nullable=False, server_default="0")
 
     __table_args__ = (
         sa.Index(
@@ -149,6 +152,9 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                 currency=currency,
                 fx_rate_to_base=fx_rate_to_base,
                 deleted_at=None,
+                clicks=normalized_record.clicks,
+                impressions=normalized_record.impressions,
+                conversions=normalized_record.conversions,
             )
         )
         
@@ -166,6 +172,9 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                     CampaignRunStat.spend: stmt.excluded.spend,
                     CampaignRunStat.revenue: stmt.excluded.revenue,
                     CampaignRunStat.fx_rate_to_base: stmt.excluded.fx_rate_to_base,
+                    CampaignRunStat.clicks: stmt.excluded.clicks,
+                    CampaignRunStat.impressions: stmt.excluded.impressions,
+                    CampaignRunStat.conversions: stmt.excluded.conversions,
                     CampaignRunStat.updated_at: sa.func.now(),
                 }
             )
@@ -182,6 +191,9 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                     CampaignRunStat.spend: stmt.excluded.spend,
                     CampaignRunStat.revenue: stmt.excluded.revenue,
                     CampaignRunStat.fx_rate_to_base: stmt.excluded.fx_rate_to_base,
+                    CampaignRunStat.clicks: stmt.excluded.clicks,
+                    CampaignRunStat.impressions: stmt.excluded.impressions,
+                    CampaignRunStat.conversions: stmt.excluded.conversions,
                     CampaignRunStat.updated_at: sa.func.now(),
                 }
             )

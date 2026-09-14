@@ -23,14 +23,14 @@ class TikTokAdsConnector(Connector):
             creds = json.loads(decrypted_api_key)
             self.access_token = creds.get("access_token")
             self.advertiser_id = str(creds.get("advertiser_id", ""))
-            
+
             if not self.access_token or not self.advertiser_id:
                 raise ValueError("TikTok Ads credentials must contain 'access_token' and 'advertiser_id'")
         except json.JSONDecodeError:
             raise ValueError("TikTok Ads credentials must be a valid JSON string")
-            
+
         self.base_url = "https://business-api.tiktok.com/open_api/v1.3"
-        
+
     def _get_headers(self) -> Dict[str, str]:
         return {
             "Access-Token": self.access_token,
@@ -42,20 +42,20 @@ class TikTokAdsConnector(Connector):
             raise UnauthorizedError("TikTok Ads: Invalid or missing access token / permissions")
         if response.status_code == 429:
             raise RateLimitError("TikTok Ads: Rate limit exceeded")
-        
+
         try:
             response.raise_for_status()
             data = response.json()
             if int(data.get("code", 0)) != 0:
                 msg = data.get("message", "Unknown TikTok API Error")
-                
+
                 # Check TikTok-specific auth/permission codes
                 if data.get("code") in {40105, 40102, 40103, 40112}:
                     raise UnauthorizedError(f"TikTok Ads: {msg}")
                 # Check TikTok-specific rate limit codes
                 if data.get("code") == 40104:
                     raise RateLimitError(f"TikTok Ads: {msg}")
-                    
+
                 raise ConnectorError(f"TikTok Ads API error: {msg}")
         except httpx.HTTPStatusError as e:
             raise ConnectorError(f"TikTok Ads HTTP error: {e}")
@@ -117,10 +117,10 @@ class TikTokAdsConnector(Connector):
                 self._raise_for_status(response)
                 payload = response.json().get("data", {})
                 campaigns.extend(payload.get("list", []))
-                
+
                 page_info = payload.get("page_info", {})
                 total_page = page_info.get("total_page", 1)
-                
+
                 if page >= total_page:
                     break
                 page += 1
@@ -133,7 +133,7 @@ class TikTokAdsConnector(Connector):
         # Fetch last 30 days like Meta Ads
         today = date.today()
         start_date = date.fromordinal(today.toordinal() - 30)
-        
+
         metrics = []
         page = 1
         async with httpx.AsyncClient(timeout=30) as client:
@@ -146,7 +146,7 @@ class TikTokAdsConnector(Connector):
                         "report_type": "BASIC",
                         "data_level": "AUCTION_CAMPAIGN",
                         "dimensions": json.dumps(["campaign_id", "stat_time_day"]),
-                        "metrics": json.dumps(["spend", "total_purchase_value"]),
+                        "metrics": json.dumps(["spend", "total_purchase_value", "clicks", "impressions", "conversion"]),
                         "start_date": start_date.strftime("%Y-%m-%d"),
                         "end_date": today.strftime("%Y-%m-%d"),
                         "page": p,
@@ -156,24 +156,24 @@ class TikTokAdsConnector(Connector):
                 self._raise_for_status(response)
                 payload = response.json().get("data", {})
                 metrics.extend(payload.get("list", []))
-                
+
                 page_info = payload.get("page_info", {})
                 total_page = page_info.get("total_page", 1)
-                
+
                 if page >= total_page:
                     break
                 page += 1
-                
+
         # To normalize, we also need currency. We can fetch it from advertiser_info.
         accounts = await self.fetch_ad_accounts()
         currency = "USD"
         if accounts and len(accounts) > 0:
             currency = accounts[0].get("currency", "USD")
-            
+
         # Attach currency to metrics so `normalize` has access to it.
         for m in metrics:
             m["_currency"] = currency
-            
+
         return metrics
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
@@ -182,22 +182,44 @@ class TikTokAdsConnector(Connector):
             try:
                 metrics = row.get("metrics", {})
                 dimensions = row.get("dimensions", {})
-                
+
                 campaign_id = str(dimensions.get("campaign_id", ""))
                 date_str = dimensions.get("stat_time_day")
-                
+
                 if not campaign_id or not date_str:
                     continue
-                    
+
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                
+
                 spend_str = str(metrics.get("spend") or "0").replace(",", "")
                 rev_str = str(metrics.get("total_purchase_value") or "0").replace(",", "")
-                
+
                 spend = Decimal(spend_str)
                 revenue = Decimal(rev_str)
                 currency = row.get("_currency", "USD")
-                
+
+                clicks_str = str(metrics.get("clicks") or "0").replace(",", "")
+                impressions_str = str(metrics.get("impressions") or "0").replace(",", "")
+                conversions_str = str(metrics.get("conversion") or "0").replace(",", "")
+
+                try:
+                    clicks = int(clicks_str)
+                    if clicks < 0: clicks = 0
+                except ValueError:
+                    clicks = 0
+
+                try:
+                    impressions = int(impressions_str)
+                    if impressions < 0: impressions = 0
+                except ValueError:
+                    impressions = 0
+
+                try:
+                    conversions = Decimal(conversions_str)
+                    if conversions < 0: conversions = Decimal("0")
+                except (InvalidOperation, TypeError, ValueError):
+                    conversions = Decimal("0")
+
                 normalized.append(
                     NormalizedRecord(
                         source="tiktok_ads",
@@ -205,13 +227,16 @@ class TikTokAdsConnector(Connector):
                         stat_date=stat_date,
                         spend=spend,
                         revenue=revenue,
-                        currency=currency
+                        currency=currency,
+                        clicks=clicks,
+                        impressions=impressions,
+                        conversions=conversions
                     )
                 )
             except (ValueError, TypeError, InvalidOperation) as e:
                 logger.warning(f"Failed to normalize TikTok row: {e}, row={row}")
                 continue
-                
+
         # Dedupe by (external_id, stat_date) preferring last seen (simplistic approach, similar to others)
         deduped = {}
         for r in normalized:
@@ -227,9 +252,9 @@ class TikTokAdsConnector(Connector):
         if not company:
             logger.error(f"Company {company_id} not found")
             return
-            
+
         base_currency = company.base_currency or "USD"
-        
+
         for record in normalized_data:
             stmt = select(CampaignRun).join(ExternalCampaignMapping, CampaignRun.id == ExternalCampaignMapping.campaign_run_id).where(
                 and_(
@@ -244,14 +269,14 @@ class TikTokAdsConnector(Connector):
             if not run:
                 logger.debug(f"TikTok Ads: No CampaignRun found for external_id={record.external_id}")
                 continue
-                
+
             fx_rate = await resolve_fx_rate(
                 session=session,
                 from_currency=record.currency,
                 to_currency=base_currency,
                 date_val=record.stat_date
             )
-            
+
             await CampaignRunStat.upsert_campaign_run_stat_atomic(
                 session=session,
                 company_id=company_id,
