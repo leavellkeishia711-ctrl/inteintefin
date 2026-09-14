@@ -4,7 +4,7 @@ from pydantic import PostgresDsn, AnyHttpUrl
 from typing import Optional
 
 class Settings(BaseSettings):
-    GOOGLE_ADS_API_VERSION: str = os.getenv("GOOGLE_ADS_API_VERSION", "v25")
+    GOOGLE_ADS_API_VERSION: str = "v25"
     # App
     PROJECT_NAME: str = "FinanceIntel Backend"
     API_V1_STR: str = "/api/v1"

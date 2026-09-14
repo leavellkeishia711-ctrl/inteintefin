@@ -42,6 +42,8 @@ async def test_rotate_secret_revives_unauthorized_connector(client_a: AsyncClien
 
 @pytest.mark.asyncio
 async def test_rotate_secret_never_leaks(client_a: AsyncClient, db_session, caplog):
+    import logging
+    caplog.set_level(logging.DEBUG)
     response = await client_a.post(
         "/api/v1/connectors/",
         json={"connector_name": "meta", "secret": "old_secret", "sync_interval_minutes": 60}
@@ -65,8 +67,7 @@ async def test_rotate_secret_never_leaks(client_a: AsyncClient, db_session, capl
         diff_str = json.dumps(log.diff) if log.diff else ""
         assert secret_val not in diff_str
         
-    for record in caplog.records:
-        assert secret_val not in record.message
+    assert secret_val not in caplog.text
 
 @pytest.mark.asyncio
 async def test_rotate_with_validate_false_on_unauthorized(client_a: AsyncClient, db_session, monkeypatch):
@@ -154,3 +155,57 @@ async def test_manual_sync_endpoint(client_a: AsyncClient, monkeypatch):
     
     response = await client_a.post(f"/api/v1/connectors/{config_id}/sync")
     assert response.status_code == 429
+
+@pytest.mark.asyncio
+async def test_rotate_with_validate_rejects_false_result(client_a: AsyncClient, db_session):
+    response = await client_a.post(
+        "/api/v1/connectors/",
+        json={"connector_name": "meta", "secret": "old_secret", "sync_interval_minutes": 60}
+    )
+    assert response.status_code == 201
+    config_id = response.json()["id"]
+
+    db_session.expire_all()
+    res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == config_id))
+    db_config = res.scalars().first()
+    old_encrypted = db_config.encrypted_secret
+
+    from unittest.mock import patch
+    with patch("app.connectors.meta_ads.MetaAdsConnector.test_connection", return_value=False):
+        response = await client_a.patch(
+            f"/api/v1/connectors/{config_id}?validate=true",
+            json={"secret": "new_secret_false"}
+        )
+        assert response.status_code == 502
+    
+    db_session.expire_all()
+    res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == config_id))
+    db_config = res.scalars().first()
+    assert db_config.encrypted_secret == old_encrypted
+
+@pytest.mark.asyncio
+async def test_rotate_secret_resets_retry_count_for_active_connector(client_a: AsyncClient, db_session):
+    response = await client_a.post(
+        "/api/v1/connectors/",
+        json={"connector_name": "meta", "secret": "old_secret", "sync_interval_minutes": 60}
+    )
+    assert response.status_code == 201
+    config_id = response.json()["id"]
+
+    db_session.expire_all()
+    res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == config_id))
+    db_config = res.scalars().first()
+    db_config.retry_count = 3
+    await db_session.commit()
+
+    response = await client_a.patch(
+        f"/api/v1/connectors/{config_id}?validate=false",
+        json={"secret": "new_secret_1"}
+    )
+    assert response.status_code == 200
+
+    db_session.expire_all()
+    res = await db_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == config_id))
+    db_config = res.scalars().first()
+    assert db_config.retry_count == 0
+    assert db_config.status == "active"

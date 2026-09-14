@@ -1,5 +1,6 @@
 import json
 import logging
+from app.core.config import settings
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone, timedelta, date
 from decimal import Decimal, InvalidOperation
@@ -15,7 +16,6 @@ from app.services.fx import resolve_fx_rate
 
 logger = logging.getLogger(__name__)
 
-from app.core.config import settings
 GOOGLE_ADS_API_VERSION = settings.GOOGLE_ADS_API_VERSION
 GOOGLE_OAUTH2_TOKEN_URL = "https://oauth2.googleapis.com/token"
 

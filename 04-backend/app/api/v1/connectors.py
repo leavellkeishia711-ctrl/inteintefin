@@ -11,7 +11,7 @@ import redis.asyncio as redis
 from app.core.deps import get_db, require_roles
 from app.db.models.connectors import ConnectorConfig
 from app.connectors.credentials import encrypt_secret
-from app.connectors.registry import CONNECTOR_REGISTRY
+from app.connectors.registry import CONNECTOR_NAMES, get_connector_class
 from app.connectors.base import UnauthorizedError
 from app.services.audit import record_user_audit
 from app.workers.tasks import manual_sync_connector_task
@@ -47,8 +47,8 @@ async def create_connector(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_roles("owner"))
 ):
-    if config_in.connector_name not in CONNECTOR_REGISTRY:
-        raise HTTPException(status_code=422, detail=f"Unknown connector type. Allowed: {list(CONNECTOR_REGISTRY.keys())}")
+    if config_in.connector_name not in CONNECTOR_NAMES:
+        raise HTTPException(status_code=422, detail=f"Unknown connector type. Allowed: {list(CONNECTOR_NAMES)}")
 
     stmt = select(ConnectorConfig).where(
         ConnectorConfig.connector_name == config_in.connector_name,
@@ -101,21 +101,27 @@ async def update_connector(
         
     if config_in.secret is not None:
         if validate:
-            connector_cls = CONNECTOR_REGISTRY.get(config.connector_name)
-            if connector_cls:
-                # Use a dummy config just for validation
-                dummy_config = ConnectorConfig(
-                    company_id=config.company_id,
-                    connector_name=config.connector_name,
-                    sync_interval_minutes=config.sync_interval_minutes
-                )
-                connector = connector_cls(dummy_config, config_in.secret)
-                try:
-                    await connector.test_connection()
-                except UnauthorizedError:
-                    raise HTTPException(status_code=400, detail="Invalid credentials")
-                except Exception:
+            if config.connector_name not in CONNECTOR_NAMES:
+                raise HTTPException(status_code=422, detail=f"Unknown connector type. Allowed: {list(CONNECTOR_NAMES)}")
+            connector_cls = get_connector_class(config.connector_name)
+            
+            # Use a dummy config just for validation
+            dummy_config = ConnectorConfig(
+                company_id=config.company_id,
+                connector_name=config.connector_name,
+                sync_interval_minutes=config.sync_interval_minutes
+            )
+            connector = connector_cls(dummy_config, config_in.secret)
+            try:
+                ok = await connector.test_connection()
+                if not ok:
                     raise HTTPException(status_code=502, detail="Connection test failed")
+            except UnauthorizedError:
+                raise HTTPException(status_code=400, detail="Invalid credentials")
+            except HTTPException:
+                raise
+            except Exception:
+                raise HTTPException(status_code=502, detail="Connection test failed")
                     
         config.encrypted_secret = encrypt_secret(config_in.secret)
         if config.status in ('unauthorized', 'failing'):
@@ -179,16 +185,18 @@ async def manual_sync(
     if not config:
         raise HTTPException(status_code=404, detail="Connector not found")
         
-    # Rate limit check
+    # Rate limit check first (read-only)
     rl_key = f"rl:manual_sync:{config.id}"
-    acquired = await redis_client.set(rl_key, "1", nx=True, ex=60)
-    if not acquired:
+    if await redis_client.exists(rl_key):
         raise HTTPException(status_code=429, detail="Too many sync requests")
         
     config.last_attempted_sync = datetime.now(timezone.utc)
     await db.flush()
     
-    # Spawn task via celery
-    task = manual_sync_connector_task.delay(str(user.company_id), str(config.id))
+    # Set rate limit after successful db flush
+    await redis_client.set(rl_key, "1", ex=60)
+    
+    # Spawn task via celery in threadpool
+    task = await run_in_threadpool(manual_sync_connector_task.delay, str(user.company_id), str(config.id))
     
     return {"status": "sync_started", "task_id": task.id}

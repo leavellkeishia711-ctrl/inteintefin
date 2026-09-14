@@ -9,7 +9,7 @@ import uuid
 
 from app.db.session import system_session, tenant_session
 from app.db.models.connectors import ConnectorConfig
-from app.connectors.registry import CONNECTOR_REGISTRY
+from app.connectors.registry import CONNECTOR_NAMES, get_connector_class
 from app.connectors.base import UnauthorizedError
 from app.connectors.credentials import decrypt_secret
 
@@ -65,7 +65,7 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             try:
                 decrypted = decrypt_secret(config.encrypted_secret)
                 
-                connector_cls = CONNECTOR_REGISTRY.get(config.connector_name)
+                connector_cls = get_connector_class(config.connector_name)
                 if not connector_cls:
                     raise ValueError(f"Unknown connector type: {config.connector_name}")
                 connector = connector_cls(config, decrypted)

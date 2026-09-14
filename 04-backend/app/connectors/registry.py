@@ -1,34 +1,27 @@
 import importlib
 from typing import Type
-from app.connectors.base import Connector
+import logging
+
+logger = logging.getLogger(__name__)
+
+CONNECTOR_NAMES = frozenset(['meta', 'google_ads', 'tiktok_ads', 'keitaro'])
 
 _REGISTRY_MAP = {
-    'keitaro': ('app.connectors.keitaro', 'KeitaroConnector'),
-    'binom': ('app.connectors.binom', 'BinomConnector'),
-    'voluum': ('app.connectors.voluum', 'VoluumConnector'),
-    'affise': ('app.connectors.affise', 'AffiseConnector'),
     'meta': ('app.connectors.meta_ads', 'MetaAdsConnector'),
     'google_ads': ('app.connectors.google_ads', 'GoogleAdsConnector'),
     'tiktok_ads': ('app.connectors.tiktok_ads', 'TikTokAdsConnector'),
+    'keitaro': ('app.connectors.keitaro', 'KeitaroConnector')
 }
 
-class LazyConnectorRegistry(dict):
-    def __getitem__(self, key: str) -> Type[Connector]:
-        if key in _REGISTRY_MAP:
-            mod_path, cls_name = _REGISTRY_MAP[key]
-            module = importlib.import_module(mod_path)
-            return getattr(module, cls_name)
-        raise KeyError(key)
-
-    def __contains__(self, key: str) -> bool:
-        return key in _REGISTRY_MAP
-
-    def get(self, key: str, default=None):
-        if key in self:
-            return self[key]
-        return default
+def get_connector_class(name: str):
+    if name not in _REGISTRY_MAP:
+        return None
         
-    def keys(self):
-        return _REGISTRY_MAP.keys()
-
-CONNECTOR_REGISTRY = LazyConnectorRegistry()
+    module_path, class_name = _REGISTRY_MAP[name]
+    try:
+        module = importlib.import_module(module_path)
+        cls = getattr(module, class_name)
+        return cls
+    except Exception as e:
+        logger.error(f"Failed to load connector class for {name}: {e}")
+        return None
