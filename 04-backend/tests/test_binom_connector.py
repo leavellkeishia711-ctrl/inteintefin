@@ -14,7 +14,7 @@ from app.db.models.companies import Company
 from app.db.models.users import User
 
 class DummyConfig:
-    def __init__(self, company_id, connector_name="dummy"):
+    def __init__(self, company_id, connector_name="binom"):
         self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {"base_url": "https://api.binom.test", "currency": "USD"}
@@ -162,6 +162,9 @@ async def test_binom_tenant_isolation(company_b_fixtures):
             note="500"
         )
         db_session.add(run_a)
+        await db_session.flush()
+        mapping_a = ExternalCampaignMapping(company_id=run_a.company_id, platform="binom", external_id=run_a.note, campaign_run_id=run_a.id)
+        db_session.add(mapping_a)
         
         run_b = CampaignRun(
             company_id=company_id_b,

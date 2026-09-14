@@ -15,7 +15,7 @@ from app.db.models.users import User
 from app.db.session import system_session
 
 class DummyConfig:
-    def __init__(self, company_id, connector_name="dummy"):
+    def __init__(self, company_id, connector_name="tiktok_ads"):
         self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {}
@@ -290,6 +290,10 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
         run1 = CampaignRun(company_id=c1_id, buyer_id=user1_id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc), note="ext1")
         run2 = CampaignRun(company_id=c2.id, buyer_id=user2.id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc), note="ext1")
         db_session.add_all([run1, run2])
+        await db_session.flush()
+        mapping_a = ExternalCampaignMapping(company_id=run1.company_id, platform="tiktok_ads", external_id=run1.note, campaign_run_id=run1.id)
+        mapping_b = ExternalCampaignMapping(company_id=run2.company_id, platform="tiktok_ads", external_id=run2.note, campaign_run_id=run2.id)
+        db_session.add_all([mapping_a, mapping_b])
         await db_session.commit()
         
         # Upsert as tenant 1

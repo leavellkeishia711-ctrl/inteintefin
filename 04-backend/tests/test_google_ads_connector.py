@@ -16,7 +16,7 @@ from app.connectors.google_ads import GoogleAdsConnector
 from app.connectors.base import UnauthorizedError
 
 class DummyConfig:
-    def __init__(self, company_id, connector_name="dummy"):
+    def __init__(self, company_id, connector_name="google_ads"):
         self.connector_name = connector_name
         self.company_id = company_id
         self.settings = {}
@@ -371,6 +371,10 @@ async def test_google_ads_tenant_isolation():
             note="ga_shared_id"
         )
         db.add_all([run_a, run_b])
+        await db.flush()
+        mapping_a = ExternalCampaignMapping(company_id=run_a.company_id, platform="google_ads", external_id=run_a.note, campaign_run_id=run_a.id)
+        mapping_b = ExternalCampaignMapping(company_id=run_b.company_id, platform="google_ads", external_id=run_b.note, campaign_run_id=run_b.id)
+        db.add_all([mapping_a, mapping_b])
         await db.commit()
         
         connector_a = GoogleAdsConnector(DummyConfig(comp_a_id), create_valid_creds())
