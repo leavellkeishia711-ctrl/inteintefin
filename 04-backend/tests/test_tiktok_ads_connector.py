@@ -232,7 +232,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
         await db_session.flush()
         mapping = ExternalCampaignMapping(
             company_id=company_id,
-            platform="tiktok_ads",
+            platform="sda_kotkit",
             external_id="12345",
             campaign_run_id=run.id
         )
@@ -291,8 +291,8 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
         run2 = CampaignRun(company_id=c2.id, buyer_id=user2.id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc), note="ext1")
         db_session.add_all([run1, run2])
         await db_session.flush()
-        mapping_a = ExternalCampaignMapping(company_id=run1.company_id, platform="tiktok_ads", external_id=run1.note, campaign_run_id=run1.id)
-        mapping_b = ExternalCampaignMapping(company_id=run2.company_id, platform="tiktok_ads", external_id=run2.note, campaign_run_id=run2.id)
+        mapping_a = ExternalCampaignMapping(company_id=run1.company_id, platform="sda_kotkit", external_id=run1.note, campaign_run_id=run1.id)
+        mapping_b = ExternalCampaignMapping(company_id=run2.company_id, platform="sda_kotkit", external_id=run2.note, campaign_run_id=run2.id)
         db_session.add_all([mapping_a, mapping_b])
         await db_session.commit()
         
