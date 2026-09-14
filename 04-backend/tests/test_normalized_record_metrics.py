@@ -52,7 +52,7 @@ class DummyConfig:
     settings = {"currency": "USD"}
 
 def test_google_ads_normalize_metrics():
-    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e"}')
+    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}')
     raw = [{
         "campaign": {"id": "123"},
         "segments": {"date": "2026-01-01"},
@@ -114,7 +114,7 @@ def test_tiktok_normalize_metrics():
     assert res[0].conversions == Decimal("5")
 
 def test_missing_metrics_default_to_zero():
-    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e"}')
+    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}')
     raw = [{
         "campaign": {"id": "123"},
         "segments": {"date": "2026-01-01"},
@@ -143,7 +143,7 @@ def test_all_connectors_return_metrics():
         settings = {"currency": "USD"}
     
     connectors = [
-        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}}]),
+        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}}]),
         (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01"}]),
         (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}}]),
         (BinomConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"camp_id": "1", "date": "2026-01-01"}]),

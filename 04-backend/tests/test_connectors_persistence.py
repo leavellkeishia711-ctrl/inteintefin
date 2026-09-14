@@ -166,6 +166,8 @@ async def test_campaign_run_stat_persists_performance_metrics(system_session, cl
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
     from app.connectors.base import NormalizedRecord
     from datetime import date
+    import uuid
+    from decimal import Decimal
     
     run_id = uuid.uuid4()
     run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Perf Metrics Test", status="active")
@@ -202,7 +204,7 @@ async def test_campaign_run_stat_persists_performance_metrics(system_session, cl
         conversions=Decimal("5.5")
     )
     
-    async with app.db.session.tenant_session(tenant_a_id) as session:
+    async with tenant_session(tenant_a_id) as session:
         await connector.upsert(session, [record])
         
         stmt = select(CampaignRunStat).where(CampaignRunStat.external_id == "perf-meta-1")
@@ -219,6 +221,8 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
     from app.connectors.base import NormalizedRecord
     from datetime import date
+    import uuid
+    from decimal import Decimal
     
     run_id = uuid.uuid4()
     run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Perf Update Test", status="active")
@@ -253,7 +257,7 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
         conversions=Decimal("2")
     )
     
-    async with app.db.session.tenant_session(tenant_a_id) as session:
+    async with tenant_session(tenant_a_id) as session:
         await connector.upsert(session, [record_a])
         
     record_b = NormalizedRecord(
@@ -268,7 +272,7 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
         conversions=Decimal("3")
     )
     
-    async with app.db.session.tenant_session(tenant_a_id) as session:
+    async with tenant_session(tenant_a_id) as session:
         await connector.upsert(session, [record_b])
         
         stmt = select(CampaignRunStat).where(CampaignRunStat.external_id == "perf-meta-2")
@@ -286,6 +290,8 @@ async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(system_sessio
     # This test verifies that inserting manually without specifying metrics defaults to 0
     from app.db.models.campaigns import CampaignRunStat, CampaignRun
     from datetime import date
+    import uuid
+    from decimal import Decimal
     
     run_id = uuid.uuid4()
     run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Legacy Default Test", status="active")
@@ -293,7 +299,7 @@ async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(system_sessio
     await system_session.commit()
     
     # Direct insert simulating older code that doesn't provide clicks/impressions/conversions
-    async with app.db.session.tenant_session(tenant_a_id) as session:
+    async with tenant_session(tenant_a_id) as session:
         stat = CampaignRunStat(
             company_id=tenant_a_id,
             campaign_run_id=run_id,
