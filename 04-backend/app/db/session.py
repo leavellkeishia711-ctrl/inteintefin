@@ -110,7 +110,7 @@ async def tenant_session(company_id: str) -> AsyncGenerator[AsyncSession, None]:
                 if "Can't operate on closed transaction inside context manager" in str(e):
                     if e.__context__:
                       raise e.__context__
-                  pass
+                    pass
                 else:
                     raise
     finally:
