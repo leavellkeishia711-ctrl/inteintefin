@@ -50,7 +50,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
         revenue=Decimal("200.00"),
         currency="USD",
         source=source,
-        external_id=external_id,
+        
     )
     
     normalized_v2 = NormalizedRecord(
@@ -59,7 +59,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
         revenue=Decimal("250.00"),
         currency="USD",
         source=source,
-        external_id=external_id,
+        
     )
     
     results = []
@@ -74,7 +74,7 @@ async def test_upsert_race_atomic_insert_or_update(client_a):
                     campaign_run_id=campaign_run_id,
                     stat_date=stat_date,
                     source=source,
-                    external_id=external_id,
+                    
                     normalized_record=normalized,
                     connector_name="BinomConnector",
                     fx_rate_to_base=Decimal("1.0"),
@@ -131,7 +131,7 @@ async def test_upsert_idempotent_multiple_calls(client_a):
         revenue=Decimal("100.00"),
         currency="EUR",
         source=source,
-        external_id=external_id,
+        
     )
     
     async with async_session_maker() as session:
@@ -142,7 +142,7 @@ async def test_upsert_idempotent_multiple_calls(client_a):
                 campaign_run_id=campaign_run_id,
                 stat_date=stat_date,
                 source=source,
-                external_id=external_id,
+                
                 normalized_record=normalized,
                 connector_name="VoluumConnector",
                 fx_rate_to_base=Decimal("1.1"),
@@ -181,7 +181,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
         revenue=Decimal("150.00"),
         currency="GBP",
         source=source,
-        external_id=external_id,
+        
     )
     
     normalized_v2 = NormalizedRecord(
@@ -190,7 +190,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
         revenue=Decimal("160.00"),
         currency="GBP",
         source=source,
-        external_id=external_id,
+        
     )
     
     async with async_session_maker() as session:
@@ -201,7 +201,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
             campaign_run_id=campaign_run_id,
             stat_date=stat_date,
             source=source,
-            external_id=external_id,
+            
             normalized_record=normalized_v1,
             connector_name="AffiseConnector",
             fx_rate_to_base=Decimal("1.2"),
@@ -224,7 +224,7 @@ async def test_upsert_soft_delete_respects_index_predicate(client_a):
             campaign_run_id=campaign_run_id,
             stat_date=stat_date,
             source=source,
-            external_id=external_id,
+            
             normalized_record=normalized_v2,
             connector_name="AffiseConnector",
             fx_rate_to_base=Decimal("1.2"),
@@ -275,7 +275,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
         revenue=Decimal("400.00"),
         currency="USD",
         source=source,
-        external_id=external_id,
+        
     )
     
     normalized_b = NormalizedRecord(
@@ -284,7 +284,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
         revenue=Decimal("600.00"),
         currency="USD",
         source=source,
-        external_id=external_id,
+        
     )
     
     errors = []
@@ -298,7 +298,7 @@ async def test_upsert_tenant_isolation_race(client_a, client_b):
                     campaign_run_id=campaign_run_id,
                     stat_date=stat_date,
                     source=source,
-                    external_id=external_id,
+                    
                     normalized_record=normalized,
                     connector_name="MetaAdsConnector",
                     fx_rate_to_base=Decimal("1.0"),
@@ -356,7 +356,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
         revenue=Decimal("20.00"),
         currency="USD",
         source=source,
-        external_id=external_id,
+        
     )
     
     normalized_v2 = NormalizedRecord(
@@ -365,7 +365,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
         revenue=Decimal("25.00"),
         currency="EUR",
         source=source,
-        external_id=external_id,
+        
     )
     
     async with async_session_maker() as session:
@@ -376,7 +376,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
             campaign_run_id=campaign_run_id,
             stat_date=stat_date,
             source=source,
-            external_id=external_id,
+            
             normalized_record=normalized_v1,
             connector_name="BinomConnector",
             fx_rate_to_base=Decimal("1.0"),
@@ -398,7 +398,7 @@ async def test_upsert_all_fields_updated_correctly(client_a):
             campaign_run_id=campaign_run_id,
             stat_date=stat_date,
             source=source,
-            external_id=external_id,
+            
             normalized_record=normalized_v2,
             connector_name="BinomConnector",
             fx_rate_to_base=Decimal("1.0"),
