@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, ForeignKey, Integer, DateTime, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy import String, ForeignKey, Integer, DateTime, UniqueConstraint, CheckConstraint, Index, text
 from datetime import datetime
 from app.db.session import Base
 from .base import TimestampMixin, CompanyScoped, SoftDeleteMixin
@@ -19,7 +19,7 @@ class ConnectorConfig(Base, TimestampMixin, CompanyScoped, SoftDeleteMixin):
     next_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
-        UniqueConstraint("company_id", "connector_name", name="uix_company_connector"),
+        Index("uix_company_connector", "company_id", "connector_name", unique=True, postgresql_where=text("deleted_at IS NULL")),
         CheckConstraint("status IN ('active', 'paused', 'failing', 'unauthorized')", name="check_connector_status"),
         Index("ix_connector_configs_next_sync", "status", "next_sync_at"),
     )

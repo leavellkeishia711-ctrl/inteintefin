@@ -126,6 +126,9 @@ class TikTokAdsConnector(Connector):
                 page += 1
         return campaigns
 
+    async def fetch(self) -> List[Dict[str, Any]]:
+        return await self.fetch_metrics()
+
     async def fetch_metrics(self) -> List[Dict[str, Any]]:
         # Fetch last 30 days like Meta Ads
         today = date.today()

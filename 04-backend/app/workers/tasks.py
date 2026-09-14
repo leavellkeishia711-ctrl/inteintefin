@@ -61,6 +61,16 @@ def monitor_data_quality_task():
 
     asyncio.run(_monitor_impl())
 
+@celery_app.task(name='sync_connectors_task')
+def sync_connectors_task():
+    from app.connectors.scheduler import run_scheduled_syncs
+    asyncio.run(run_scheduled_syncs())
+
+@celery_app.task(name='manual_sync_connector_task')
+def manual_sync_connector_task(company_id: str, connector_id: str):
+    from app.connectors.scheduler import sync_connector_instance
+    asyncio.run(sync_connector_instance(company_id, connector_id))
+
 # Setup Celery Beat
 celery_app.conf.beat_schedule = {
     "check-alerts-every-hour": {
@@ -71,14 +81,8 @@ celery_app.conf.beat_schedule = {
         "task": "monitor_data_quality",
         "schedule": crontab(hour=0, minute=0), # Daily at midnight UTC
     },
-}
-
-@celery_app.task(name='sync_connectors_task')
-def sync_connectors_task():
-    from app.connectors.scheduler import run_scheduled_syncs
-    asyncio.run(run_scheduled_syncs())
-
-celery_app.conf.beat_schedule['sync-connectors-every-hour'] = {
-    'task': 'sync_connectors_task',
-    'schedule': 3600.0,
+    'sync-connectors-every-hour': {
+        'task': 'sync_connectors_task',
+        'schedule': 3600.0,
+    }
 }

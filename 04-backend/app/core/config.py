@@ -1,8 +1,10 @@
+import os
 from pydantic_settings import BaseSettings
 from pydantic import PostgresDsn, AnyHttpUrl
 from typing import Optional
 
 class Settings(BaseSettings):
+    GOOGLE_ADS_API_VERSION: str = "v25"
     # App
     PROJECT_NAME: str = "FinanceIntel Backend"
     API_V1_STR: str = "/api/v1"

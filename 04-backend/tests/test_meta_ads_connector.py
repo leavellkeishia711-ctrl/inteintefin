@@ -583,7 +583,7 @@ async def test_meta_scheduler_unauthorized_state(mock_sync):
         mock_sync.side_effect = UnauthorizedError("Token invalid")
         
         with patch("app.connectors.scheduler.decrypt_secret", return_value="fake_secret"), \
-             patch("app.connectors.scheduler.acquire_lock", return_value=True):
+             patch("app.connectors.scheduler.acquire_lock", return_value="mock_token"):
             await sync_connector_instance(str(company_id), str(conn.id))
         
         async with system_session() as new_session:

@@ -3,7 +3,7 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `6c1bbab2bce54b5e2d2558726f5bf41994a1f3a6`
+**Current main SHA:** `b5ad1c0ab3547ce835185606ce51a3223958c41b`
 
 ## Verified Implementation (Post-Merge)
 

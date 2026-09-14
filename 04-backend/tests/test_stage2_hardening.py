@@ -364,7 +364,7 @@ async def test_scheduler_next_sync_at_updated_on_success(company_b_fixtures):
     before_sync = datetime.now(timezone.utc)
 
     with patch("app.connectors.scheduler.decrypt_secret", return_value="fake"), \
-         patch("app.connectors.scheduler.acquire_lock", return_value=True), \
+         patch("app.connectors.scheduler.acquire_lock", return_value="mock_token"), \
          patch("app.connectors.scheduler.release_lock", new_callable=AsyncMock), \
          patch("app.connectors.base.Connector.sync", new_callable=AsyncMock):
         await sync_connector_instance(str(company_id), str(conn_id))
@@ -409,7 +409,7 @@ async def test_scheduler_unauthorized_sets_null_next_sync(company_b_fixtures):
         conn_id = conn.id
 
     with patch("app.connectors.scheduler.decrypt_secret", return_value="fake"), \
-         patch("app.connectors.scheduler.acquire_lock", return_value=True), \
+         patch("app.connectors.scheduler.acquire_lock", return_value="mock_token"), \
          patch("app.connectors.scheduler.release_lock", new_callable=AsyncMock), \
          patch("app.connectors.base.Connector.sync", side_effect=UnauthorizedError("Token expired")):
         await sync_connector_instance(str(company_id), str(conn_id))
@@ -449,7 +449,7 @@ async def test_scheduler_failure_sets_next_sync_with_retry_interval(company_b_fi
     before_sync = datetime.now(timezone.utc)
 
     with patch("app.connectors.scheduler.decrypt_secret", return_value="fake"), \
-         patch("app.connectors.scheduler.acquire_lock", return_value=True), \
+         patch("app.connectors.scheduler.acquire_lock", return_value="mock_token"), \
          patch("app.connectors.scheduler.release_lock", new_callable=AsyncMock), \
          patch("app.connectors.base.Connector.sync", side_effect=RuntimeError("network error")):
         await sync_connector_instance(str(company_id), str(conn_id))

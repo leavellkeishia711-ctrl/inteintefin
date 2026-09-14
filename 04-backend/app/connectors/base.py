@@ -99,7 +99,7 @@ class Connector(ABC):
 
     async def fetch(self) -> List[Dict[str, Any]]:
         """Fetches raw data from the external source."""
-        pass
+        raise NotImplementedError("fetch() must be implemented by the connector")
 
     @abstractmethod
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
