@@ -1,0 +1,15 @@
+﻿2026-09-13T19:00:49.9028472Z ##[group]Run python scripts/check_floats.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+2026-09-13T19:00:49.9029564Z [36;1mpython scripts/check_floats.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:00:49.9074152Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:00:49.9074381Z env:
+2026-09-13T19:00:49.9074615Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:49.9074995Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:00:49.9075359Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:49.9075664Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:49.9075966Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:49.9076263Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:00:49.9076534Z ##[endgroup]
+2026-09-13T19:00:50.0238092Z app/workers/tasks.py: Failed to parse AST: invalid syntax (tasks.py, line 15)
+2026-09-13T19:00:50.0239118Z app/connectors/registry.py: Failed to parse AST: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+2026-09-13T19:00:50.0240131Z app/connectors/scheduler.py: Failed to parse AST: unexpected character after line continuation character (scheduler.py, line 32)
+2026-09-13T19:00:50.0240933Z Float type check failed! Financial applications must use Decimal.

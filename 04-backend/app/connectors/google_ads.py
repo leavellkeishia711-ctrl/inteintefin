@@ -177,7 +177,7 @@ class GoogleAdsConnector(Connector):
         start_str = start_dt.strftime("%Y-%m-%d")
         end_str = end_dt.strftime("%Y-%m-%d")
         
-        query = f"SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros, metrics.conversions_value, customer.id, customer.currency_code FROM campaign WHERE segments.date BETWEEN '{start_str}' AND '{end_str}' AND campaign.status != 'REMOVED'"
+        query = f"SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros, metrics.conversions_value, metrics.clicks, metrics.impressions, metrics.conversions, customer.id, customer.currency_code FROM campaign WHERE segments.date BETWEEN '{start_str}' AND '{end_str}' AND campaign.status != 'REMOVED'"
         return await self._execute_gaql(query)
 
     async def fetch(self) -> List[Dict[str, Any]]:
@@ -223,13 +223,34 @@ class GoogleAdsConnector(Connector):
             except (InvalidOperation, TypeError, ValueError):
                 continue
                 
+            try:
+                clicks = int(str(metrics.get("clicks", "0") or "0"))
+                if clicks < 0: clicks = 0
+            except ValueError:
+                clicks = 0
+                
+            try:
+                impressions = int(str(metrics.get("impressions", "0") or "0"))
+                if impressions < 0: impressions = 0
+            except ValueError:
+                impressions = 0
+                
+            try:
+                conversions = Decimal(str(metrics.get("conversions", "0") or "0"))
+                if conversions < 0: conversions = Decimal("0")
+            except (InvalidOperation, TypeError, ValueError):
+                conversions = Decimal("0")
+                
             normalized.append(NormalizedRecord(
                 source="google_ads",
                 external_id=str(campaign_id),
                 stat_date=stat_date,
                 spend=spend,
                 revenue=revenue,
-                currency=str(currency_code)
+                currency=str(currency_code),
+                clicks=clicks,
+                impressions=impressions,
+                conversions=conversions
             ))
             
         unique_records = {}

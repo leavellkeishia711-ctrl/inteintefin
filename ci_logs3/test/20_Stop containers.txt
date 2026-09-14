@@ -1,0 +1,82 @@
+﻿2026-09-13T19:07:28.1364123Z Print service container logs: 13aeafae7e934d81b411d8812d0d3c8d_postgres16alpine_590370
+2026-09-13T19:07:28.1368762Z ##[command]/usr/bin/docker logs --details 28970a0b5a4ceec703553facde5317c6a93a14c6a7861123791ae735b2a30bd3
+2026-09-13T19:07:28.1493434Z  The files belonging to this database system will be owned by user "postgres".
+2026-09-13T19:07:28.1493965Z  This user must also own the server process.
+2026-09-13T19:07:28.1494263Z  
+2026-09-13T19:07:28.1494722Z  The database cluster will be initialized with locale "en_US.utf8".
+2026-09-13T19:07:28.1496177Z  sh: locale: not found
+2026-09-13T19:07:28.1496645Z  The default database encoding has accordingly been set to "UTF8".
+2026-09-13T19:07:28.1497508Z  2026-09-13 19:06:49.364 UTC [35] WARNING:  no usable system locales were found
+2026-09-13T19:07:28.1498050Z  The default text search configuration will be set to "english".
+2026-09-13T19:07:28.1498815Z  initdb: warning: enabling "trust" authentication for local connections
+2026-09-13T19:07:28.1499258Z  
+2026-09-13T19:07:28.1500120Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-09-13T19:07:28.1501037Z  Data page checksums are disabled.
+2026-09-13T19:07:28.1501930Z  2026-09-13 19:06:50.194 UTC [1] LOG:  starting PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-09-13T19:07:28.1502488Z  
+2026-09-13T19:07:28.1503077Z  2026-09-13 19:06:50.194 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-09-13T19:07:28.1504214Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2026-09-13T19:07:28.1505015Z  2026-09-13 19:06:50.194 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-09-13T19:07:28.1505603Z  2026-09-13 19:06:50.196 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-09-13T19:07:28.1506186Z  2026-09-13 19:06:50.199 UTC [57] LOG:  database system was shut down at 2026-09-13 19:06:50 UTC
+2026-09-13T19:07:28.1506722Z  2026-09-13 19:06:50.209 UTC [1] LOG:  database system is ready to accept connections
+2026-09-13T19:07:28.1507176Z  2026-09-13 19:06:58.926 UTC [67] FATAL:  role "root" does not exist
+2026-09-13T19:07:28.1507595Z  2026-09-13 19:07:08.965 UTC [74] FATAL:  role "root" does not exist
+2026-09-13T19:07:28.1507986Z  2026-09-13 19:07:19.004 UTC [81] FATAL:  role "root" does not exist
+2026-09-13T19:07:28.1508326Z  creating subdirectories ... ok
+2026-09-13T19:07:28.1508653Z  selecting dynamic shared memory implementation ... posix
+2026-09-13T19:07:28.1509005Z  selecting default max_connections ... 100
+2026-09-13T19:07:28.1509314Z  selecting default shared_buffers ... 128MB
+2026-09-13T19:07:28.1509606Z  selecting default time zone ... UTC
+2026-09-13T19:07:28.1509888Z  creating configuration files ... ok
+2026-09-13T19:07:28.1510160Z  running bootstrap script ... ok
+2026-09-13T19:07:28.1510477Z  performing post-bootstrap initialization ... ok
+2026-09-13T19:07:28.1510794Z  syncing data to disk ... ok
+2026-09-13T19:07:28.1511030Z  
+2026-09-13T19:07:28.1511206Z  
+2026-09-13T19:07:28.1511435Z  Success. You can now start the database server using:
+2026-09-13T19:07:28.1511742Z  
+2026-09-13T19:07:28.1511987Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2026-09-13T19:07:28.1512294Z  
+2026-09-13T19:07:28.1513026Z  waiting for server to start....2026-09-13 19:06:49.912 UTC [41] LOG:  starting PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-09-13T19:07:28.1514170Z  2026-09-13 19:06:49.913 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-09-13T19:07:28.1514762Z  2026-09-13 19:06:49.915 UTC [44] LOG:  database system was shut down at 2026-09-13 19:06:49 UTC
+2026-09-13T19:07:28.1515282Z  2026-09-13 19:06:49.920 UTC [41] LOG:  database system is ready to accept connections
+2026-09-13T19:07:28.1515670Z   done
+2026-09-13T19:07:28.1515859Z  server started
+2026-09-13T19:07:28.1516074Z  CREATE DATABASE
+2026-09-13T19:07:28.1516275Z  
+2026-09-13T19:07:28.1516690Z  
+2026-09-13T19:07:28.1517010Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2026-09-13T19:07:28.1517426Z  
+2026-09-13T19:07:28.1517804Z  waiting for server to shut down....2026-09-13 19:06:50.067 UTC [41] LOG:  received fast shutdown request
+2026-09-13T19:07:28.1518423Z  2026-09-13 19:06:50.069 UTC [41] LOG:  aborting any active transactions
+2026-09-13T19:07:28.1519022Z  2026-09-13 19:06:50.073 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+2026-09-13T19:07:28.1519575Z  2026-09-13 19:06:50.073 UTC [42] LOG:  shutting down
+2026-09-13T19:07:28.1519968Z  2026-09-13 19:06:50.073 UTC [42] LOG:  checkpoint starting: shutdown immediate
+2026-09-13T19:07:28.1521270Z  2026-09-13 19:06:50.091 UTC [42] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.003 s, total=0.018 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4283 kB, estimate=4283 kB; lsn=0/1925D60, redo lsn=0/1925D60
+2026-09-13T19:07:28.1522373Z  2026-09-13 19:06:50.099 UTC [41] LOG:  database system is shut down
+2026-09-13T19:07:28.1522734Z   done
+2026-09-13T19:07:28.1533998Z  server stopped
+2026-09-13T19:07:28.1534394Z  
+2026-09-13T19:07:28.1534815Z  PostgreSQL init process complete; ready for start up.
+2026-09-13T19:07:28.1535197Z  
+2026-09-13T19:07:28.1541152Z Stop and remove container: 13aeafae7e934d81b411d8812d0d3c8d_postgres16alpine_590370
+2026-09-13T19:07:28.1546435Z ##[command]/usr/bin/docker rm --force 28970a0b5a4ceec703553facde5317c6a93a14c6a7861123791ae735b2a30bd3
+2026-09-13T19:07:28.3532641Z 28970a0b5a4ceec703553facde5317c6a93a14c6a7861123791ae735b2a30bd3
+2026-09-13T19:07:28.3553779Z Print service container logs: 6ded1666ded24b309007626349f4bcc8_redis7alpine_dca8df
+2026-09-13T19:07:28.3554977Z ##[command]/usr/bin/docker logs --details 6170295b483148a8101293006c73c68eeb685a95fa3505a067d5a787de88d9ef
+2026-09-13T19:07:28.3682054Z  1:C 13 Sep 2026 19:06:50.824 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+2026-09-13T19:07:28.3685446Z  1:C 13 Sep 2026 19:06:50.824 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2026-09-13T19:07:28.3686437Z  1:C 13 Sep 2026 19:06:50.824 * Redis version=7.4.11, bits=64, commit=00000000, modified=0, pid=1, just started
+2026-09-13T19:07:28.3687928Z  1:C 13 Sep 2026 19:06:50.824 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2026-09-13T19:07:28.3689172Z  1:M 13 Sep 2026 19:06:50.824 * monotonic clock: POSIX clock_gettime
+2026-09-13T19:07:28.3689900Z  1:M 13 Sep 2026 19:06:50.825 * Running mode=standalone, port=6379.
+2026-09-13T19:07:28.3690572Z  1:M 13 Sep 2026 19:06:50.825 * Server initialized
+2026-09-13T19:07:28.3691195Z  1:M 13 Sep 2026 19:06:50.825 * Ready to accept connections tcp
+2026-09-13T19:07:28.3696944Z Stop and remove container: 6ded1666ded24b309007626349f4bcc8_redis7alpine_dca8df
+2026-09-13T19:07:28.3698226Z ##[command]/usr/bin/docker rm --force 6170295b483148a8101293006c73c68eeb685a95fa3505a067d5a787de88d9ef
+2026-09-13T19:07:28.5103885Z 6170295b483148a8101293006c73c68eeb685a95fa3505a067d5a787de88d9ef
+2026-09-13T19:07:28.5126985Z Remove container network: github_network_586351c37bf74d9bab8dd365ac3da32e
+2026-09-13T19:07:28.5131210Z ##[command]/usr/bin/docker network rm github_network_586351c37bf74d9bab8dd365ac3da32e
+2026-09-13T19:07:28.6128310Z github_network_586351c37bf74d9bab8dd365ac3da32e

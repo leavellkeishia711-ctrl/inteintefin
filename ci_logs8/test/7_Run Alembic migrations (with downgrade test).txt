@@ -1,0 +1,34 @@
+﻿2026-09-13T19:25:02.0773684Z ##[group]Run alembic upgrade head 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+2026-09-13T19:25:02.0774214Z [36;1malembic upgrade head 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:25:02.0774960Z [36;1malembic downgrade -1 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:25:02.0775372Z [36;1malembic upgrade head 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:25:02.0815880Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:25:02.0816161Z env:
+2026-09-13T19:25:02.0816445Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:02.0816915Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:25:02.0817357Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:02.0817740Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:02.0818137Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:02.0818520Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:25:02.0818848Z ##[endgroup]
+2026-09-13T19:25:02.6967260Z INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+2026-09-13T19:25:02.6968259Z INFO  [alembic.runtime.migration] Will assume transactional DDL.
+2026-09-13T19:25:02.7305678Z INFO  [alembic.runtime.migration] Running upgrade  -> c823966262b9, initial
+2026-09-13T19:25:02.9122333Z INFO  [alembic.runtime.migration] Running upgrade c823966262b9 -> 0002_rls, rls
+2026-09-13T19:25:02.9510628Z INFO  [alembic.runtime.migration] Running upgrade 0002_rls -> e8acf4873fc7, enforce rls on remaining tables
+2026-09-13T19:25:02.9735632Z INFO  [alembic.runtime.migration] Running upgrade e8acf4873fc7 -> 4826288717b7, drop audit_log bogus fks on entity_id and request_id
+2026-09-13T19:25:02.9799352Z INFO  [alembic.runtime.migration] Running upgrade 4826288717b7 -> 13f060b286e3, schema_update
+2026-09-13T19:25:03.1572245Z INFO  [alembic.runtime.migration] Running upgrade 13f060b286e3 -> 20d6e73eefad, Add actor_type and source to AuditLog
+2026-09-13T19:25:03.1603581Z INFO  [alembic.runtime.migration] Running upgrade 20d6e73eefad -> 6033c46a54ae, Add alert thresholds
+2026-09-13T19:25:03.1655686Z INFO  [alembic.runtime.migration] Running upgrade 6033c46a54ae -> c9b566320193, update check constraints
+2026-09-13T19:25:03.1780085Z INFO  [alembic.runtime.migration] Running upgrade c9b566320193 -> f8d61e75a111, add status to invites
+2026-09-13T19:25:03.1803073Z INFO  [alembic.runtime.migration] Running upgrade f8d61e75a111 -> b7d23a9b1c1e, add_connector_configs
+2026-09-13T19:25:03.1940554Z INFO  [alembic.runtime.migration] Running upgrade b7d23a9b1c1e -> 5f9e8a7c6d5b, add name to ad_accounts
+2026-09-13T19:25:03.1959564Z INFO  [alembic.runtime.migration] Running upgrade 5f9e8a7c6d5b -> 2a5ebeceefb0, add_campaign_run_stats_soft_delete
+2026-09-13T19:25:03.2056520Z INFO  [alembic.runtime.migration] Running upgrade 2a5ebeceefb0 -> 154ef253e8eb, make connector name unique constraint partial
+2026-09-13T19:25:03.8362283Z INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+2026-09-13T19:25:03.8363144Z INFO  [alembic.runtime.migration] Will assume transactional DDL.
+2026-09-13T19:25:03.8503085Z INFO  [alembic.runtime.migration] Running downgrade 154ef253e8eb -> 2a5ebeceefb0, make connector name unique constraint partial
+2026-09-13T19:25:04.4699669Z INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+2026-09-13T19:25:04.4700447Z INFO  [alembic.runtime.migration] Will assume transactional DDL.
+2026-09-13T19:25:04.4842520Z INFO  [alembic.runtime.migration] Running upgrade 2a5ebeceefb0 -> 154ef253e8eb, make connector name unique constraint partial

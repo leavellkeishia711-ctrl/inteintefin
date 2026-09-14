@@ -1,0 +1,481 @@
+﻿2026-09-13T19:22:28.4117671Z ##[group]Run set -o pipefail
+2026-09-13T19:22:28.4117929Z [36;1mset -o pipefail[0m
+2026-09-13T19:22:28.4118329Z [36;1mPYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:22:28.4151208Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:22:28.4151418Z env:
+2026-09-13T19:22:28.4151649Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:28.4152030Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:22:28.4152385Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:28.4152680Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:28.4152981Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:28.4153282Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:22:28.4153541Z ##[endgroup]
+2026-09-13T19:22:29.0018788Z ============================= test session starts ==============================
+2026-09-13T19:22:29.0019432Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-13T19:22:29.0019856Z cachedir: .pytest_cache
+2026-09-13T19:22:29.0020142Z rootdir: /home/runner/work/inteintefin/inteintefin/04-backend
+2026-09-13T19:22:29.0020428Z configfile: pyproject.toml
+2026-09-13T19:22:29.0020858Z plugins: anyio-4.15.1, asyncio-1.4.0
+2026-09-13T19:22:29.0021284Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=session
+2026-09-13T19:22:30.9309462Z collecting ... collected 185 items
+2026-09-13T19:22:30.9309719Z 
+2026-09-13T19:22:31.1046411Z tests/test_ad_accounts_crud.py::test_ad_account_crud PASSED              [  0%]
+2026-09-13T19:22:31.1950671Z tests/test_ad_accounts_tenant_isolation.py::test_tenant_isolation PASSED [  1%]
+2026-09-13T19:22:31.2096875Z tests/test_ad_accounts_upsert_idempotency.py::test_upsert_idempotency PASSED [  1%]
+2026-09-13T19:22:31.2512183Z tests/test_affise_connector.py::test_affise_test_connection_success PASSED [  2%]
+2026-09-13T19:22:31.2667970Z tests/test_affise_connector.py::test_affise_test_connection_fail PASSED  [  2%]
+2026-09-13T19:22:31.2847945Z tests/test_affise_connector.py::test_affise_normalization PASSED         [  3%]
+2026-09-13T19:22:31.3064828Z tests/test_affise_connector.py::test_affise_upsert_idempotency PASSED    [  3%]
+2026-09-13T19:22:31.3192909Z tests/test_affise_connector.py::test_affise_tenant_isolation PASSED      [  4%]
+2026-09-13T19:22:31.3360726Z tests/test_affise_connector.py::test_affise_retry_429 PASSED             [  4%]
+2026-09-13T19:22:31.3525562Z tests/test_affise_connector.py::test_affise_retry_5xx_success PASSED     [  5%]
+2026-09-13T19:22:31.3681634Z tests/test_affise_connector.py::test_affise_unauthorized PASSED          [  5%]
+2026-09-13T19:22:31.4026547Z tests/test_affise_connector.py::test_affise_smoke PASSED                 [  6%]
+2026-09-13T19:22:31.4110106Z tests/test_ai_analyst.py::test_ai_analyst_successful_tool_call PASSED    [  7%]
+2026-09-13T19:22:31.4164797Z tests/test_ai_analyst.py::test_ai_analyst_tool_enforcement PASSED        [  7%]
+2026-09-13T19:22:31.4184899Z tests/test_ai_analyst.py::test_ai_analyst_tool_error_prevents_response PASSED [  8%]
+2026-09-13T19:22:31.4214299Z tests/test_ai_analyst.py::test_ai_analyst_no_sensitive_fields PASSED     [  8%]
+2026-09-13T19:22:31.4313356Z tests/test_alerts.py::test_alert_deduplication PASSED                    [  9%]
+2026-09-13T19:22:31.4435073Z tests/test_alerts.py::test_check_financial_alerts_roi PASSED             [  9%]
+2026-09-13T19:22:31.4572205Z tests/test_app_boots.py::test_app_boots_and_health_check PASSED          [ 10%]
+2026-09-13T19:22:31.4578669Z tests/test_audit.py::test_generate_diff_omits_sensitive_fields PASSED    [ 10%]
+2026-09-13T19:22:31.4584726Z tests/test_audit.py::test_generate_diff_serializes_complex_types PASSED  [ 11%]
+2026-09-13T19:22:31.4663055Z tests/test_audit.py::test_record_user_audit PASSED                       [ 11%]
+2026-09-13T19:22:31.4707565Z tests/test_audit.py::test_record_system_audit PASSED                     [ 12%]
+2026-09-13T19:22:31.4891300Z tests/test_auth.py::test_access_token_accepted PASSED                    [ 12%]
+2026-09-13T19:22:31.4908470Z tests/test_auth.py::test_refresh_token_rejected_as_access PASSED         [ 13%]
+2026-09-13T19:22:31.4970374Z tests/test_auth.py::test_refresh_endpoint PASSED                         [ 14%]
+2026-09-13T19:22:31.5010775Z tests/test_auth.py::test_logout_endpoint PASSED                          [ 14%]
+2026-09-13T19:22:31.5025746Z tests/test_auth.py::test_invalid_jwt PASSED                              [ 15%]
+2026-09-13T19:22:31.5183478Z tests/test_binom_connector.py::test_binom_test_connection_success PASSED [ 15%]
+2026-09-13T19:22:31.5348573Z tests/test_binom_connector.py::test_binom_test_connection_fail PASSED    [ 16%]
+2026-09-13T19:22:31.5357315Z tests/test_binom_connector.py::test_binom_normalization PASSED           [ 16%]
+2026-09-13T19:22:31.5504117Z tests/test_binom_connector.py::test_binom_upsert_idempotency PASSED      [ 17%]
+2026-09-13T19:22:31.6459046Z tests/test_binom_connector.py::test_binom_tenant_isolation PASSED        [ 17%]
+2026-09-13T19:22:31.6629068Z tests/test_binom_connector.py::test_binom_retry_429 PASSED               [ 18%]
+2026-09-13T19:22:31.6794521Z tests/test_binom_connector.py::test_binom_retry_5xx_success PASSED       [ 18%]
+2026-09-13T19:22:31.6951319Z tests/test_binom_connector.py::test_binom_unauthorized PASSED            [ 19%]
+2026-09-13T19:22:31.7305681Z tests/test_binom_connector.py::test_binom_smoke PASSED                   [ 20%]
+2026-09-13T19:22:31.7840771Z tests/test_campaigns.py::test_get_ad_account_cost PASSED                 [ 20%]
+2026-09-13T19:22:31.7957244Z tests/test_campaigns.py::test_upsert_campaign_run_stat PASSED            [ 21%]
+2026-09-13T19:22:31.7988254Z tests/test_celery_tenant_isolation.py::test_tenant_task_session_sets_context PASSED [ 21%]
+2026-09-13T19:22:31.8013612Z tests/test_celery_tenant_isolation.py::test_tenant_task_session_cleans_up PASSED [ 22%]
+2026-09-13T19:22:31.8136363Z tests/test_computation.py::test_pnl_calculation_and_rounding PASSED      [ 22%]
+2026-09-13T19:22:31.8202147Z tests/test_computation.py::test_pnl_div_by_zero PASSED                   [ 23%]
+2026-09-13T19:22:31.8385558Z tests/test_computation.py::test_cashflow_runway PASSED                   [ 23%]
+2026-09-13T19:22:31.8478924Z tests/test_computation.py::test_health_score_bounds PASSED               [ 24%]
+2026-09-13T19:22:31.8484824Z tests/test_connector_base_contract.py::test_connector_base_contract PASSED [ 24%]
+2026-09-13T19:22:31.8499181Z tests/test_connectors.py::test_credentials_encryption PASSED             [ 25%]
+2026-09-13T19:22:31.9000945Z tests/test_connectors.py::test_api_create_connector PASSED               [ 25%]
+2026-09-13T19:22:31.9509847Z tests/test_connectors.py::test_api_tenant_isolation PASSED               [ 26%]
+2026-09-13T19:22:31.9517883Z tests/test_connectors.py::test_keitaro_normalize PASSED                  [ 27%]
+2026-09-13T19:22:31.9674437Z tests/test_connectors.py::test_keitaro_fetch_401 PASSED                  [ 27%]
+2026-09-13T19:22:31.9840056Z tests/test_connectors.py::test_keitaro_fetch_429 PASSED                  [ 28%]
+2026-09-13T19:22:32.0002910Z tests/test_connectors.py::test_keitaro_fetch_500 PASSED                  [ 28%]
+2026-09-13T19:22:32.0167961Z tests/test_connectors.py::test_keitaro_fetch_timeout PASSED              [ 29%]
+2026-09-13T19:22:32.0321304Z tests/test_connectors.py::test_keitaro_malformed_json PASSED             [ 29%]
+2026-09-13T19:22:32.0328643Z tests/test_connectors.py::test_keitaro_normalize_utc PASSED              [ 30%]
+2026-09-13T19:22:32.0334688Z tests/test_connectors.py::test_keitaro_normalize_missing_fields PASSED   [ 30%]
+2026-09-13T19:22:32.0490917Z tests/test_connectors.py::test_keitaro_fetch_403 PASSED                  [ 31%]
+2026-09-13T19:22:32.0498185Z tests/test_connectors.py::test_keitaro_normalize_bad_money PASSED        [ 31%]
+2026-09-13T19:22:32.1072399Z tests/test_connectors_api.py::test_rotate_secret_revives_unauthorized_connector PASSED [ 32%]
+2026-09-13T19:22:32.1601738Z tests/test_connectors_api.py::test_rotate_secret_never_leaks PASSED      [ 32%]
+2026-09-13T19:22:32.2098049Z tests/test_connectors_api.py::test_rotate_with_validate_false_on_unauthorized PASSED [ 33%]
+2026-09-13T19:22:32.2668856Z tests/test_connectors_api.py::test_soft_deleted_connector_can_be_recreated PASSED [ 34%]
+2026-09-13T19:22:32.3105079Z tests/test_connectors_api.py::test_create_unknown_connector_returns_422 PASSED [ 34%]
+2026-09-13T19:22:32.3697758Z tests/test_connectors_api.py::test_manual_sync_endpoint PASSED           [ 35%]
+2026-09-13T19:22:32.4165848Z tests/test_connectors_persistence.py::test_api_persistence_create PASSED [ 35%]
+2026-09-13T19:22:32.4668665Z tests/test_connectors_persistence.py::test_api_persistence_patch_status PASSED [ 36%]
+2026-09-13T19:22:32.5167836Z tests/test_connectors_persistence.py::test_api_persistence_soft_delete PASSED [ 36%]
+2026-09-13T19:22:32.5175232Z tests/test_consumables.py::test_pan_masking PASSED                       [ 37%]
+2026-09-13T19:22:32.5181537Z tests/test_consumables.py::test_full_pan_raises_error_if_required PASSED [ 37%]
+2026-09-13T19:22:32.5275279Z tests/test_credential_rotation.py::test_credential_rotation PASSED       [ 38%]
+2026-09-13T19:22:32.5339599Z tests/test_credential_rotation_rollback.py::test_credential_rotation_rollback PASSED [ 38%]
+2026-09-13T19:22:32.5502092Z tests/test_google_ads_connector.py::test_google_ads_test_connection_success PASSED [ 39%]
+2026-09-13T19:22:32.5787091Z tests/test_google_ads_connector.py::test_google_ads_test_connection_auth_failure PASSED [ 40%]
+2026-09-13T19:22:32.5945492Z tests/test_google_ads_connector.py::test_google_ads_fetch_ad_accounts PASSED [ 40%]
+2026-09-13T19:22:32.6103350Z tests/test_google_ads_connector.py::test_google_ads_fetch_campaigns PASSED [ 41%]
+2026-09-13T19:22:32.6110750Z tests/test_google_ads_connector.py::test_google_ads_fetch_metrics_converts_micros_to_decimal PASSED [ 41%]
+2026-09-13T19:22:32.6117470Z tests/test_google_ads_connector.py::test_google_ads_metrics_include_stat_date PASSED [ 42%]
+2026-09-13T19:22:32.6124178Z tests/test_google_ads_connector.py::test_google_ads_external_id_is_deterministic PASSED [ 42%]
+2026-09-13T19:22:32.6422060Z tests/test_google_ads_connector.py::test_google_ads_pagination PASSED    [ 43%]
+2026-09-13T19:22:32.6430438Z tests/test_google_ads_connector.py::test_google_ads_optional_metrics PASSED [ 43%]
+2026-09-13T19:22:32.6615578Z tests/test_google_ads_connector.py::test_google_ads_persistence_uses_atomic_upsert PASSED [ 44%]
+2026-09-13T19:22:32.6738697Z tests/test_google_ads_connector.py::test_google_ads_tenant_isolation PASSED [ 44%]
+2026-09-13T19:22:32.7964504Z tests/test_invites.py::test_invites_happy_path PASSED                    [ 45%]
+2026-09-13T19:22:32.7979175Z tests/test_invites.py::test_invites_media_buyer_forbidden PASSED         [ 45%]
+2026-09-13T19:22:32.7993082Z tests/test_invites.py::test_invites_team_lead_forbidden PASSED           [ 46%]
+2026-09-13T19:22:32.8487195Z tests/test_invites.py::test_invites_cross_tenant PASSED                  [ 47%]
+2026-09-13T19:22:32.9406430Z tests/test_invites.py::test_duplicate_invite_email PASSED                [ 47%]
+2026-09-13T19:22:33.0220859Z tests/test_media_buying.py::test_ad_account_crud PASSED                  [ 48%]
+2026-09-13T19:22:33.0783545Z tests/test_media_buying.py::test_campaign_run_stat_upsert PASSED         [ 48%]
+2026-09-13T19:22:33.0944512Z tests/test_meta_ads_connector.py::test_meta_test_connection_success PASSED [ 49%]
+2026-09-13T19:22:33.1112172Z tests/test_meta_ads_connector.py::test_meta_secret_stripping_on_paging PASSED [ 49%]
+2026-09-13T19:22:33.1422584Z tests/test_meta_ads_connector.py::test_meta_nested_insights_paging PASSED [ 50%]
+2026-09-13T19:22:33.1433465Z tests/test_meta_ads_connector.py::test_meta_normalization_with_action_values PASSED [ 50%]
+2026-09-13T19:22:33.1735280Z tests/test_meta_ads_connector.py::test_meta_fetch_campaigns_flattening PASSED [ 51%]
+2026-09-13T19:22:33.1794985Z tests/test_meta_ads_connector.py::test_meta_ad_accounts_status_mapping PASSED [ 51%]
+2026-09-13T19:22:33.1907771Z tests/test_meta_ads_connector.py::test_meta_tenant_isolation PASSED      [ 52%]
+2026-09-13T19:22:33.2066672Z tests/test_meta_ads_connector.py::test_meta_upsert_idempotency PASSED    [ 52%]
+2026-09-13T19:22:33.2237891Z tests/test_meta_ads_connector.py::test_meta_retry_429 PASSED             [ 53%]
+2026-09-13T19:22:33.2550703Z tests/test_meta_ads_connector.py::test_meta_retry_5xx_success PASSED     [ 54%]
+2026-09-13T19:22:33.2707606Z tests/test_meta_ads_connector.py::test_meta_unauthorized PASSED          [ 54%]
+2026-09-13T19:22:33.3017770Z tests/test_meta_ads_connector.py::test_meta_fetch_campaigns_nested_paging_and_safety PASSED [ 55%]
+2026-09-13T19:22:33.3780088Z tests/test_meta_ads_connector.py::test_meta_upsert_fx_rate_success_and_failure PASSED [ 55%]
+2026-09-13T19:22:33.4078941Z tests/test_meta_ads_connector.py::test_meta_test_connection_401_403 PASSED [ 56%]
+2026-09-13T19:22:33.4240033Z tests/test_meta_ads_connector.py::test_meta_scheduler_unauthorized_state PASSED [ 56%]
+2026-09-13T19:22:33.5686104Z tests/test_no_float.py::test_no_float_in_financial_code PASSED           [ 57%]
+2026-09-13T19:22:33.5692770Z tests/test_parsing.py::test_parse_amount PASSED                          [ 57%]
+2026-09-13T19:22:33.5699547Z tests/test_parsing.py::test_parse_amount_errors PASSED                   [ 58%]
+2026-09-13T19:22:33.5708600Z tests/test_payroll_logic.py::test_payroll_fixed_base_salary PASSED       [ 58%]
+2026-09-13T19:22:33.5715673Z tests/test_payroll_logic.py::test_payroll_bonus_calculation PASSED       [ 59%]
+2026-09-13T19:22:34.5742890Z tests/test_retry_429.py::test_retry_429 PASSED                           [ 60%]
+2026-09-13T19:22:34.5753090Z tests/test_retry_5xx.py::test_retry_5xx PASSED                           [ 60%]
+2026-09-13T19:22:34.5762656Z tests/test_retry_exhausted.py::test_retry_exhausted PASSED               [ 61%]
+2026-09-13T19:22:34.5955831Z tests/test_rls_completeness.py::test_all_tables_have_rls PASSED          [ 61%]
+2026-09-13T19:22:35.1640036Z tests/test_scheduler_concurrency.py::test_scheduler_max_concurrency FAILED [ 62%]
+2026-09-13T19:22:35.5981743Z tests/test_scheduler_concurrency.py::test_scheduler_batch_continues_on_error FAILED [ 62%]
+2026-09-13T19:22:35.5992677Z tests/test_scheduler_concurrency.py::test_safe_redis_lock_release PASSED [ 63%]
+2026-09-13T19:22:35.6148847Z tests/test_stage2_hardening.py::test_unauthorized_exception_no_response_body PASSED [ 63%]
+2026-09-13T19:22:35.6309633Z tests/test_stage2_hardening.py::test_connector_error_no_response_body PASSED [ 64%]
+2026-09-13T19:22:35.6411956Z tests/test_stage2_hardening.py::test_binom_upsert_fx_rate_missing_raises PASSED [ 64%]
+2026-09-13T19:22:35.6495230Z tests/test_stage2_hardening.py::test_voluum_upsert_fx_rate_missing_raises PASSED [ 65%]
+2026-09-13T19:22:35.6575252Z tests/test_stage2_hardening.py::test_affise_upsert_fx_rate_missing_raises PASSED [ 65%]
+2026-09-13T19:22:35.6581742Z tests/test_stage2_hardening.py::test_voluum_normalize_no_date_skips PASSED [ 66%]
+2026-09-13T19:22:35.6587876Z tests/test_stage2_hardening.py::test_affise_normalize_no_date_skips PASSED [ 67%]
+2026-09-13T19:22:35.6593713Z tests/test_stage2_hardening.py::test_meta_normalize_no_date_skips PASSED [ 67%]
+2026-09-13T19:22:35.6600409Z tests/test_stage2_hardening.py::test_voluum_normalize_with_date_works PASSED [ 68%]
+2026-09-13T19:22:35.6606625Z tests/test_stage2_hardening.py::test_affise_normalize_with_date_works PASSED [ 68%]
+2026-09-13T19:22:35.6612803Z tests/test_stage2_hardening.py::test_meta_normalize_with_date_works PASSED [ 69%]
+2026-09-13T19:22:35.6700166Z tests/test_stage2_hardening.py::test_scheduler_due_connector_runs PASSED [ 69%]
+2026-09-13T19:22:35.6773536Z tests/test_stage2_hardening.py::test_scheduler_not_due_connector_skipped PASSED [ 70%]
+2026-09-13T19:22:35.6847820Z tests/test_stage2_hardening.py::test_scheduler_null_next_sync_runs PASSED [ 70%]
+2026-09-13T19:22:35.6995057Z tests/test_stage2_hardening.py::test_scheduler_next_sync_at_updated_on_success PASSED [ 71%]
+2026-09-13T19:22:35.7129659Z tests/test_stage2_hardening.py::test_scheduler_unauthorized_sets_null_next_sync PASSED [ 71%]
+2026-09-13T19:22:35.7279947Z tests/test_stage2_hardening.py::test_scheduler_failure_sets_next_sync_with_retry_interval PASSED [ 72%]
+2026-09-13T19:22:35.7905628Z tests/test_stage2_stat_integrity.py::test_campaign_run_stat_soft_delete PASSED [ 72%]
+2026-09-13T19:22:35.8454675Z tests/test_stage2_stat_integrity.py::test_campaign_run_stat_uniqueness_external_id_null PASSED [ 73%]
+2026-09-13T19:22:35.9012911Z tests/test_stage2_stat_integrity.py::test_tenant_isolation_campaign_run_stats PASSED [ 74%]
+2026-09-13T19:22:35.9766798Z tests/test_stage2_stat_integrity.py::test_regression_old_index_different_external_ids PASSED [ 74%]
+2026-09-13T19:22:36.0584718Z tests/test_stage2_upsert_race.py::test_upsert_race_atomic_insert_or_update PASSED [ 75%]
+2026-09-13T19:22:36.1472802Z tests/test_stage2_upsert_race.py::test_upsert_idempotent_multiple_calls PASSED [ 75%]
+2026-09-13T19:22:36.1996017Z tests/test_stage2_upsert_race.py::test_upsert_soft_delete_respects_index_predicate PASSED [ 76%]
+2026-09-13T19:22:36.2856307Z tests/test_stage2_upsert_race.py::test_upsert_tenant_isolation_race PASSED [ 76%]
+2026-09-13T19:22:36.4559837Z tests/test_stage2_upsert_race.py::test_upsert_all_fields_updated_correctly PASSED [ 77%]
+2026-09-13T19:22:36.4696475Z tests/test_stale_source_dq.py::test_stale_source_dq PASSED               [ 77%]
+2026-09-13T19:22:36.4862312Z tests/test_stale_source_dq_deduplication.py::test_stale_source_dq_dedup PASSED [ 78%]
+2026-09-13T19:22:36.4940259Z tests/test_telegram.py::test_telegram_link_token PASSED                  [ 78%]
+2026-09-13T19:22:36.4949095Z tests/test_telegram.py::test_telegram_status_cross_tenant PASSED         [ 79%]
+2026-09-13T19:22:36.4960808Z tests/test_telegram.py::test_telegram_redis_unavailable PASSED           [ 80%]
+2026-09-13T19:22:36.5013277Z tests/test_telegram.py::test_telegram_link_success_and_reuse PASSED      [ 80%]
+2026-09-13T19:22:36.5047000Z tests/test_telegram_link.py::test_telegram_webhook_invalid_hash PASSED   [ 81%]
+2026-09-13T19:22:36.5177075Z tests/test_telegram_link.py::test_telegram_status_command PASSED         [ 81%]
+2026-09-13T19:22:36.5211768Z tests/test_tenant_isolation.py::test_raw_sql_select_returns_zero_rows_without_context PASSED [ 82%]
+2026-09-13T19:22:36.5243330Z tests/test_tenant_isolation.py::test_raw_sql_insert_rejected_by_with_check PASSED [ 82%]
+2026-09-13T19:22:36.5329831Z tests/test_tenant_isolation.py::test_cross_tenant_select_returns_zero_rows PASSED [ 83%]
+2026-09-13T19:22:36.5363012Z tests/test_tenant_isolation.py::test_cross_tenant_insert_rejected PASSED [ 83%]
+2026-09-13T19:22:36.5415297Z tests/test_tenant_isolation.py::test_fk_insert_commits_cleanly PASSED    [ 84%]
+2026-09-13T19:22:36.6115247Z tests/test_tenant_isolation.py::test_every_route_is_tenant_scoped PASSED [ 84%]
+2026-09-13T19:22:36.6272987Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_test_connection_success PASSED [ 85%]
+2026-09-13T19:22:36.6425539Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_test_connection_auth_failure PASSED [ 85%]
+2026-09-13T19:22:36.6579324Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_ad_accounts PASSED [ 86%]
+2026-09-13T19:22:36.6734102Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_campaigns PASSED [ 87%]
+2026-09-13T19:22:36.7030712Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_metrics PASSED [ 87%]
+2026-09-13T19:22:36.7037469Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_decimal_mapping PASSED [ 88%]
+2026-09-13T19:22:36.7043878Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_stat_date_mapping PASSED [ 88%]
+2026-09-13T19:22:36.7050380Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_external_id_is_deterministic PASSED [ 89%]
+2026-09-13T19:22:36.7222497Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_pagination PASSED    [ 89%]
+2026-09-13T19:22:36.7228894Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_optional_metrics PASSED [ 90%]
+2026-09-13T19:22:36.7368950Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_persistence_uses_atomic_upsert PASSED [ 90%]
+2026-09-13T19:22:36.7515213Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_tenant_isolation PASSED [ 91%]
+2026-09-13T19:22:36.7521806Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_no_real_network_calls PASSED [ 91%]
+2026-09-13T19:22:36.8024875Z tests/test_transactions.py::test_create_transaction PASSED               [ 92%]
+2026-09-13T19:22:36.8575580Z tests/test_transactions.py::test_list_and_get_transaction PASSED         [ 92%]
+2026-09-13T19:22:36.9089794Z tests/test_transactions.py::test_update_transaction PASSED               [ 93%]
+2026-09-13T19:22:36.9601866Z tests/test_transactions.py::test_delete_transaction PASSED               [ 94%]
+2026-09-13T19:22:37.2263818Z tests/test_types.py::test_openapi_schema_money PASSED                    [ 94%]
+2026-09-13T19:22:37.2793258Z tests/test_types.py::test_pnl_returns_string PASSED                      [ 95%]
+2026-09-13T19:22:37.2953140Z tests/test_voluum_connector.py::test_voluum_test_connection_success PASSED [ 95%]
+2026-09-13T19:22:37.3106795Z tests/test_voluum_connector.py::test_voluum_test_connection_fail PASSED  [ 96%]
+2026-09-13T19:22:37.3115357Z tests/test_voluum_connector.py::test_voluum_normalization PASSED         [ 96%]
+2026-09-13T19:22:37.3254972Z tests/test_voluum_connector.py::test_voluum_upsert_idempotency PASSED    [ 97%]
+2026-09-13T19:22:37.3360688Z tests/test_voluum_connector.py::test_voluum_tenant_isolation PASSED      [ 97%]
+2026-09-13T19:22:37.3530263Z tests/test_voluum_connector.py::test_voluum_retry_429 PASSED             [ 98%]
+2026-09-13T19:22:37.3698534Z tests/test_voluum_connector.py::test_voluum_retry_5xx_success PASSED     [ 98%]
+2026-09-13T19:22:37.3895612Z tests/test_voluum_connector.py::test_voluum_unauthorized PASSED          [ 99%]
+2026-09-13T19:22:37.4375286Z tests/test_voluum_connector.py::test_voluum_smoke PASSED                 [100%]
+2026-09-13T19:22:37.4375620Z 
+2026-09-13T19:22:37.4375787Z =================================== FAILURES ===================================
+2026-09-13T19:22:37.4376141Z ________________________ test_scheduler_max_concurrency ________________________
+2026-09-13T19:22:37.4376946Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: in _prepare_and_execute
+2026-09-13T19:22:37.4377518Z     self._rows = deque(await prepared_stmt.fetch(*parameters))
+2026-09-13T19:22:37.4377813Z                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4378224Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+2026-09-13T19:22:37.4378650Z     data = await self.__bind_execute(args, 0, timeout)
+2026-09-13T19:22:37.4378895Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4379298Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+2026-09-13T19:22:37.4380003Z     data, status, _ = await self.__do_execute(
+2026-09-13T19:22:37.4380422Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+2026-09-13T19:22:37.4380817Z     return await executor(protocol)
+2026-09-13T19:22:37.4381026Z            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4381264Z asyncpg/protocol/protocol.pyx:205: in bind_execute
+2026-09-13T19:22:37.4381503Z     ???
+2026-09-13T19:22:37.4381869Z E   asyncpg.exceptions.UniqueViolationError: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.4382435Z E   DETAIL:  Key (company_id, connector_name)=(f4532fe4-d7b0-4a60-9a73-fef733867ac2, meta) already exists.
+2026-09-13T19:22:37.4382730Z 
+2026-09-13T19:22:37.4382892Z The above exception was the direct cause of the following exception:
+2026-09-13T19:22:37.4383406Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2127: in _exec_insertmany_context
+2026-09-13T19:22:37.4384029Z     dialect.do_execute(
+2026-09-13T19:22:37.4384491Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:22:37.4385178Z     cursor.execute(statement, parameters)
+2026-09-13T19:22:37.4385877Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:22:37.4386572Z     self._adapt_connection.await_(
+2026-09-13T19:22:37.4387001Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:22:37.4387574Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:22:37.4387933Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4388359Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:22:37.4388795Z     value = await result
+2026-09-13T19:22:37.4388985Z             ^^^^^^^^^^^^
+2026-09-13T19:22:37.4389426Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:22:37.4389956Z     self._handle_exception(error)
+2026-09-13T19:22:37.4390540Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:22:37.4391043Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:22:37.4391527Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:22:37.4391981Z     raise translated_error from error
+2026-09-13T19:22:37.4392651Z E   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.4393487Z E   DETAIL:  Key (company_id, connector_name)=(f4532fe4-d7b0-4a60-9a73-fef733867ac2, meta) already exists.
+2026-09-13T19:22:37.4393782Z 
+2026-09-13T19:22:37.4393931Z The above exception was the direct cause of the following exception:
+2026-09-13T19:22:37.4394300Z tests/test_scheduler_concurrency.py:37: in test_scheduler_max_concurrency
+2026-09-13T19:22:37.4394615Z     await db_session.commit()
+2026-09-13T19:22:37.4395016Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:999: in commit
+2026-09-13T19:22:37.4395446Z     await greenlet_spawn(self.sync_session.commit)
+2026-09-13T19:22:37.4395901Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:203: in greenlet_spawn
+2026-09-13T19:22:37.4396513Z     result = context.switch(value)
+2026-09-13T19:22:37.4396725Z              ^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4397096Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2035: in commit
+2026-09-13T19:22:37.4397499Z     trans.commit(_to_root=True)
+2026-09-13T19:22:37.4397703Z <string>:2: in commit
+2026-09-13T19:22:37.4397874Z     ???
+2026-09-13T19:22:37.4398200Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:22:37.4398593Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:22:37.4398806Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4399159Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1316: in commit
+2026-09-13T19:22:37.4399532Z     self._prepare_impl()
+2026-09-13T19:22:37.4399727Z <string>:2: in _prepare_impl
+2026-09-13T19:22:37.4399910Z     ???
+2026-09-13T19:22:37.4400294Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:22:37.4400717Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:22:37.4400915Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4401406Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1290: in _prepare_impl
+2026-09-13T19:22:37.4401803Z     self.session.flush()
+2026-09-13T19:22:37.4402156Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4353: in flush
+2026-09-13T19:22:37.4402529Z     self._flush(objects)
+2026-09-13T19:22:37.4402869Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+2026-09-13T19:22:37.4403245Z     with util.safe_reraise():
+2026-09-13T19:22:37.4403630Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+2026-09-13T19:22:37.4404036Z     raise exc_value.with_traceback(exc_tb)
+2026-09-13T19:22:37.4404409Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+2026-09-13T19:22:37.4404808Z     flush_context.execute()
+2026-09-13T19:22:37.4405177Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:465: in execute
+2026-09-13T19:22:37.4405562Z     rec.execute(self)
+2026-09-13T19:22:37.4405981Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:641: in execute
+2026-09-13T19:22:37.4406684Z     util.preloaded.orm_persistence.save_obj(
+2026-09-13T19:22:37.4407097Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:94: in save_obj
+2026-09-13T19:22:37.4407487Z     _emit_insert_statements(
+2026-09-13T19:22:37.4407911Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+2026-09-13T19:22:37.4408351Z     result = connection.execute(
+2026-09-13T19:22:37.4408722Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+2026-09-13T19:22:37.4409094Z     return meth(
+2026-09-13T19:22:37.4409486Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+2026-09-13T19:22:37.4409925Z     return connection._execute_clauseelement(
+2026-09-13T19:22:37.4410351Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+2026-09-13T19:22:37.4410769Z     ret = self._execute_context(
+2026-09-13T19:22:37.4411160Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context
+2026-09-13T19:22:37.4411603Z     return self._exec_insertmany_context(dialect, context)
+2026-09-13T19:22:37.4411867Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4412294Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2135: in _exec_insertmany_context
+2026-09-13T19:22:37.4412724Z     self._handle_dbapi_exception(
+2026-09-13T19:22:37.4413135Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+2026-09-13T19:22:37.4413611Z     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-09-13T19:22:37.4414091Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2127: in _exec_insertmany_context
+2026-09-13T19:22:37.4414509Z     dialect.do_execute(
+2026-09-13T19:22:37.4414876Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:22:37.4415279Z     cursor.execute(statement, parameters)
+2026-09-13T19:22:37.4415712Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:22:37.4416138Z     self._adapt_connection.await_(
+2026-09-13T19:22:37.4416770Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:22:37.4417467Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:22:37.4417823Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4418245Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:22:37.4418667Z     value = await result
+2026-09-13T19:22:37.4418852Z             ^^^^^^^^^^^^
+2026-09-13T19:22:37.4419273Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:22:37.4419734Z     self._handle_exception(error)
+2026-09-13T19:22:37.4420167Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:22:37.4420649Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:22:37.4421120Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:22:37.4421580Z     raise translated_error from error
+2026-09-13T19:22:37.4422269Z E   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.4423242Z E   DETAIL:  Key (company_id, connector_name)=(f4532fe4-d7b0-4a60-9a73-fef733867ac2, meta) already exists.
+2026-09-13T19:22:37.4424457Z E   [SQL: INSERT INTO connector_configs (id, company_id, connector_name, status, encrypted_secret, sync_interval_minutes, last_attempted_sync, last_successful_sync, retry_count, next_sync_at, deleted_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5 ... 4412 characters truncated ... IME ZONE) RETURNING connector_configs.created_at, connector_configs.updated_at, connector_configs.id]
+2026-09-13T19:22:37.4430267Z E   [parameters: (UUID('c11d7c6e-3da6-4b8d-bb96-d877e1e59be9'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('10ccb426-d992-4886-a12d-dc3845e7de02'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('df3111ae-b80f-4133-be13-a567a79d7c50'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('363a0148-2e21-49d6-b4fa-9774482b6d03'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('36127c98-8b4c-4d4a-833e-2e5e23b2d5fc'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60 ... 120 parameters truncated ... 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('964010c5-9f9c-4ca9-823e-b21e9a088494'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('72ab41bf-f7d5-4fe2-b150-5f9b06a3d2b4'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('e15c60b7-0c22-42c6-a253-7c43a0535175'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('b475a770-00a7-4072-b26f-5ec70f464047'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None)]
+2026-09-13T19:22:37.4435285Z E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:22:37.4435656Z ___________________ test_scheduler_batch_continues_on_error ____________________
+2026-09-13T19:22:37.4436449Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: in _prepare_and_execute
+2026-09-13T19:22:37.4436997Z     self._rows = deque(await prepared_stmt.fetch(*parameters))
+2026-09-13T19:22:37.4437288Z                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4437684Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+2026-09-13T19:22:37.4438086Z     data = await self.__bind_execute(args, 0, timeout)
+2026-09-13T19:22:37.4438330Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4438732Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+2026-09-13T19:22:37.4439150Z     data, status, _ = await self.__do_execute(
+2026-09-13T19:22:37.4439556Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+2026-09-13T19:22:37.4439950Z     return await executor(protocol)
+2026-09-13T19:22:37.4440166Z            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4440520Z asyncpg/protocol/protocol.pyx:205: in bind_execute
+2026-09-13T19:22:37.4440754Z     ???
+2026-09-13T19:22:37.4441114Z E   asyncpg.exceptions.UniqueViolationError: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.4441689Z E   DETAIL:  Key (company_id, connector_name)=(f9ec2013-d311-4e3a-9a48-5cd1b9b2336b, meta) already exists.
+2026-09-13T19:22:37.4441976Z 
+2026-09-13T19:22:37.4442129Z The above exception was the direct cause of the following exception:
+2026-09-13T19:22:37.4442630Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2127: in _exec_insertmany_context
+2026-09-13T19:22:37.4443068Z     dialect.do_execute(
+2026-09-13T19:22:37.4443435Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:22:37.4443840Z     cursor.execute(statement, parameters)
+2026-09-13T19:22:37.4444271Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:22:37.4444855Z     self._adapt_connection.await_(
+2026-09-13T19:22:37.4445271Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:22:37.4445951Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:22:37.4446492Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4447074Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:22:37.4447561Z     value = await result
+2026-09-13T19:22:37.4447750Z             ^^^^^^^^^^^^
+2026-09-13T19:22:37.4448183Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:22:37.4448649Z     self._handle_exception(error)
+2026-09-13T19:22:37.4449099Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:22:37.4449581Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:22:37.4450063Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:22:37.4450522Z     raise translated_error from error
+2026-09-13T19:22:37.4451191Z E   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.4452152Z E   DETAIL:  Key (company_id, connector_name)=(f9ec2013-d311-4e3a-9a48-5cd1b9b2336b, meta) already exists.
+2026-09-13T19:22:37.4452442Z 
+2026-09-13T19:22:37.4452600Z The above exception was the direct cause of the following exception:
+2026-09-13T19:22:37.4452996Z tests/test_scheduler_concurrency.py:80: in test_scheduler_batch_continues_on_error
+2026-09-13T19:22:37.4453337Z     await db_session.commit()
+2026-09-13T19:22:37.4453734Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:999: in commit
+2026-09-13T19:22:37.4454166Z     await greenlet_spawn(self.sync_session.commit)
+2026-09-13T19:22:37.4454613Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:203: in greenlet_spawn
+2026-09-13T19:22:37.4455050Z     result = context.switch(value)
+2026-09-13T19:22:37.4455252Z              ^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4455608Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2035: in commit
+2026-09-13T19:22:37.4455993Z     trans.commit(_to_root=True)
+2026-09-13T19:22:37.4456416Z <string>:2: in commit
+2026-09-13T19:22:37.4456603Z     ???
+2026-09-13T19:22:37.4456947Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:22:37.4457484Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:22:37.4457698Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4458056Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1316: in commit
+2026-09-13T19:22:37.4458434Z     self._prepare_impl()
+2026-09-13T19:22:37.4458626Z <string>:2: in _prepare_impl
+2026-09-13T19:22:37.4458819Z     ???
+2026-09-13T19:22:37.4459145Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:22:37.4459531Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:22:37.4459730Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4460124Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1290: in _prepare_impl
+2026-09-13T19:22:37.4460525Z     self.session.flush()
+2026-09-13T19:22:37.4460878Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4353: in flush
+2026-09-13T19:22:37.4461260Z     self._flush(objects)
+2026-09-13T19:22:37.4461607Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+2026-09-13T19:22:37.4461986Z     with util.safe_reraise():
+2026-09-13T19:22:37.4462371Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+2026-09-13T19:22:37.4462777Z     raise exc_value.with_traceback(exc_tb)
+2026-09-13T19:22:37.4463165Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+2026-09-13T19:22:37.4463540Z     flush_context.execute()
+2026-09-13T19:22:37.4463922Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:465: in execute
+2026-09-13T19:22:37.4464309Z     rec.execute(self)
+2026-09-13T19:22:37.4464683Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:641: in execute
+2026-09-13T19:22:37.4465292Z     util.preloaded.orm_persistence.save_obj(
+2026-09-13T19:22:37.4465903Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:94: in save_obj
+2026-09-13T19:22:37.4466682Z     _emit_insert_statements(
+2026-09-13T19:22:37.4467399Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+2026-09-13T19:22:37.4468171Z     result = connection.execute(
+2026-09-13T19:22:37.4468770Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+2026-09-13T19:22:37.4469246Z     return meth(
+2026-09-13T19:22:37.4469791Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+2026-09-13T19:22:37.4470240Z     return connection._execute_clauseelement(
+2026-09-13T19:22:37.4470678Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+2026-09-13T19:22:37.4471108Z     ret = self._execute_context(
+2026-09-13T19:22:37.4471497Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context
+2026-09-13T19:22:37.4471950Z     return self._exec_insertmany_context(dialect, context)
+2026-09-13T19:22:37.4472216Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4472642Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2135: in _exec_insertmany_context
+2026-09-13T19:22:37.4473080Z     self._handle_dbapi_exception(
+2026-09-13T19:22:37.4473499Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+2026-09-13T19:22:37.4473978Z     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-09-13T19:22:37.4474463Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2127: in _exec_insertmany_context
+2026-09-13T19:22:37.4475006Z     dialect.do_execute(
+2026-09-13T19:22:37.4475376Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:22:37.4475782Z     cursor.execute(statement, parameters)
+2026-09-13T19:22:37.4476414Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:22:37.4476865Z     self._adapt_connection.await_(
+2026-09-13T19:22:37.4477279Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:22:37.4477847Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:22:37.4478210Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:22:37.4478636Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:22:37.4479067Z     value = await result
+2026-09-13T19:22:37.4479245Z             ^^^^^^^^^^^^
+2026-09-13T19:22:37.4479672Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:22:37.4480163Z     self._handle_exception(error)
+2026-09-13T19:22:37.4480620Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:22:37.4481109Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:22:37.4481594Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:22:37.4482052Z     raise translated_error from error
+2026-09-13T19:22:37.4482741Z E   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.4483593Z E   DETAIL:  Key (company_id, connector_name)=(f9ec2013-d311-4e3a-9a48-5cd1b9b2336b, meta) already exists.
+2026-09-13T19:22:37.4484797Z E   [SQL: INSERT INTO connector_configs (id, company_id, connector_name, status, encrypted_secret, sync_interval_minutes, last_attempted_sync, last_successful_sync, retry_count, next_sync_at, deleted_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5 ... 4412 characters truncated ... IME ZONE) RETURNING connector_configs.created_at, connector_configs.updated_at, connector_configs.id]
+2026-09-13T19:22:37.4490504Z E   [parameters: (UUID('cdae349b-2bfb-4555-abf8-aaa2f36ab5b6'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('262afb93-d2ac-4b85-98b5-e103cdcd12d9'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('2b8b37e7-1cfb-439c-8c02-f01b9314c6b4'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('0b6be576-549e-454f-b6a3-eec251222c22'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('3cf5f8e1-b537-4ab0-a601-eedecd016256'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60 ... 120 parameters truncated ... 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('2822717a-99b9-41e1-a32e-2d13af2f54a4'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('6d0307cf-90ed-411a-91a1-1fcc853d55e3'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('df0c4b3e-e508-4094-9452-d12ced225ed7'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('b39926d8-a118-43d2-8bce-5f4b340bcc60'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None)]
+2026-09-13T19:22:37.4495514Z E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:22:37.4495843Z =============================== warnings summary ===============================
+2026-09-13T19:22:37.4496452Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854
+2026-09-13T19:22:37.4497196Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+2026-09-13T19:22:37.4497762Z     from crypt import crypt as _crypt
+2026-09-13T19:22:37.4497913Z 
+2026-09-13T19:22:37.4498002Z app/api/v1/connectors.py:33
+2026-09-13T19:22:37.4498893Z   /home/runner/work/inteintefin/inteintefin/04-backend/app/api/v1/connectors.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+2026-09-13T19:22:37.4499778Z     class ConnectorResponse(BaseModel):
+2026-09-13T19:22:37.4499927Z 
+2026-09-13T19:22:37.4500161Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53
+2026-09-13T19:22:37.4500989Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+2026-09-13T19:22:37.4501850Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+2026-09-13T19:22:37.4502405Z 
+2026-09-13T19:22:37.4502571Z tests/test_ad_accounts_crud.py::test_ad_account_crud
+2026-09-13T19:22:37.4503583Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/handlers/argon2.py:716: DeprecationWarning: Accessing argon2.__version__ is deprecated and will be removed in a future release. Use importlib.metadata directly to query for argon2-cffi's packaging metadata.
+2026-09-13T19:22:37.4517322Z     _argon2_cffi.__version__, max_version)
+2026-09-13T19:22:37.4517514Z 
+2026-09-13T19:22:37.4517621Z tests/test_auth.py::test_refresh_endpoint
+2026-09-13T19:22:37.4517887Z tests/test_auth.py::test_refresh_endpoint
+2026-09-13T19:22:37.4518120Z tests/test_auth.py::test_logout_endpoint
+2026-09-13T19:22:37.4518356Z tests/test_auth.py::test_invalid_jwt
+2026-09-13T19:22:37.4519206Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/httpx/_client.py:1859: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+2026-09-13T19:22:37.4520074Z     return await self.request(
+2026-09-13T19:22:37.4520208Z 
+2026-09-13T19:22:37.4520320Z tests/test_types.py::test_openapi_schema_money
+2026-09-13T19:22:37.4521106Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pydantic/json_schema.py:2463: PydanticJsonSchemaWarning: Unable to serialize value '0.00' with the plain serializer; excluding default from JSON schema [non-serializable-default]
+2026-09-13T19:22:37.4521904Z     warnings.warn(message, PydanticJsonSchemaWarning)
+2026-09-13T19:22:37.4522080Z 
+2026-09-13T19:22:37.4522254Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-09-13T19:22:37.6530564Z - generated xml file: /home/runner/work/inteintefin/inteintefin/04-backend/pytest-results.xml -
+2026-09-13T19:22:37.6531123Z =========================== short test summary info ============================
+2026-09-13T19:22:37.6532127Z FAILED tests/test_scheduler_concurrency.py::test_scheduler_max_concurrency - sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.6533199Z DETAIL:  Key (company_id, connector_name)=(f4532fe4-d7b0-4a60-9a73-fef733867ac2, meta) already exists.
+2026-09-13T19:22:37.6534427Z [SQL: INSERT INTO connector_configs (id, company_id, connector_name, status, encrypted_secret, sync_interval_minutes, last_attempted_sync, last_successful_sync, retry_count, next_sync_at, deleted_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5 ... 4412 characters truncated ... IME ZONE) RETURNING connector_configs.created_at, connector_configs.updated_at, connector_configs.id]
+2026-09-13T19:22:37.6540087Z [parameters: (UUID('c11d7c6e-3da6-4b8d-bb96-d877e1e59be9'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('10ccb426-d992-4886-a12d-dc3845e7de02'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('df3111ae-b80f-4133-be13-a567a79d7c50'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('363a0148-2e21-49d6-b4fa-9774482b6d03'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('36127c98-8b4c-4d4a-833e-2e5e23b2d5fc'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60 ... 120 parameters truncated ... 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('964010c5-9f9c-4ca9-823e-b21e9a088494'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('72ab41bf-f7d5-4fe2-b150-5f9b06a3d2b4'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('e15c60b7-0c22-42c6-a253-7c43a0535175'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None, UUID('b475a770-00a7-4072-b26f-5ec70f464047'), UUID('f4532fe4-d7b0-4a60-9a73-fef733867ac2'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 34, 599651, tzinfo=datetime.timezone.utc), None)]
+2026-09-13T19:22:37.6545111Z (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:22:37.6546082Z FAILED tests/test_scheduler_concurrency.py::test_scheduler_batch_continues_on_error - sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "uix_company_connector"
+2026-09-13T19:22:37.6547230Z DETAIL:  Key (company_id, connector_name)=(f9ec2013-d311-4e3a-9a48-5cd1b9b2336b, meta) already exists.
+2026-09-13T19:22:37.6548448Z [SQL: INSERT INTO connector_configs (id, company_id, connector_name, status, encrypted_secret, sync_interval_minutes, last_attempted_sync, last_successful_sync, retry_count, next_sync_at, deleted_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5 ... 4412 characters truncated ... IME ZONE) RETURNING connector_configs.created_at, connector_configs.updated_at, connector_configs.id]
+2026-09-13T19:22:37.6553991Z [parameters: (UUID('cdae349b-2bfb-4555-abf8-aaa2f36ab5b6'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('262afb93-d2ac-4b85-98b5-e103cdcd12d9'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('2b8b37e7-1cfb-439c-8c02-f01b9314c6b4'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('0b6be576-549e-454f-b6a3-eec251222c22'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('3cf5f8e1-b537-4ab0-a601-eedecd016256'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60 ... 120 parameters truncated ... 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('2822717a-99b9-41e1-a32e-2d13af2f54a4'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('6d0307cf-90ed-411a-91a1-1fcc853d55e3'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('df0c4b3e-e508-4094-9452-d12ced225ed7'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None, UUID('b39926d8-a118-43d2-8bce-5f4b340bcc60'), UUID('f9ec2013-d311-4e3a-9a48-5cd1b9b2336b'), 'meta', 'active', 'enc1', 60, None, None, 0, datetime.datetime(2026, 9, 13, 19, 21, 35, 167407, tzinfo=datetime.timezone.utc), None)]
+2026-09-13T19:22:37.6559000Z (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:22:37.6559346Z ================== 2 failed, 183 passed, 9 warnings in 8.44s ===================
+2026-09-13T19:22:38.1005168Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,133 @@
+﻿2026-09-13T19:04:09.6580505Z ##[group]Run set -o pipefail
+2026-09-13T19:04:09.6580839Z [36;1mset -o pipefail[0m
+2026-09-13T19:04:09.6581347Z [36;1mPYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:04:09.6618639Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:04:09.6618901Z env:
+2026-09-13T19:04:09.6619174Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.6619653Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:04:09.6620118Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.6620513Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.6620908Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.6621307Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:04:09.6621636Z ##[endgroup]
+2026-09-13T19:04:10.0948770Z ============================= test session starts ==============================
+2026-09-13T19:04:10.0949674Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-13T19:04:10.0950630Z cachedir: .pytest_cache
+2026-09-13T19:04:10.0951047Z rootdir: /home/runner/work/inteintefin/inteintefin/04-backend
+2026-09-13T19:04:10.0951510Z configfile: pyproject.toml
+2026-09-13T19:04:10.0951837Z plugins: anyio-4.15.1, asyncio-1.4.0
+2026-09-13T19:04:10.0952800Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=session
+2026-09-13T19:04:12.9730453Z collecting ... collected 173 items / 4 errors
+2026-09-13T19:04:12.9731037Z 
+2026-09-13T19:04:12.9731261Z ==================================== ERRORS ====================================
+2026-09-13T19:04:12.9732212Z ___________________ ERROR collecting tests/test_app_boots.py ___________________
+2026-09-13T19:04:12.9734223Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:04:12.9735443Z     mod = import_path(
+2026-09-13T19:04:12.9736447Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:04:12.9737689Z     importlib.import_module(module_name)
+2026-09-13T19:04:12.9738763Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:04:12.9740036Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:04:12.9740852Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:04:12.9741591Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:04:12.9742138Z     ???
+2026-09-13T19:04:12.9742815Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:04:12.9743376Z     ???
+2026-09-13T19:04:12.9743853Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:04:12.9744457Z     ???
+2026-09-13T19:04:12.9744873Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:04:12.9745349Z     ???
+2026-09-13T19:04:12.9745890Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:04:12.9746543Z     exec(co, module.__dict__)
+2026-09-13T19:04:12.9746853Z tests/test_app_boots.py:3: in <module>
+2026-09-13T19:04:12.9747187Z     from app.main import app
+2026-09-13T19:04:12.9747475Z app/main.py:6: in <module>
+2026-09-13T19:04:12.9748468Z     from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts, invites, connectors
+2026-09-13T19:04:12.9749529Z app/api/v1/connectors.py:13: in <module>
+2026-09-13T19:04:12.9749931Z     from app.connectors.registry import CONNECTOR_REGISTRY
+2026-09-13T19:04:12.9750572Z E     File "/home/runner/work/inteintefin/inteintefin/04-backend/app/connectors/registry.py", line 6
+2026-09-13T19:04:12.9751263Z E       \'keitaro\': (\'app.connectors.keitaro\', \'KeitaroConnector\'),
+2026-09-13T19:04:12.9752035Z E        ^
+2026-09-13T19:04:12.9752347Z E   SyntaxError: unexpected character after line continuation character
+2026-09-13T19:04:12.9753157Z ________________ ERROR collecting tests/test_connectors_api.py _________________
+2026-09-13T19:04:12.9753866Z ImportError while importing test module '/home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py'.
+2026-09-13T19:04:12.9754535Z Hint: make sure your test modules/packages have valid Python names.
+2026-09-13T19:04:12.9754883Z Traceback:
+2026-09-13T19:04:12.9755270Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:04:12.9755813Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:04:12.9756175Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:04:12.9756481Z tests/test_connectors_api.py:4: in <module>
+2026-09-13T19:04:12.9756797Z     from app.db.models.company import Company
+2026-09-13T19:04:12.9757369Z E   ModuleNotFoundError: No module named 'app.db.models.company'
+2026-09-13T19:04:12.9758079Z _____________ ERROR collecting tests/test_scheduler_concurrency.py _____________
+2026-09-13T19:04:12.9758718Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:04:12.9759239Z     mod = import_path(
+2026-09-13T19:04:12.9759701Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:04:12.9760217Z     importlib.import_module(module_name)
+2026-09-13T19:04:12.9760832Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:04:12.9761369Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:04:12.9761742Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:04:12.9762068Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:04:12.9762370Z     ???
+2026-09-13T19:04:12.9762819Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:04:12.9763136Z     ???
+2026-09-13T19:04:12.9763395Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:04:12.9763714Z     ???
+2026-09-13T19:04:12.9763933Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:04:12.9764224Z     ???
+2026-09-13T19:04:12.9764668Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:04:12.9765201Z     exec(co, module.__dict__)
+2026-09-13T19:04:12.9765482Z tests/test_scheduler_concurrency.py:4: in <module>
+2026-09-13T19:04:12.9765811Z     from app.connectors import scheduler
+2026-09-13T19:04:12.9766106Z app/connectors/scheduler.py:12: in <module>
+2026-09-13T19:04:12.9766451Z     from app.connectors.registry import CONNECTOR_REGISTRY
+2026-09-13T19:04:12.9766978Z E     File "/home/runner/work/inteintefin/inteintefin/04-backend/app/connectors/registry.py", line 6
+2026-09-13T19:04:12.9767550Z E       \'keitaro\': (\'app.connectors.keitaro\', \'KeitaroConnector\'),
+2026-09-13T19:04:12.9767900Z E        ^
+2026-09-13T19:04:12.9768194Z E   SyntaxError: unexpected character after line continuation character
+2026-09-13T19:04:12.9768668Z _________________ ERROR collecting tests/test_telegram_link.py _________________
+2026-09-13T19:04:12.9769289Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:04:12.9769794Z     mod = import_path(
+2026-09-13T19:04:12.9770232Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:04:12.9770746Z     importlib.import_module(module_name)
+2026-09-13T19:04:12.9771203Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:04:12.9771739Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:04:12.9772094Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:04:12.9772819Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:04:12.9773117Z     ???
+2026-09-13T19:04:12.9773347Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:04:12.9773641Z     ???
+2026-09-13T19:04:12.9773900Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:04:12.9774220Z     ???
+2026-09-13T19:04:12.9774442Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:04:12.9774732Z     ???
+2026-09-13T19:04:12.9775173Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:04:12.9775713Z     exec(co, module.__dict__)
+2026-09-13T19:04:12.9775982Z tests/test_telegram_link.py:3: in <module>
+2026-09-13T19:04:12.9776273Z     from app.main import app
+2026-09-13T19:04:12.9776516Z app/main.py:6: in <module>
+2026-09-13T19:04:12.9777342Z     from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts, invites, connectors
+2026-09-13T19:04:12.9778347Z app/api/v1/connectors.py:13: in <module>
+2026-09-13T19:04:12.9778685Z     from app.connectors.registry import CONNECTOR_REGISTRY
+2026-09-13T19:04:12.9779221Z E     File "/home/runner/work/inteintefin/inteintefin/04-backend/app/connectors/registry.py", line 6
+2026-09-13T19:04:12.9779774Z E       \'keitaro\': (\'app.connectors.keitaro\', \'KeitaroConnector\'),
+2026-09-13T19:04:12.9780116Z E        ^
+2026-09-13T19:04:12.9780412Z E   SyntaxError: unexpected character after line continuation character
+2026-09-13T19:04:12.9780844Z =============================== warnings summary ===============================
+2026-09-13T19:04:12.9781400Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854
+2026-09-13T19:04:12.9782369Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+2026-09-13T19:04:12.9783384Z     from crypt import crypt as _crypt
+2026-09-13T19:04:12.9783565Z 
+2026-09-13T19:04:12.9783868Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53
+2026-09-13T19:04:12.9784947Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+2026-09-13T19:04:12.9785981Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+2026-09-13T19:04:12.9786329Z 
+2026-09-13T19:04:12.9786550Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-09-13T19:04:12.9787136Z - generated xml file: /home/runner/work/inteintefin/inteintefin/04-backend/pytest-results.xml -
+2026-09-13T19:04:12.9787678Z =========================== short test summary info ============================
+2026-09-13T19:04:12.9788031Z ERROR tests/test_app_boots.py
+2026-09-13T19:04:12.9788297Z ERROR tests/test_connectors_api.py
+2026-09-13T19:04:12.9788576Z ERROR tests/test_scheduler_concurrency.py
+2026-09-13T19:04:12.9788864Z ERROR tests/test_telegram_link.py
+2026-09-13T19:04:12.9789207Z !!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+2026-09-13T19:04:12.9789615Z ======================== 2 warnings, 4 errors in 2.75s =========================
+2026-09-13T19:04:13.2549650Z ##[error]Process completed with exit code 2.

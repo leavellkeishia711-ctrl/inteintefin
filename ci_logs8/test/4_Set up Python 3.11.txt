@@ -1,0 +1,24 @@
+﻿2026-09-13T19:24:44.5069272Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-13T19:24:44.5070945Z ##[group]Run actions/setup-python@v4
+2026-09-13T19:24:44.5071216Z with:
+2026-09-13T19:24:44.5071425Z   python-version: 3.11
+2026-09-13T19:24:44.5071648Z   cache: pip
+2026-09-13T19:24:44.5071860Z   check-latest: false
+2026-09-13T19:24:44.5074115Z   token: ***
+2026-09-13T19:24:44.5074332Z   update-environment: true
+2026-09-13T19:24:44.5074583Z   allow-prereleases: false
+2026-09-13T19:24:44.5074953Z ##[endgroup]
+2026-09-13T19:24:44.6424251Z ##[group]Installed versions
+2026-09-13T19:24:44.6510706Z (node:2862) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-13T19:24:44.6511833Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-13T19:24:44.6512609Z Successfully set up CPython (3.11.16)
+2026-09-13T19:24:44.6513321Z ##[endgroup]
+2026-09-13T19:24:44.7443518Z [command]/opt/hostedtoolcache/Python/3.11.16/x64/bin/pip cache dir
+2026-09-13T19:24:46.8728282Z /home/runner/.cache/pip
+2026-09-13T19:24:46.9631575Z Cache hit for: setup-python-Linux-24.04-Ubuntu-python-3.11.16-pip-8f3ec8cc2ebe6c344f9af53bc594ba4e1ad8767364415dd19d121344d5e3a833
+2026-09-13T19:24:46.9733607Z (node:2862) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-13T19:24:47.2288254Z Received 38707364 of 38707364 (100.0%), 163.3 MBs/sec
+2026-09-13T19:24:47.2289004Z Cache Size: ~37 MB (38707364 B)
+2026-09-13T19:24:47.2354510Z [command]/usr/bin/tar -xf /home/runner/work/_temp/823d0814-456d-4ca9-9cb5-da571364e761/cache.tzst -P -C /home/runner/work/inteintefin/inteintefin --use-compress-program unzstd
+2026-09-13T19:24:47.3285681Z Cache restored successfully
+2026-09-13T19:24:47.3308771Z Cache restored from key: setup-python-Linux-24.04-Ubuntu-python-3.11.16-pip-8f3ec8cc2ebe6c344f9af53bc594ba4e1ad8767364415dd19d121344d5e3a833

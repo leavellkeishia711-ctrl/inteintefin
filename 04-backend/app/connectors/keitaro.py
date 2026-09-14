@@ -67,13 +67,35 @@ class KeitaroConnector(Connector):
             except (InvalidOperation, TypeError, ValueError):
                 continue
 
+            try:
+                clicks = int(str(row.get("clicks", "0") or "0"))
+                if clicks < 0: clicks = 0
+            except ValueError:
+                clicks = 0
+                
+            try:
+                impressions = int(str(row.get("impressions", "0") or "0"))
+                if impressions < 0: impressions = 0
+            except ValueError:
+                impressions = 0
+                
+            try:
+                raw_conv = row.get("conversions") if "conversions" in row else row.get("leads")
+                conversions = Decimal(str(raw_conv or "0"))
+                if conversions < 0: conversions = Decimal("0")
+            except (InvalidOperation, TypeError, ValueError):
+                conversions = Decimal("0")
+
             normalized.append(NormalizedRecord(
                 source="keitaro",
                 external_id=str(external_id),
                 stat_date=stat_date,
                 spend=spend,
                 revenue=revenue,
-                currency="USD"
+                currency="USD",
+                clicks=clicks,
+                impressions=impressions,
+                conversions=conversions
             ))
             
         # Deduplicate taking the latest if multiple rows have same external_id and date

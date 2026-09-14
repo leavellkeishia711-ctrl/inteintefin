@@ -1,0 +1,541 @@
+﻿2026-09-13T19:16:58.4198178Z ##[group]Run set -o pipefail
+2026-09-13T19:16:58.4198512Z [36;1mset -o pipefail[0m
+2026-09-13T19:16:58.4199015Z [36;1mPYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:16:58.4237437Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:16:58.4237695Z env:
+2026-09-13T19:16:58.4237976Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:16:58.4238436Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:16:58.4238879Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:16:58.4239267Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:16:58.4239657Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:16:58.4240077Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:16:58.4240410Z ##[endgroup]
+2026-09-13T19:16:59.0217870Z ============================= test session starts ==============================
+2026-09-13T19:16:59.0219155Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-13T19:16:59.0220099Z cachedir: .pytest_cache
+2026-09-13T19:16:59.0220661Z rootdir: /home/runner/work/inteintefin/inteintefin/04-backend
+2026-09-13T19:16:59.0221307Z configfile: pyproject.toml
+2026-09-13T19:16:59.0222126Z plugins: anyio-4.15.1, asyncio-1.4.0
+2026-09-13T19:16:59.0223114Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=session
+2026-09-13T19:17:01.4938561Z collecting ... collected 185 items
+2026-09-13T19:17:01.4939050Z 
+2026-09-13T19:17:01.7195774Z tests/test_ad_accounts_crud.py::test_ad_account_crud PASSED              [  0%]
+2026-09-13T19:17:01.7896924Z tests/test_ad_accounts_tenant_isolation.py::test_tenant_isolation PASSED [  1%]
+2026-09-13T19:17:01.8085165Z tests/test_ad_accounts_upsert_idempotency.py::test_upsert_idempotency PASSED [  1%]
+2026-09-13T19:17:01.8595505Z tests/test_affise_connector.py::test_affise_test_connection_success PASSED [  2%]
+2026-09-13T19:17:01.8804682Z tests/test_affise_connector.py::test_affise_test_connection_fail PASSED  [  2%]
+2026-09-13T19:17:01.8998946Z tests/test_affise_connector.py::test_affise_normalization PASSED         [  3%]
+2026-09-13T19:17:01.9290961Z tests/test_affise_connector.py::test_affise_upsert_idempotency PASSED    [  3%]
+2026-09-13T19:17:01.9464773Z tests/test_affise_connector.py::test_affise_tenant_isolation PASSED      [  4%]
+2026-09-13T19:17:01.9692686Z tests/test_affise_connector.py::test_affise_retry_429 PASSED             [  4%]
+2026-09-13T19:17:01.9923502Z tests/test_affise_connector.py::test_affise_retry_5xx_success PASSED     [  5%]
+2026-09-13T19:17:02.0143905Z tests/test_affise_connector.py::test_affise_unauthorized PASSED          [  5%]
+2026-09-13T19:17:02.0629147Z tests/test_affise_connector.py::test_affise_smoke PASSED                 [  6%]
+2026-09-13T19:17:02.0753249Z tests/test_ai_analyst.py::test_ai_analyst_successful_tool_call PASSED    [  7%]
+2026-09-13T19:17:02.0826928Z tests/test_ai_analyst.py::test_ai_analyst_tool_enforcement PASSED        [  7%]
+2026-09-13T19:17:02.0856767Z tests/test_ai_analyst.py::test_ai_analyst_tool_error_prevents_response PASSED [  8%]
+2026-09-13T19:17:02.0904662Z tests/test_ai_analyst.py::test_ai_analyst_no_sensitive_fields PASSED     [  8%]
+2026-09-13T19:17:02.1046895Z tests/test_alerts.py::test_alert_deduplication PASSED                    [  9%]
+2026-09-13T19:17:02.1222154Z tests/test_alerts.py::test_check_financial_alerts_roi PASSED             [  9%]
+2026-09-13T19:17:02.1423579Z tests/test_app_boots.py::test_app_boots_and_health_check PASSED          [ 10%]
+2026-09-13T19:17:02.1433080Z tests/test_audit.py::test_generate_diff_omits_sensitive_fields PASSED    [ 10%]
+2026-09-13T19:17:02.1442444Z tests/test_audit.py::test_generate_diff_serializes_complex_types PASSED  [ 11%]
+2026-09-13T19:17:02.1557012Z tests/test_audit.py::test_record_user_audit PASSED                       [ 11%]
+2026-09-13T19:17:02.1619557Z tests/test_audit.py::test_record_system_audit PASSED                     [ 12%]
+2026-09-13T19:17:02.1863792Z tests/test_auth.py::test_access_token_accepted PASSED                    [ 12%]
+2026-09-13T19:17:02.1886804Z tests/test_auth.py::test_refresh_token_rejected_as_access PASSED         [ 13%]
+2026-09-13T19:17:02.1967713Z tests/test_auth.py::test_refresh_endpoint PASSED                         [ 14%]
+2026-09-13T19:17:02.2022035Z tests/test_auth.py::test_logout_endpoint PASSED                          [ 14%]
+2026-09-13T19:17:02.2041677Z tests/test_auth.py::test_invalid_jwt PASSED                              [ 15%]
+2026-09-13T19:17:02.2257938Z tests/test_binom_connector.py::test_binom_test_connection_success PASSED [ 15%]
+2026-09-13T19:17:02.2481969Z tests/test_binom_connector.py::test_binom_test_connection_fail PASSED    [ 16%]
+2026-09-13T19:17:02.2497998Z tests/test_binom_connector.py::test_binom_normalization PASSED           [ 16%]
+2026-09-13T19:17:02.2694912Z tests/test_binom_connector.py::test_binom_upsert_idempotency PASSED      [ 17%]
+2026-09-13T19:17:02.2844841Z tests/test_binom_connector.py::test_binom_tenant_isolation PASSED        [ 17%]
+2026-09-13T19:17:02.3071528Z tests/test_binom_connector.py::test_binom_retry_429 PASSED               [ 18%]
+2026-09-13T19:17:02.3302793Z tests/test_binom_connector.py::test_binom_retry_5xx_success PASSED       [ 18%]
+2026-09-13T19:17:02.3522074Z tests/test_binom_connector.py::test_binom_unauthorized PASSED            [ 19%]
+2026-09-13T19:17:02.4004949Z tests/test_binom_connector.py::test_binom_smoke PASSED                   [ 20%]
+2026-09-13T19:17:02.4669412Z tests/test_campaigns.py::test_get_ad_account_cost PASSED                 [ 20%]
+2026-09-13T19:17:02.4818886Z tests/test_campaigns.py::test_upsert_campaign_run_stat PASSED            [ 21%]
+2026-09-13T19:17:02.4860157Z tests/test_celery_tenant_isolation.py::test_tenant_task_session_sets_context PASSED [ 21%]
+2026-09-13T19:17:02.4894014Z tests/test_celery_tenant_isolation.py::test_tenant_task_session_cleans_up PASSED [ 22%]
+2026-09-13T19:17:02.5049324Z tests/test_computation.py::test_pnl_calculation_and_rounding PASSED      [ 22%]
+2026-09-13T19:17:02.5135087Z tests/test_computation.py::test_pnl_div_by_zero PASSED                   [ 23%]
+2026-09-13T19:17:02.5382067Z tests/test_computation.py::test_cashflow_runway PASSED                   [ 23%]
+2026-09-13T19:17:02.5514659Z tests/test_computation.py::test_health_score_bounds PASSED               [ 24%]
+2026-09-13T19:17:02.5524509Z tests/test_connector_base_contract.py::test_connector_base_contract PASSED [ 24%]
+2026-09-13T19:17:02.5543323Z tests/test_connectors.py::test_credentials_encryption PASSED             [ 25%]
+2026-09-13T19:17:02.6152781Z tests/test_connectors.py::test_api_create_connector PASSED               [ 25%]
+2026-09-13T19:17:02.6789100Z tests/test_connectors.py::test_api_tenant_isolation PASSED               [ 26%]
+2026-09-13T19:17:02.6801062Z tests/test_connectors.py::test_keitaro_normalize PASSED                  [ 27%]
+2026-09-13T19:17:02.7010827Z tests/test_connectors.py::test_keitaro_fetch_401 PASSED                  [ 27%]
+2026-09-13T19:17:02.7233964Z tests/test_connectors.py::test_keitaro_fetch_429 PASSED                  [ 28%]
+2026-09-13T19:17:02.7463274Z tests/test_connectors.py::test_keitaro_fetch_500 PASSED                  [ 28%]
+2026-09-13T19:17:02.7685518Z tests/test_connectors.py::test_keitaro_fetch_timeout PASSED              [ 29%]
+2026-09-13T19:17:02.7896805Z tests/test_connectors.py::test_keitaro_malformed_json PASSED             [ 29%]
+2026-09-13T19:17:02.7907556Z tests/test_connectors.py::test_keitaro_normalize_utc PASSED              [ 30%]
+2026-09-13T19:17:02.7916923Z tests/test_connectors.py::test_keitaro_normalize_missing_fields PASSED   [ 30%]
+2026-09-13T19:17:02.8131250Z tests/test_connectors.py::test_keitaro_fetch_403 PASSED                  [ 31%]
+2026-09-13T19:17:02.8142483Z tests/test_connectors.py::test_keitaro_normalize_bad_money PASSED        [ 31%]
+2026-09-13T19:17:03.0292124Z tests/test_connectors_api.py::test_rotate_secret_revives_unauthorized_connector FAILED [ 32%]
+2026-09-13T19:17:03.1033253Z tests/test_connectors_api.py::test_rotate_secret_never_leaks PASSED      [ 32%]
+2026-09-13T19:17:03.1720573Z tests/test_connectors_api.py::test_rotate_with_validate_false_on_unauthorized PASSED [ 33%]
+2026-09-13T19:17:03.2451068Z tests/test_connectors_api.py::test_soft_deleted_connector_can_be_recreated PASSED [ 34%]
+2026-09-13T19:17:03.2955246Z tests/test_connectors_api.py::test_create_unknown_connector_returns_422 PASSED [ 34%]
+2026-09-13T19:17:03.3681353Z tests/test_connectors_api.py::test_manual_sync_endpoint PASSED           [ 35%]
+2026-09-13T19:17:03.4254874Z tests/test_connectors_persistence.py::test_api_persistence_create PASSED [ 35%]
+2026-09-13T19:17:03.4789591Z tests/test_connectors_persistence.py::test_api_persistence_patch_status FAILED [ 36%]
+2026-09-13T19:17:03.5323436Z tests/test_connectors_persistence.py::test_api_persistence_soft_delete FAILED [ 36%]
+2026-09-13T19:17:03.5333671Z tests/test_consumables.py::test_pan_masking PASSED                       [ 37%]
+2026-09-13T19:17:03.5342830Z tests/test_consumables.py::test_full_pan_raises_error_if_required PASSED [ 37%]
+2026-09-13T19:17:03.5471344Z tests/test_credential_rotation.py::test_credential_rotation PASSED       [ 38%]
+2026-09-13T19:17:03.5557468Z tests/test_credential_rotation_rollback.py::test_credential_rotation_rollback PASSED [ 38%]
+2026-09-13T19:17:03.5778383Z tests/test_google_ads_connector.py::test_google_ads_test_connection_success PASSED [ 39%]
+2026-09-13T19:17:03.6175081Z tests/test_google_ads_connector.py::test_google_ads_test_connection_auth_failure PASSED [ 40%]
+2026-09-13T19:17:03.6398946Z tests/test_google_ads_connector.py::test_google_ads_fetch_ad_accounts PASSED [ 40%]
+2026-09-13T19:17:03.6619482Z tests/test_google_ads_connector.py::test_google_ads_fetch_campaigns PASSED [ 41%]
+2026-09-13T19:17:03.6630819Z tests/test_google_ads_connector.py::test_google_ads_fetch_metrics_converts_micros_to_decimal PASSED [ 41%]
+2026-09-13T19:17:03.6640873Z tests/test_google_ads_connector.py::test_google_ads_metrics_include_stat_date PASSED [ 42%]
+2026-09-13T19:17:03.6650994Z tests/test_google_ads_connector.py::test_google_ads_external_id_is_deterministic PASSED [ 42%]
+2026-09-13T19:17:03.7067720Z tests/test_google_ads_connector.py::test_google_ads_pagination PASSED    [ 43%]
+2026-09-13T19:17:03.7081321Z tests/test_google_ads_connector.py::test_google_ads_optional_metrics PASSED [ 43%]
+2026-09-13T19:17:03.7352590Z tests/test_google_ads_connector.py::test_google_ads_persistence_uses_atomic_upsert PASSED [ 44%]
+2026-09-13T19:17:03.7520691Z tests/test_google_ads_connector.py::test_google_ads_tenant_isolation PASSED [ 44%]
+2026-09-13T19:17:03.8997412Z tests/test_invites.py::test_invites_happy_path PASSED                    [ 45%]
+2026-09-13T19:17:03.9018788Z tests/test_invites.py::test_invites_media_buyer_forbidden PASSED         [ 45%]
+2026-09-13T19:17:03.9037943Z tests/test_invites.py::test_invites_team_lead_forbidden PASSED           [ 46%]
+2026-09-13T19:17:03.9718984Z tests/test_invites.py::test_invites_cross_tenant PASSED                  [ 47%]
+2026-09-13T19:17:04.0920125Z tests/test_invites.py::test_duplicate_invite_email PASSED                [ 47%]
+2026-09-13T19:17:04.1858540Z tests/test_media_buying.py::test_ad_account_crud PASSED                  [ 48%]
+2026-09-13T19:17:04.2533639Z tests/test_media_buying.py::test_campaign_run_stat_upsert PASSED         [ 48%]
+2026-09-13T19:17:04.2752305Z tests/test_meta_ads_connector.py::test_meta_test_connection_success PASSED [ 49%]
+2026-09-13T19:17:04.2989576Z tests/test_meta_ads_connector.py::test_meta_secret_stripping_on_paging PASSED [ 49%]
+2026-09-13T19:17:04.3411398Z tests/test_meta_ads_connector.py::test_meta_nested_insights_paging PASSED [ 50%]
+2026-09-13T19:17:04.3425727Z tests/test_meta_ads_connector.py::test_meta_normalization_with_action_values PASSED [ 50%]
+2026-09-13T19:17:04.3830187Z tests/test_meta_ads_connector.py::test_meta_fetch_campaigns_flattening PASSED [ 51%]
+2026-09-13T19:17:04.3902426Z tests/test_meta_ads_connector.py::test_meta_ad_accounts_status_mapping PASSED [ 51%]
+2026-09-13T19:17:04.4051739Z tests/test_meta_ads_connector.py::test_meta_tenant_isolation PASSED      [ 52%]
+2026-09-13T19:17:04.4235597Z tests/test_meta_ads_connector.py::test_meta_upsert_idempotency PASSED    [ 52%]
+2026-09-13T19:17:04.4489550Z tests/test_meta_ads_connector.py::test_meta_retry_429 PASSED             [ 53%]
+2026-09-13T19:17:04.4975059Z tests/test_meta_ads_connector.py::test_meta_retry_5xx_success PASSED     [ 54%]
+2026-09-13T19:17:04.5191893Z tests/test_meta_ads_connector.py::test_meta_unauthorized PASSED          [ 54%]
+2026-09-13T19:17:04.5608006Z tests/test_meta_ads_connector.py::test_meta_fetch_campaigns_nested_paging_and_safety PASSED [ 55%]
+2026-09-13T19:17:04.5885646Z tests/test_meta_ads_connector.py::test_meta_upsert_fx_rate_success_and_failure PASSED [ 55%]
+2026-09-13T19:17:04.6337227Z tests/test_meta_ads_connector.py::test_meta_test_connection_401_403 PASSED [ 56%]
+2026-09-13T19:17:04.8546357Z tests/test_meta_ads_connector.py::test_meta_scheduler_unauthorized_state FAILED [ 56%]
+2026-09-13T19:17:04.9025666Z tests/test_no_float.py::test_no_float_in_financial_code PASSED           [ 57%]
+2026-09-13T19:17:04.9034752Z tests/test_parsing.py::test_parse_amount PASSED                          [ 57%]
+2026-09-13T19:17:04.9043601Z tests/test_parsing.py::test_parse_amount_errors PASSED                   [ 58%]
+2026-09-13T19:17:04.9055477Z tests/test_payroll_logic.py::test_payroll_fixed_base_salary PASSED       [ 58%]
+2026-09-13T19:17:04.9065886Z tests/test_payroll_logic.py::test_payroll_bonus_calculation PASSED       [ 59%]
+2026-09-13T19:17:05.9097052Z tests/test_retry_429.py::test_retry_429 PASSED                           [ 60%]
+2026-09-13T19:17:05.9110854Z tests/test_retry_5xx.py::test_retry_5xx PASSED                           [ 60%]
+2026-09-13T19:17:05.9124345Z tests/test_retry_exhausted.py::test_retry_exhausted PASSED               [ 61%]
+2026-09-13T19:17:05.9367942Z tests/test_rls_completeness.py::test_all_tables_have_rls PASSED          [ 61%]
+2026-09-13T19:17:06.4640102Z tests/test_scheduler_concurrency.py::test_scheduler_max_concurrency FAILED [ 62%]
+2026-09-13T19:17:07.1171326Z tests/test_scheduler_concurrency.py::test_scheduler_batch_continues_on_error FAILED [ 62%]
+2026-09-13T19:17:07.1184133Z tests/test_scheduler_concurrency.py::test_safe_redis_lock_release PASSED [ 63%]
+2026-09-13T19:17:07.1397579Z tests/test_stage2_hardening.py::test_unauthorized_exception_no_response_body PASSED [ 63%]
+2026-09-13T19:17:07.1620104Z tests/test_stage2_hardening.py::test_connector_error_no_response_body PASSED [ 64%]
+2026-09-13T19:17:07.1749786Z tests/test_stage2_hardening.py::test_binom_upsert_fx_rate_missing_raises PASSED [ 64%]
+2026-09-13T19:17:07.1863306Z tests/test_stage2_hardening.py::test_voluum_upsert_fx_rate_missing_raises PASSED [ 65%]
+2026-09-13T19:17:07.1976285Z tests/test_stage2_hardening.py::test_affise_upsert_fx_rate_missing_raises PASSED [ 65%]
+2026-09-13T19:17:07.1984724Z tests/test_stage2_hardening.py::test_voluum_normalize_no_date_skips PASSED [ 66%]
+2026-09-13T19:17:07.1993500Z tests/test_stage2_hardening.py::test_affise_normalize_no_date_skips PASSED [ 67%]
+2026-09-13T19:17:07.2002189Z tests/test_stage2_hardening.py::test_meta_normalize_no_date_skips PASSED [ 67%]
+2026-09-13T19:17:07.2011298Z tests/test_stage2_hardening.py::test_voluum_normalize_with_date_works PASSED [ 68%]
+2026-09-13T19:17:07.2020110Z tests/test_stage2_hardening.py::test_affise_normalize_with_date_works PASSED [ 68%]
+2026-09-13T19:17:07.2028935Z tests/test_stage2_hardening.py::test_meta_normalize_with_date_works PASSED [ 69%]
+2026-09-13T19:17:07.2150060Z tests/test_stage2_hardening.py::test_scheduler_due_connector_runs PASSED [ 69%]
+2026-09-13T19:17:07.2256589Z tests/test_stage2_hardening.py::test_scheduler_not_due_connector_skipped PASSED [ 70%]
+2026-09-13T19:17:07.2357132Z tests/test_stage2_hardening.py::test_scheduler_null_next_sync_runs PASSED [ 70%]
+2026-09-13T19:17:07.2560775Z tests/test_stage2_hardening.py::test_scheduler_next_sync_at_updated_on_success PASSED [ 71%]
+2026-09-13T19:17:07.2756410Z tests/test_stage2_hardening.py::test_scheduler_unauthorized_sets_null_next_sync PASSED [ 71%]
+2026-09-13T19:17:07.2969185Z tests/test_stage2_hardening.py::test_scheduler_failure_sets_next_sync_with_retry_interval PASSED [ 72%]
+2026-09-13T19:17:07.3755684Z tests/test_stage2_stat_integrity.py::test_campaign_run_stat_soft_delete PASSED [ 72%]
+2026-09-13T19:17:07.4398821Z tests/test_stage2_stat_integrity.py::test_campaign_run_stat_uniqueness_external_id_null PASSED [ 73%]
+2026-09-13T19:17:07.5076297Z tests/test_stage2_stat_integrity.py::test_tenant_isolation_campaign_run_stats PASSED [ 74%]
+2026-09-13T19:17:07.5634433Z tests/test_stage2_stat_integrity.py::test_regression_old_index_different_external_ids PASSED [ 74%]
+2026-09-13T19:17:07.6561872Z tests/test_stage2_upsert_race.py::test_upsert_race_atomic_insert_or_update PASSED [ 75%]
+2026-09-13T19:17:07.7483545Z tests/test_stage2_upsert_race.py::test_upsert_idempotent_multiple_calls PASSED [ 75%]
+2026-09-13T19:17:07.8130772Z tests/test_stage2_upsert_race.py::test_upsert_soft_delete_respects_index_predicate PASSED [ 76%]
+2026-09-13T19:17:07.8898328Z tests/test_stage2_upsert_race.py::test_upsert_tenant_isolation_race PASSED [ 76%]
+2026-09-13T19:17:08.0529896Z tests/test_stage2_upsert_race.py::test_upsert_all_fields_updated_correctly PASSED [ 77%]
+2026-09-13T19:17:08.0713563Z tests/test_stale_source_dq.py::test_stale_source_dq PASSED               [ 77%]
+2026-09-13T19:17:08.0956724Z tests/test_stale_source_dq_deduplication.py::test_stale_source_dq_dedup PASSED [ 78%]
+2026-09-13T19:17:08.1055734Z tests/test_telegram.py::test_telegram_link_token PASSED                  [ 78%]
+2026-09-13T19:17:08.1068428Z tests/test_telegram.py::test_telegram_status_cross_tenant PASSED         [ 79%]
+2026-09-13T19:17:08.1085604Z tests/test_telegram.py::test_telegram_redis_unavailable PASSED           [ 80%]
+2026-09-13T19:17:08.1142637Z tests/test_telegram.py::test_telegram_link_success_and_reuse PASSED      [ 80%]
+2026-09-13T19:17:08.1186954Z tests/test_telegram_link.py::test_telegram_webhook_invalid_hash PASSED   [ 81%]
+2026-09-13T19:17:08.1356136Z tests/test_telegram_link.py::test_telegram_status_command PASSED         [ 81%]
+2026-09-13T19:17:08.1403827Z tests/test_tenant_isolation.py::test_raw_sql_select_returns_zero_rows_without_context PASSED [ 82%]
+2026-09-13T19:17:08.1448250Z tests/test_tenant_isolation.py::test_raw_sql_insert_rejected_by_with_check PASSED [ 82%]
+2026-09-13T19:17:08.1515039Z tests/test_tenant_isolation.py::test_cross_tenant_select_returns_zero_rows PASSED [ 83%]
+2026-09-13T19:17:08.1558825Z tests/test_tenant_isolation.py::test_cross_tenant_insert_rejected PASSED [ 83%]
+2026-09-13T19:17:08.1627369Z tests/test_tenant_isolation.py::test_fk_insert_commits_cleanly PASSED    [ 84%]
+2026-09-13T19:17:08.2516157Z tests/test_tenant_isolation.py::test_every_route_is_tenant_scoped PASSED [ 84%]
+2026-09-13T19:17:08.2734725Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_test_connection_success PASSED [ 85%]
+2026-09-13T19:17:08.2949442Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_test_connection_auth_failure PASSED [ 85%]
+2026-09-13T19:17:08.3164595Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_ad_accounts PASSED [ 86%]
+2026-09-13T19:17:08.3383790Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_campaigns PASSED [ 87%]
+2026-09-13T19:17:08.3814048Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_metrics PASSED [ 87%]
+2026-09-13T19:17:08.3824308Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_decimal_mapping PASSED [ 88%]
+2026-09-13T19:17:08.3833828Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_stat_date_mapping PASSED [ 88%]
+2026-09-13T19:17:08.3843392Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_external_id_is_deterministic PASSED [ 89%]
+2026-09-13T19:17:08.4069034Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_pagination PASSED    [ 89%]
+2026-09-13T19:17:08.4079772Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_optional_metrics PASSED [ 90%]
+2026-09-13T19:17:08.4271789Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_persistence_uses_atomic_upsert PASSED [ 90%]
+2026-09-13T19:17:08.4483069Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_tenant_isolation PASSED [ 91%]
+2026-09-13T19:17:08.4492678Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_no_real_network_calls PASSED [ 91%]
+2026-09-13T19:17:08.5116941Z tests/test_transactions.py::test_create_transaction PASSED               [ 92%]
+2026-09-13T19:17:08.5809799Z tests/test_transactions.py::test_list_and_get_transaction PASSED         [ 92%]
+2026-09-13T19:17:08.6440303Z tests/test_transactions.py::test_update_transaction PASSED               [ 93%]
+2026-09-13T19:17:08.7082437Z tests/test_transactions.py::test_delete_transaction PASSED               [ 94%]
+2026-09-13T19:17:08.9271709Z tests/test_types.py::test_openapi_schema_money PASSED                    [ 94%]
+2026-09-13T19:17:08.9912030Z tests/test_types.py::test_pnl_returns_string PASSED                      [ 95%]
+2026-09-13T19:17:09.0130945Z tests/test_voluum_connector.py::test_voluum_test_connection_success PASSED [ 95%]
+2026-09-13T19:17:09.0342520Z tests/test_voluum_connector.py::test_voluum_test_connection_fail PASSED  [ 96%]
+2026-09-13T19:17:09.0354686Z tests/test_voluum_connector.py::test_voluum_normalization PASSED         [ 96%]
+2026-09-13T19:17:09.0546240Z tests/test_voluum_connector.py::test_voluum_upsert_idempotency PASSED    [ 97%]
+2026-09-13T19:17:09.0698962Z tests/test_voluum_connector.py::test_voluum_tenant_isolation PASSED      [ 97%]
+2026-09-13T19:17:09.0943774Z tests/test_voluum_connector.py::test_voluum_retry_429 PASSED             [ 98%]
+2026-09-13T19:17:09.1172852Z tests/test_voluum_connector.py::test_voluum_retry_5xx_success PASSED     [ 98%]
+2026-09-13T19:17:09.1385686Z tests/test_voluum_connector.py::test_voluum_unauthorized PASSED          [ 99%]
+2026-09-13T19:17:09.2018661Z tests/test_voluum_connector.py::test_voluum_smoke PASSED                 [100%]
+2026-09-13T19:17:09.2019340Z 
+2026-09-13T19:17:09.2019696Z =================================== FAILURES ===================================
+2026-09-13T19:17:09.2020475Z ______________ test_rotate_secret_revives_unauthorized_connector _______________
+2026-09-13T19:17:09.2021435Z tests/test_connectors_api.py:38: in test_rotate_secret_revives_unauthorized_connector
+2026-09-13T19:17:09.2022264Z     assert db_config.status == "active"
+2026-09-13T19:17:09.2022843Z E   AssertionError: assert 'unauthorized' == 'active'
+2026-09-13T19:17:09.2023381Z E     
+2026-09-13T19:17:09.2023712Z E     - active
+2026-09-13T19:17:09.2024069Z E     + unauthorized
+2026-09-13T19:17:09.2024632Z ---------------------------- Captured stdout setup -----------------------------
+2026-09-13T19:17:09.2025326Z client_a: fixture started
+2026-09-13T19:17:09.2025762Z client_a: starting db operations
+2026-09-13T19:17:09.2026230Z client_a: inside system_session
+2026-09-13T19:17:09.2027121Z ______________________ test_api_persistence_patch_status _______________________
+2026-09-13T19:17:09.2028071Z tests/test_connectors_persistence.py:41: in test_api_persistence_patch_status
+2026-09-13T19:17:09.2028834Z     assert resp.status_code == 201
+2026-09-13T19:17:09.2029266Z E   assert 422 == 201
+2026-09-13T19:17:09.2029766Z E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:17:09.2030550Z ---------------------------- Captured stdout setup -----------------------------
+2026-09-13T19:17:09.2031234Z client_a: fixture started
+2026-09-13T19:17:09.2031670Z client_a: starting db operations
+2026-09-13T19:17:09.2032138Z client_a: inside system_session
+2026-09-13T19:17:09.2032768Z _______________________ test_api_persistence_soft_delete _______________________
+2026-09-13T19:17:09.2033675Z tests/test_connectors_persistence.py:71: in test_api_persistence_soft_delete
+2026-09-13T19:17:09.2034389Z     assert resp.status_code == 201
+2026-09-13T19:17:09.2034839Z E   assert 422 == 201
+2026-09-13T19:17:09.2035459Z E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:17:09.2036861Z ---------------------------- Captured stdout setup -----------------------------
+2026-09-13T19:17:09.2037572Z client_a: fixture started
+2026-09-13T19:17:09.2038026Z client_a: starting db operations
+2026-09-13T19:17:09.2038463Z client_a: inside system_session
+2026-09-13T19:17:09.2039063Z ____________________ test_meta_scheduler_unauthorized_state ____________________
+2026-09-13T19:17:09.2039939Z tests/test_meta_ads_connector.py:587: in test_meta_scheduler_unauthorized_state
+2026-09-13T19:17:09.2040780Z     await sync_connector_instance(str(company_id), str(conn.id))
+2026-09-13T19:17:09.2041446Z app/connectors/scheduler.py:108: in sync_connector_instance
+2026-09-13T19:17:09.2041988Z     await release_lock(lock_key, token)
+2026-09-13T19:17:09.2042489Z app/connectors/scheduler.py:39: in release_lock
+2026-09-13T19:17:09.2043075Z     await redis_client.eval(RELEASE_LOCK_SCRIPT, 1, lock_key, token)
+2026-09-13T19:17:09.2044054Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/client.py:946: in execute_command
+2026-09-13T19:17:09.2044958Z     result = await conn.retry.call_with_retry(
+2026-09-13T19:17:09.2045789Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/retry.py:69: in call_with_retry
+2026-09-13T19:17:09.2047241Z     return await do()
+2026-09-13T19:17:09.2047866Z            ^^^^^^^^^^
+2026-09-13T19:17:09.2048691Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/client.py:870: in _send_command_parse_response
+2026-09-13T19:17:09.2049602Z     await conn.send_command(*args)
+2026-09-13T19:17:09.2050399Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/connection.py:1215: in send_command
+2026-09-13T19:17:09.2051384Z     self.pack_command(*args), check_health=kwargs.get("check_health", True)
+2026-09-13T19:17:09.2051976Z     ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2052743Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/connection.py:1357: in pack_command
+2026-09-13T19:17:09.2053638Z     for arg in map(self.encoder.encode, args):
+2026-09-13T19:17:09.2054432Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/_parsers/encoders.py:20: in encode
+2026-09-13T19:17:09.2055194Z     raise DataError(
+2026-09-13T19:17:09.2055877Z E   redis.exceptions.DataError: Invalid input of type: 'bool'. Convert to a bytes, string, int or float first.
+2026-09-13T19:17:09.2056991Z ------------------------------ Captured log call -------------------------------
+2026-09-13T19:17:09.2057808Z ERROR    app.connectors.scheduler:scheduler.py:87 Connector sync unauthorized: Token invalid
+2026-09-13T19:17:09.2058655Z ________________________ test_scheduler_max_concurrency ________________________
+2026-09-13T19:17:09.2059724Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: in _prepare_and_execute
+2026-09-13T19:17:09.2060774Z     self._rows = deque(await prepared_stmt.fetch(*parameters))
+2026-09-13T19:17:09.2061314Z                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2062103Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+2026-09-13T19:17:09.2062952Z     data = await self.__bind_execute(args, 0, timeout)
+2026-09-13T19:17:09.2063436Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2064272Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+2026-09-13T19:17:09.2065185Z     data, status, _ = await self.__do_execute(
+2026-09-13T19:17:09.2065999Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+2026-09-13T19:17:09.2067019Z     return await executor(protocol)
+2026-09-13T19:17:09.2067411Z            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2067842Z asyncpg/protocol/protocol.pyx:205: in bind_execute
+2026-09-13T19:17:09.2068286Z     ???
+2026-09-13T19:17:09.2069352Z E   asyncpg.exceptions.NotNullViolationError: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.2070952Z E   DETAIL:  Failing row contains (23e968ee-be88-4fb6-9d86-cf772fc1e159, Test Co, null, f, en, 2026-09-13 19:17:05.938908+00, 2026-09-13 19:17:05.938908+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.2071882Z 
+2026-09-13T19:17:09.2072182Z The above exception was the direct cause of the following exception:
+2026-09-13T19:17:09.2073185Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+2026-09-13T19:17:09.2074066Z     self.dialect.do_execute(
+2026-09-13T19:17:09.2074838Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:17:09.2075694Z     cursor.execute(statement, parameters)
+2026-09-13T19:17:09.2076776Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:17:09.2077707Z     self._adapt_connection.await_(
+2026-09-13T19:17:09.2078537Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:17:09.2079708Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:17:09.2080627Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2081488Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:17:09.2082383Z     value = await result
+2026-09-13T19:17:09.2082714Z             ^^^^^^^^^^^^
+2026-09-13T19:17:09.2083582Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:17:09.2084596Z     self._handle_exception(error)
+2026-09-13T19:17:09.2085507Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:17:09.2086782Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:17:09.2087829Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:17:09.2088818Z     raise translated_error from error
+2026-09-13T19:17:09.2090309Z E   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.2092542Z E   DETAIL:  Failing row contains (23e968ee-be88-4fb6-9d86-cf772fc1e159, Test Co, null, f, en, 2026-09-13 19:17:05.938908+00, 2026-09-13 19:17:05.938908+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.2093445Z 
+2026-09-13T19:17:09.2093729Z The above exception was the direct cause of the following exception:
+2026-09-13T19:17:09.2094467Z tests/test_scheduler_concurrency.py:22: in test_scheduler_max_concurrency
+2026-09-13T19:17:09.2095066Z     await db_session.commit()
+2026-09-13T19:17:09.2095846Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:999: in commit
+2026-09-13T19:17:09.2096967Z     await greenlet_spawn(self.sync_session.commit)
+2026-09-13T19:17:09.2097887Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:203: in greenlet_spawn
+2026-09-13T19:17:09.2098812Z     result = context.switch(value)
+2026-09-13T19:17:09.2099193Z              ^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2099928Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2035: in commit
+2026-09-13T19:17:09.2100690Z     trans.commit(_to_root=True)
+2026-09-13T19:17:09.2101042Z <string>:2: in commit
+2026-09-13T19:17:09.2101347Z     ???
+2026-09-13T19:17:09.2101990Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:17:09.2102967Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:17:09.2103349Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2104061Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1316: in commit
+2026-09-13T19:17:09.2104838Z     self._prepare_impl()
+2026-09-13T19:17:09.2105196Z <string>:2: in _prepare_impl
+2026-09-13T19:17:09.2105531Z     ???
+2026-09-13T19:17:09.2106168Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:17:09.2107143Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:17:09.2107525Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2108285Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1290: in _prepare_impl
+2026-09-13T19:17:09.2109125Z     self.session.flush()
+2026-09-13T19:17:09.2109811Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4353: in flush
+2026-09-13T19:17:09.2110591Z     self._flush(objects)
+2026-09-13T19:17:09.2111274Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+2026-09-13T19:17:09.2112044Z     with util.safe_reraise():
+2026-09-13T19:17:09.2113084Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+2026-09-13T19:17:09.2113931Z     raise exc_value.with_traceback(exc_tb)
+2026-09-13T19:17:09.2114698Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+2026-09-13T19:17:09.2115507Z     flush_context.execute()
+2026-09-13T19:17:09.2116247Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:465: in execute
+2026-09-13T19:17:09.2117240Z     rec.execute(self)
+2026-09-13T19:17:09.2117935Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:641: in execute
+2026-09-13T19:17:09.2118807Z     util.preloaded.orm_persistence.save_obj(
+2026-09-13T19:17:09.2119628Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:94: in save_obj
+2026-09-13T19:17:09.2120432Z     _emit_insert_statements(
+2026-09-13T19:17:09.2121284Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1234: in _emit_insert_statements
+2026-09-13T19:17:09.2122201Z     result = connection.execute(
+2026-09-13T19:17:09.2122939Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+2026-09-13T19:17:09.2123700Z     return meth(
+2026-09-13T19:17:09.2124468Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+2026-09-13T19:17:09.2125503Z     return connection._execute_clauseelement(
+2026-09-13T19:17:09.2126367Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+2026-09-13T19:17:09.2127433Z     ret = self._execute_context(
+2026-09-13T19:17:09.2128236Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1848: in _execute_context
+2026-09-13T19:17:09.2129087Z     return self._exec_single_context(
+2026-09-13T19:17:09.2129912Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1988: in _exec_single_context
+2026-09-13T19:17:09.2130786Z     self._handle_dbapi_exception(
+2026-09-13T19:17:09.2131635Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+2026-09-13T19:17:09.2132616Z     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-09-13T19:17:09.2133595Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+2026-09-13T19:17:09.2134674Z     self.dialect.do_execute(
+2026-09-13T19:17:09.2135418Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:17:09.2136246Z     cursor.execute(statement, parameters)
+2026-09-13T19:17:09.2137367Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:17:09.2138273Z     self._adapt_connection.await_(
+2026-09-13T19:17:09.2139082Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:17:09.2140216Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:17:09.2140908Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2141741Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:17:09.2142611Z     value = await result
+2026-09-13T19:17:09.2142933Z             ^^^^^^^^^^^^
+2026-09-13T19:17:09.2143818Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:17:09.2144771Z     self._handle_exception(error)
+2026-09-13T19:17:09.2146062Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:17:09.2147250Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:17:09.2148237Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:17:09.2149164Z     raise translated_error from error
+2026-09-13T19:17:09.2150675Z E   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.2152857Z E   DETAIL:  Failing row contains (23e968ee-be88-4fb6-9d86-cf772fc1e159, Test Co, null, f, en, 2026-09-13 19:17:05.938908+00, 2026-09-13 19:17:05.938908+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.2155670Z E   [SQL: INSERT INTO companies (id, name, base_currency, budget_requests_frozen, default_language, alert_runway_threshold_days, alert_roi_threshold, alert_stalled_data_days, deleted_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::VARCHAR, $6::INTEGER, $7::NUMERIC(20, 4), $8::INTEGER, $9::TIMESTAMP WITH TIME ZONE) RETURNING companies.created_at, companies.updated_at]
+2026-09-13T19:17:09.2158337Z E   [parameters: (UUID('23e968ee-be88-4fb6-9d86-cf772fc1e159'), 'Test Co', None, False, 'en', 30, Decimal('0'), 3, None)]
+2026-09-13T19:17:09.2159346Z E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:17:09.2160038Z ___________________ test_scheduler_batch_continues_on_error ____________________
+2026-09-13T19:17:09.2161196Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: in _prepare_and_execute
+2026-09-13T19:17:09.2162278Z     self._rows = deque(await prepared_stmt.fetch(*parameters))
+2026-09-13T19:17:09.2162815Z                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2163593Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+2026-09-13T19:17:09.2164433Z     data = await self.__bind_execute(args, 0, timeout)
+2026-09-13T19:17:09.2164920Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2165734Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+2026-09-13T19:17:09.2166772Z     data, status, _ = await self.__do_execute(
+2026-09-13T19:17:09.2167610Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+2026-09-13T19:17:09.2168626Z     return await executor(protocol)
+2026-09-13T19:17:09.2169004Z            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2169436Z asyncpg/protocol/protocol.pyx:205: in bind_execute
+2026-09-13T19:17:09.2169880Z     ???
+2026-09-13T19:17:09.2170677Z E   asyncpg.exceptions.NotNullViolationError: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.2172190Z E   DETAIL:  Failing row contains (d68cc74a-c7ee-49d8-bfff-d482b1b31536, Test Co, null, f, en, 2026-09-13 19:17:06.46539+00, 2026-09-13 19:17:06.46539+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.2173068Z 
+2026-09-13T19:17:09.2173347Z The above exception was the direct cause of the following exception:
+2026-09-13T19:17:09.2174354Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+2026-09-13T19:17:09.2175226Z     self.dialect.do_execute(
+2026-09-13T19:17:09.2175982Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:17:09.2177033Z     cursor.execute(statement, parameters)
+2026-09-13T19:17:09.2177943Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:17:09.2178819Z     self._adapt_connection.await_(
+2026-09-13T19:17:09.2179845Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:17:09.2181000Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:17:09.2181716Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2182582Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:17:09.2183443Z     value = await result
+2026-09-13T19:17:09.2183770Z             ^^^^^^^^^^^^
+2026-09-13T19:17:09.2184644Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:17:09.2185603Z     self._handle_exception(error)
+2026-09-13T19:17:09.2186733Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:17:09.2187726Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:17:09.2188685Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:17:09.2189617Z     raise translated_error from error
+2026-09-13T19:17:09.2191047Z E   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.2193067Z E   DETAIL:  Failing row contains (d68cc74a-c7ee-49d8-bfff-d482b1b31536, Test Co, null, f, en, 2026-09-13 19:17:06.46539+00, 2026-09-13 19:17:06.46539+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.2193935Z 
+2026-09-13T19:17:09.2194204Z The above exception was the direct cause of the following exception:
+2026-09-13T19:17:09.2194954Z tests/test_scheduler_concurrency.py:65: in test_scheduler_batch_continues_on_error
+2026-09-13T19:17:09.2195581Z     await db_session.commit()
+2026-09-13T19:17:09.2196348Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:999: in commit
+2026-09-13T19:17:09.2197425Z     await greenlet_spawn(self.sync_session.commit)
+2026-09-13T19:17:09.2198328Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:203: in greenlet_spawn
+2026-09-13T19:17:09.2199186Z     result = context.switch(value)
+2026-09-13T19:17:09.2199558Z              ^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2200306Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2035: in commit
+2026-09-13T19:17:09.2201315Z     trans.commit(_to_root=True)
+2026-09-13T19:17:09.2201670Z <string>:2: in commit
+2026-09-13T19:17:09.2201966Z     ???
+2026-09-13T19:17:09.2202596Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:17:09.2203373Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:17:09.2203767Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2204463Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1316: in commit
+2026-09-13T19:17:09.2205217Z     self._prepare_impl()
+2026-09-13T19:17:09.2205563Z <string>:2: in _prepare_impl
+2026-09-13T19:17:09.2205892Z     ???
+2026-09-13T19:17:09.2206683Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+2026-09-13T19:17:09.2207456Z     ret_value = fn(self, *arg, **kw)
+2026-09-13T19:17:09.2207823Z                 ^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2208594Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1290: in _prepare_impl
+2026-09-13T19:17:09.2209402Z     self.session.flush()
+2026-09-13T19:17:09.2210088Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4353: in flush
+2026-09-13T19:17:09.2211025Z     self._flush(objects)
+2026-09-13T19:17:09.2211696Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+2026-09-13T19:17:09.2212663Z     with util.safe_reraise():
+2026-09-13T19:17:09.2213578Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+2026-09-13T19:17:09.2214783Z     raise exc_value.with_traceback(exc_tb)
+2026-09-13T19:17:09.2233415Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+2026-09-13T19:17:09.2234355Z     flush_context.execute()
+2026-09-13T19:17:09.2235152Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:465: in execute
+2026-09-13T19:17:09.2235942Z     rec.execute(self)
+2026-09-13T19:17:09.2236919Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:641: in execute
+2026-09-13T19:17:09.2237618Z     util.preloaded.orm_persistence.save_obj(
+2026-09-13T19:17:09.2238203Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:94: in save_obj
+2026-09-13T19:17:09.2238770Z     _emit_insert_statements(
+2026-09-13T19:17:09.2239358Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1234: in _emit_insert_statements
+2026-09-13T19:17:09.2239967Z     result = connection.execute(
+2026-09-13T19:17:09.2240470Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+2026-09-13T19:17:09.2240972Z     return meth(
+2026-09-13T19:17:09.2241481Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+2026-09-13T19:17:09.2242088Z     return connection._execute_clauseelement(
+2026-09-13T19:17:09.2242703Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+2026-09-13T19:17:09.2243286Z     ret = self._execute_context(
+2026-09-13T19:17:09.2243812Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1848: in _execute_context
+2026-09-13T19:17:09.2244382Z     return self._exec_single_context(
+2026-09-13T19:17:09.2244959Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1988: in _exec_single_context
+2026-09-13T19:17:09.2245531Z     self._handle_dbapi_exception(
+2026-09-13T19:17:09.2246090Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+2026-09-13T19:17:09.2247242Z     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-09-13T19:17:09.2247885Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+2026-09-13T19:17:09.2248450Z     self.dialect.do_execute(
+2026-09-13T19:17:09.2248957Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+2026-09-13T19:17:09.2249518Z     cursor.execute(statement, parameters)
+2026-09-13T19:17:09.2250125Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+2026-09-13T19:17:09.2250716Z     self._adapt_connection.await_(
+2026-09-13T19:17:09.2251265Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-09-13T19:17:09.2252035Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-09-13T19:17:09.2252522Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:17:09.2253091Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-09-13T19:17:09.2253678Z     value = await result
+2026-09-13T19:17:09.2253904Z             ^^^^^^^^^^^^
+2026-09-13T19:17:09.2254605Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+2026-09-13T19:17:09.2255234Z     self._handle_exception(error)
+2026-09-13T19:17:09.2255833Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+2026-09-13T19:17:09.2256654Z     self._adapt_connection._handle_exception(error)
+2026-09-13T19:17:09.2257377Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: in _handle_exception
+2026-09-13T19:17:09.2257999Z     raise translated_error from error
+2026-09-13T19:17:09.2258990Z E   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.2260390Z E   DETAIL:  Failing row contains (d68cc74a-c7ee-49d8-bfff-d482b1b31536, Test Co, null, f, en, 2026-09-13 19:17:06.46539+00, 2026-09-13 19:17:06.46539+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.2262163Z E   [SQL: INSERT INTO companies (id, name, base_currency, budget_requests_frozen, default_language, alert_runway_threshold_days, alert_roi_threshold, alert_stalled_data_days, deleted_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::VARCHAR, $6::INTEGER, $7::NUMERIC(20, 4), $8::INTEGER, $9::TIMESTAMP WITH TIME ZONE) RETURNING companies.created_at, companies.updated_at]
+2026-09-13T19:17:09.2263762Z E   [parameters: (UUID('d68cc74a-c7ee-49d8-bfff-d482b1b31536'), 'Test Co', None, False, 'en', 30, Decimal('0'), 3, None)]
+2026-09-13T19:17:09.2264406Z E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:17:09.2264834Z =============================== warnings summary ===============================
+2026-09-13T19:17:09.2265429Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854
+2026-09-13T19:17:09.2266416Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+2026-09-13T19:17:09.2267401Z     from crypt import crypt as _crypt
+2026-09-13T19:17:09.2267604Z 
+2026-09-13T19:17:09.2267715Z app/api/v1/connectors.py:33
+2026-09-13T19:17:09.2268913Z   /home/runner/work/inteintefin/inteintefin/04-backend/app/api/v1/connectors.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+2026-09-13T19:17:09.2270279Z     class ConnectorResponse(BaseModel):
+2026-09-13T19:17:09.2270475Z 
+2026-09-13T19:17:09.2270788Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53
+2026-09-13T19:17:09.2271885Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+2026-09-13T19:17:09.2272913Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+2026-09-13T19:17:09.2273271Z 
+2026-09-13T19:17:09.2273419Z tests/test_ad_accounts_crud.py::test_ad_account_crud
+2026-09-13T19:17:09.2274564Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/handlers/argon2.py:716: DeprecationWarning: Accessing argon2.__version__ is deprecated and will be removed in a future release. Use importlib.metadata directly to query for argon2-cffi's packaging metadata.
+2026-09-13T19:17:09.2275683Z     _argon2_cffi.__version__, max_version)
+2026-09-13T19:17:09.2275880Z 
+2026-09-13T19:17:09.2275996Z tests/test_auth.py::test_refresh_endpoint
+2026-09-13T19:17:09.2276292Z tests/test_auth.py::test_refresh_endpoint
+2026-09-13T19:17:09.2276851Z tests/test_auth.py::test_logout_endpoint
+2026-09-13T19:17:09.2277145Z tests/test_auth.py::test_invalid_jwt
+2026-09-13T19:17:09.2278252Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/httpx/_client.py:1859: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+2026-09-13T19:17:09.2279362Z     return await self.request(
+2026-09-13T19:17:09.2279529Z 
+2026-09-13T19:17:09.2279654Z tests/test_types.py::test_openapi_schema_money
+2026-09-13T19:17:09.2280679Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pydantic/json_schema.py:2463: PydanticJsonSchemaWarning: Unable to serialize value '0.00' with the plain serializer; excluding default from JSON schema [non-serializable-default]
+2026-09-13T19:17:09.2281733Z     warnings.warn(message, PydanticJsonSchemaWarning)
+2026-09-13T19:17:09.2281970Z 
+2026-09-13T19:17:09.2282175Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-09-13T19:17:09.2282768Z - generated xml file: /home/runner/work/inteintefin/inteintefin/04-backend/pytest-results.xml -
+2026-09-13T19:17:09.2283317Z =========================== short test summary info ============================
+2026-09-13T19:17:09.2284008Z FAILED tests/test_connectors_api.py::test_rotate_secret_revives_unauthorized_connector - AssertionError: assert 'unauthorized' == 'active'
+2026-09-13T19:17:09.2284615Z   
+2026-09-13T19:17:09.2284802Z   - active
+2026-09-13T19:17:09.2284996Z   + unauthorized
+2026-09-13T19:17:09.2285406Z FAILED tests/test_connectors_persistence.py::test_api_persistence_patch_status - assert 422 == 201
+2026-09-13T19:17:09.4455553Z  +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:17:09.4457382Z FAILED tests/test_connectors_persistence.py::test_api_persistence_soft_delete - assert 422 == 201
+2026-09-13T19:17:09.4458820Z  +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:17:09.4460875Z FAILED tests/test_meta_ads_connector.py::test_meta_scheduler_unauthorized_state - redis.exceptions.DataError: Invalid input of type: 'bool'. Convert to a bytes, string, int or float first.
+2026-09-13T19:17:09.4463702Z FAILED tests/test_scheduler_concurrency.py::test_scheduler_max_concurrency - sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.4465759Z DETAIL:  Failing row contains (23e968ee-be88-4fb6-9d86-cf772fc1e159, Test Co, null, f, en, 2026-09-13 19:17:05.938908+00, 2026-09-13 19:17:05.938908+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.4468431Z [SQL: INSERT INTO companies (id, name, base_currency, budget_requests_frozen, default_language, alert_runway_threshold_days, alert_roi_threshold, alert_stalled_data_days, deleted_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::VARCHAR, $6::INTEGER, $7::NUMERIC(20, 4), $8::INTEGER, $9::TIMESTAMP WITH TIME ZONE) RETURNING companies.created_at, companies.updated_at]
+2026-09-13T19:17:09.4470414Z [parameters: (UUID('23e968ee-be88-4fb6-9d86-cf772fc1e159'), 'Test Co', None, False, 'en', 30, Decimal('0'), 3, None)]
+2026-09-13T19:17:09.4471180Z (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:17:09.4472859Z FAILED tests/test_scheduler_concurrency.py::test_scheduler_batch_continues_on_error - sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "base_currency" of relation "companies" violates not-null constraint
+2026-09-13T19:17:09.4474684Z DETAIL:  Failing row contains (d68cc74a-c7ee-49d8-bfff-d482b1b31536, Test Co, null, f, en, 2026-09-13 19:17:06.46539+00, 2026-09-13 19:17:06.46539+00, null, 30, 0.0000, 3).
+2026-09-13T19:17:09.4476443Z [SQL: INSERT INTO companies (id, name, base_currency, budget_requests_frozen, default_language, alert_runway_threshold_days, alert_roi_threshold, alert_stalled_data_days, deleted_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::VARCHAR, $6::INTEGER, $7::NUMERIC(20, 4), $8::INTEGER, $9::TIMESTAMP WITH TIME ZONE) RETURNING companies.created_at, companies.updated_at]
+2026-09-13T19:17:09.4478355Z [parameters: (UUID('d68cc74a-c7ee-49d8-bfff-d482b1b31536'), 'Test Co', None, False, 'en', 30, Decimal('0'), 3, None)]
+2026-09-13T19:17:09.4478959Z (Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-13T19:17:09.4479399Z ================== 6 failed, 179 passed, 9 warnings in 10.18s ==================
+2026-09-13T19:17:10.0084207Z ##[error]Process completed with exit code 1.

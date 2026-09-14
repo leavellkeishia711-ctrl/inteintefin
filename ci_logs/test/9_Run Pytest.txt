@@ -1,0 +1,150 @@
+﻿2026-09-13T19:00:50.0309825Z ##[group]Run set -o pipefail
+2026-09-13T19:00:50.0310078Z [36;1mset -o pipefail[0m
+2026-09-13T19:00:50.0310467Z [36;1mPYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:00:50.0342158Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:00:50.0342364Z env:
+2026-09-13T19:00:50.0342589Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:50.0342945Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:00:50.0343277Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:50.0343574Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:50.0343870Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:00:50.0344170Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:00:50.0344612Z ##[endgroup]
+2026-09-13T19:00:50.4567974Z ============================= test session starts ==============================
+2026-09-13T19:00:50.4568791Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-13T19:00:50.4569211Z cachedir: .pytest_cache
+2026-09-13T19:00:50.4569477Z rootdir: /home/runner/work/inteintefin/inteintefin/04-backend
+2026-09-13T19:00:50.4569766Z configfile: pyproject.toml
+2026-09-13T19:00:50.4569976Z plugins: anyio-4.15.1, asyncio-1.4.0
+2026-09-13T19:00:50.4570399Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=session
+2026-09-13T19:00:52.7162784Z collecting ... collected 171 items / 5 errors
+2026-09-13T19:00:52.7163148Z 
+2026-09-13T19:00:52.7163339Z ==================================== ERRORS ====================================
+2026-09-13T19:00:52.7163803Z ___________________ ERROR collecting tests/test_app_boots.py ___________________
+2026-09-13T19:00:52.7164317Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:00:52.7164743Z     mod = import_path(
+2026-09-13T19:00:52.7165097Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:00:52.7165491Z     importlib.import_module(module_name)
+2026-09-13T19:00:52.7165872Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:00:52.7166291Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:00:52.7166574Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:00:52.7166831Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:00:52.7167075Z     ???
+2026-09-13T19:00:52.7167267Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:00:52.7167504Z     ???
+2026-09-13T19:00:52.7167710Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:00:52.7167971Z     ???
+2026-09-13T19:00:52.7168156Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:00:52.7168381Z     ???
+2026-09-13T19:00:52.7168931Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:00:52.7169487Z     exec(co, module.__dict__)
+2026-09-13T19:00:52.7169762Z tests/test_app_boots.py:3: in <module>
+2026-09-13T19:00:52.7170072Z     from app.main import app
+2026-09-13T19:00:52.7170329Z app/main.py:6: in <module>
+2026-09-13T19:00:52.7171169Z     from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts, invites, connectors
+2026-09-13T19:00:52.7172058Z app/api/v1/connectors.py:13: in <module>
+2026-09-13T19:00:52.7172421Z     from app.connectors.registry import CONNECTOR_REGISTRY
+2026-09-13T19:00:52.7172740Z E   SyntaxError: source code string cannot contain null bytes
+2026-09-13T19:00:52.7173110Z ____________ ERROR collecting tests/test_celery_tenant_isolation.py ____________
+2026-09-13T19:00:52.7173957Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:00:52.7174352Z     mod = import_path(
+2026-09-13T19:00:52.7174706Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:00:52.7175098Z     importlib.import_module(module_name)
+2026-09-13T19:00:52.7175452Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:00:52.7175866Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:00:52.7176143Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:00:52.7176397Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:00:52.7176648Z     ???
+2026-09-13T19:00:52.7176998Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:00:52.7177234Z     ???
+2026-09-13T19:00:52.7177441Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:00:52.7177701Z     ???
+2026-09-13T19:00:52.7177886Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:00:52.7178114Z     ???
+2026-09-13T19:00:52.7178448Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:00:52.7178957Z     exec(co, module.__dict__)
+2026-09-13T19:00:52.7179184Z tests/test_celery_tenant_isolation.py:2: in <module>
+2026-09-13T19:00:52.7179458Z     from app.workers.tasks import tenant_task_session
+2026-09-13T19:00:52.7179830Z E     File "/home/runner/work/inteintefin/inteintefin/04-backend/app/workers/tasks.py", line 15
+2026-09-13T19:00:52.7180256Z E       Context manager for background tasks to ensure they only access data
+2026-09-13T19:00:52.7180562Z E               ^^^^^^^
+2026-09-13T19:00:52.7180760Z E   SyntaxError: invalid syntax
+2026-09-13T19:00:52.7181045Z ________________ ERROR collecting tests/test_connectors_api.py _________________
+2026-09-13T19:00:52.7181564Z ImportError while importing test module '/home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py'.
+2026-09-13T19:00:52.7182066Z Hint: make sure your test modules/packages have valid Python names.
+2026-09-13T19:00:52.7182336Z Traceback:
+2026-09-13T19:00:52.7182649Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:00:52.7183065Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:00:52.7183351Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:00:52.7183592Z tests/test_connectors_api.py:4: in <module>
+2026-09-13T19:00:52.7183843Z     from app.db.models.company import Company
+2026-09-13T19:00:52.7184141Z E   ModuleNotFoundError: No module named 'app.db.models.company'
+2026-09-13T19:00:52.7184524Z _____________ ERROR collecting tests/test_scheduler_concurrency.py _____________
+2026-09-13T19:00:52.7185003Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:00:52.7185403Z     mod = import_path(
+2026-09-13T19:00:52.7185749Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:00:52.7186144Z     importlib.import_module(module_name)
+2026-09-13T19:00:52.7186500Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:00:52.7186904Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:00:52.7187178Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:00:52.7187434Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:00:52.7187666Z     ???
+2026-09-13T19:00:52.7187858Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:00:52.7188095Z     ???
+2026-09-13T19:00:52.7188310Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:00:52.7188656Z     ???
+2026-09-13T19:00:52.7188857Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:00:52.7189216Z     ???
+2026-09-13T19:00:52.7189574Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:00:52.7189984Z     exec(co, module.__dict__)
+2026-09-13T19:00:52.7190213Z tests/test_scheduler_concurrency.py:4: in <module>
+2026-09-13T19:00:52.7190475Z     from app.connectors import scheduler
+2026-09-13T19:00:52.7190858Z E     File "/home/runner/work/inteintefin/inteintefin/04-backend/app/connectors/scheduler.py", line 32
+2026-09-13T19:00:52.7191289Z E       \"\"\"Acquires a redis lock with a TTL and returns a token.\"\"\"
+2026-09-13T19:00:52.7191558Z E        ^
+2026-09-13T19:00:52.7191798Z E   SyntaxError: unexpected character after line continuation character
+2026-09-13T19:00:52.7192280Z _________________ ERROR collecting tests/test_telegram_link.py _________________
+2026-09-13T19:00:52.7192745Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+2026-09-13T19:00:52.7193131Z     mod = import_path(
+2026-09-13T19:00:52.7193479Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/pathlib.py:596: in import_path
+2026-09-13T19:00:52.7193879Z     importlib.import_module(module_name)
+2026-09-13T19:00:52.7194236Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2026-09-13T19:00:52.7194637Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-09-13T19:00:52.7194926Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:00:52.7195180Z <frozen importlib._bootstrap>:1204: in _gcd_import
+2026-09-13T19:00:52.7195411Z     ???
+2026-09-13T19:00:52.7195602Z <frozen importlib._bootstrap>:1176: in _find_and_load
+2026-09-13T19:00:52.7195847Z     ???
+2026-09-13T19:00:52.7196052Z <frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+2026-09-13T19:00:52.7196306Z     ???
+2026-09-13T19:00:52.7196489Z <frozen importlib._bootstrap>:690: in _load_unlocked
+2026-09-13T19:00:52.7196732Z     ???
+2026-09-13T19:00:52.7197069Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+2026-09-13T19:00:52.7197469Z     exec(co, module.__dict__)
+2026-09-13T19:00:52.7197680Z tests/test_telegram_link.py:3: in <module>
+2026-09-13T19:00:52.7197916Z     from app.main import app
+2026-09-13T19:00:52.7198117Z app/main.py:6: in <module>
+2026-09-13T19:00:52.7198820Z     from app.api.v1 import auth, imports, consumables, transactions, reports, ad_accounts, campaign_runs, campaign_run_stats, payroll, partners, settings as settings_router, chat, webhooks, alerts, invites, connectors
+2026-09-13T19:00:52.7199457Z app/api/v1/connectors.py:13: in <module>
+2026-09-13T19:00:52.7199726Z     from app.connectors.registry import CONNECTOR_REGISTRY
+2026-09-13T19:00:52.7200043Z E   SyntaxError: source code string cannot contain null bytes
+2026-09-13T19:00:52.7200346Z =============================== warnings summary ===============================
+2026-09-13T19:00:52.7200771Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854
+2026-09-13T19:00:52.7201493Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+2026-09-13T19:00:52.7202049Z     from crypt import crypt as _crypt
+2026-09-13T19:00:52.7202191Z 
+2026-09-13T19:00:52.7202409Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53
+2026-09-13T19:00:52.7203204Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+2026-09-13T19:00:52.7203956Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+2026-09-13T19:00:52.7204338Z 
+2026-09-13T19:00:52.7204516Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-09-13T19:00:52.7204970Z - generated xml file: /home/runner/work/inteintefin/inteintefin/04-backend/pytest-results.xml -
+2026-09-13T19:00:52.7205385Z =========================== short test summary info ============================
+2026-09-13T19:00:52.7205651Z ERROR tests/test_app_boots.py
+2026-09-13T19:00:52.7205875Z ERROR tests/test_celery_tenant_isolation.py
+2026-09-13T19:00:52.7206114Z ERROR tests/test_connectors_api.py
+2026-09-13T19:00:52.7206338Z ERROR tests/test_scheduler_concurrency.py
+2026-09-13T19:00:52.7206567Z ERROR tests/test_telegram_link.py
+2026-09-13T19:00:52.7206852Z !!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+2026-09-13T19:00:52.7207176Z ======================== 2 warnings, 5 errors in 2.15s =========================
+2026-09-13T19:00:52.9626352Z ##[error]Process completed with exit code 2.

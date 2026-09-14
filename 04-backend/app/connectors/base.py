@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, TypeVar, Callable, Awaitable
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import uuid
 import httpx
 import asyncio
@@ -74,6 +74,9 @@ class NormalizedRecord(BaseModel):
     spend: Decimal
     revenue: Decimal
     currency: str
+    clicks: int = Field(default=0, ge=0)
+    impressions: int = Field(default=0, ge=0)
+    conversions: Decimal = Field(default_factory=lambda: Decimal("0"))
 
 class NormalizedAdAccount(BaseModel):
     platform: str

@@ -1,0 +1,31 @@
+﻿2026-09-13T19:25:15.1264389Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-13T19:25:15.1265849Z ##[group]Run actions/upload-artifact@v4
+2026-09-13T19:25:15.1266134Z with:
+2026-09-13T19:25:15.1266353Z   name: pytest-results
+2026-09-13T19:25:15.1266606Z   path: 04-backend/pytest-results.xml
+2026-09-13T19:25:15.1266886Z   if-no-files-found: warn
+2026-09-13T19:25:15.1267260Z   compression-level: 6
+2026-09-13T19:25:15.1267657Z   overwrite: false
+2026-09-13T19:25:15.1268171Z   include-hidden-files: false
+2026-09-13T19:25:15.1268513Z env:
+2026-09-13T19:25:15.1284368Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:15.1285077Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:25:15.1285562Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:15.1286005Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:15.1286392Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:25:15.1286786Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:25:15.1287116Z ##[endgroup]
+2026-09-13T19:25:15.2976532Z (node:4847) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-13T19:25:15.2977482Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-13T19:25:15.3022564Z With the provided path, there will be 1 file uploaded
+2026-09-13T19:25:15.3028623Z Artifact name is valid!
+2026-09-13T19:25:15.3029407Z Root directory input is valid!
+2026-09-13T19:25:15.5144840Z Beginning upload of artifact content to blob storage
+2026-09-13T19:25:15.5326909Z (node:4847) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-13T19:25:15.5833498Z Uploaded bytes 2923
+2026-09-13T19:25:15.6015109Z Finished uploading artifact content to blob storage!
+2026-09-13T19:25:15.6016107Z SHA256 digest of uploaded artifact zip is b1deb4e234ce46c37bc0dc60f5e332c4b0d7f68e1c5506064aab017aa336c689
+2026-09-13T19:25:15.6017868Z Finalizing artifact upload
+2026-09-13T19:25:15.8101441Z Artifact pytest-results.zip successfully finalized. Artifact ID 10323343335
+2026-09-13T19:25:15.8102542Z Artifact pytest-results has been successfully uploaded! Final size is 2923 bytes. Artifact ID is 10323343335
+2026-09-13T19:25:15.8109064Z Artifact download URL: https://github.com/leavellkeishia711-ctrl/inteintefin/actions/runs/34777591118/artifacts/10323343335

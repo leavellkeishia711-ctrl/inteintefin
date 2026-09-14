@@ -1,0 +1,591 @@
+﻿2026-09-13T19:10:00.2575405Z ##[group]Run set -o pipefail
+2026-09-13T19:10:00.2575730Z [36;1mset -o pipefail[0m
+2026-09-13T19:10:00.2576593Z [36;1mPYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:10:00.2613538Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:10:00.2613800Z env:
+2026-09-13T19:10:00.2614072Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:10:00.2614524Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:10:00.2614971Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:10:00.2615360Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:10:00.2615752Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:10:00.2616423Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:10:00.2616760Z ##[endgroup]
+2026-09-13T19:10:00.8871458Z ============================= test session starts ==============================
+2026-09-13T19:10:00.8872696Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-13T19:10:00.8874024Z cachedir: .pytest_cache
+2026-09-13T19:10:00.8874636Z rootdir: /home/runner/work/inteintefin/inteintefin/04-backend
+2026-09-13T19:10:00.8875335Z configfile: pyproject.toml
+2026-09-13T19:10:00.8875809Z plugins: anyio-4.15.1, asyncio-1.4.0
+2026-09-13T19:10:00.8877176Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=session
+2026-09-13T19:10:03.1660574Z collecting ... collected 185 items
+2026-09-13T19:10:03.1661031Z 
+2026-09-13T19:10:03.3774331Z tests/test_ad_accounts_crud.py::test_ad_account_crud PASSED              [  0%]
+2026-09-13T19:10:03.4374054Z tests/test_ad_accounts_tenant_isolation.py::test_tenant_isolation PASSED [  1%]
+2026-09-13T19:10:03.4548647Z tests/test_ad_accounts_upsert_idempotency.py::test_upsert_idempotency PASSED [  1%]
+2026-09-13T19:10:03.5005433Z tests/test_affise_connector.py::test_affise_test_connection_success PASSED [  2%]
+2026-09-13T19:10:03.5207277Z tests/test_affise_connector.py::test_affise_test_connection_fail PASSED  [  2%]
+2026-09-13T19:10:03.5390154Z tests/test_affise_connector.py::test_affise_normalization PASSED         [  3%]
+2026-09-13T19:10:03.5645062Z tests/test_affise_connector.py::test_affise_upsert_idempotency PASSED    [  3%]
+2026-09-13T19:10:03.5809054Z tests/test_affise_connector.py::test_affise_tenant_isolation PASSED      [  4%]
+2026-09-13T19:10:03.6025147Z tests/test_affise_connector.py::test_affise_retry_429 PASSED             [  4%]
+2026-09-13T19:10:03.6241603Z tests/test_affise_connector.py::test_affise_retry_5xx_success PASSED     [  5%]
+2026-09-13T19:10:03.6446794Z tests/test_affise_connector.py::test_affise_unauthorized PASSED          [  5%]
+2026-09-13T19:10:03.6883219Z tests/test_affise_connector.py::test_affise_smoke PASSED                 [  6%]
+2026-09-13T19:10:03.6982779Z tests/test_ai_analyst.py::test_ai_analyst_successful_tool_call PASSED    [  7%]
+2026-09-13T19:10:03.7011112Z tests/test_ai_analyst.py::test_ai_analyst_tool_enforcement PASSED        [  7%]
+2026-09-13T19:10:03.7037084Z tests/test_ai_analyst.py::test_ai_analyst_tool_error_prevents_response PASSED [  8%]
+2026-09-13T19:10:03.7072035Z tests/test_ai_analyst.py::test_ai_analyst_no_sensitive_fields PASSED     [  8%]
+2026-09-13T19:10:03.7217784Z tests/test_alerts.py::test_alert_deduplication PASSED                    [  9%]
+2026-09-13T19:10:03.7369244Z tests/test_alerts.py::test_check_financial_alerts_roi PASSED             [  9%]
+2026-09-13T19:10:03.7554503Z tests/test_app_boots.py::test_app_boots_and_health_check PASSED          [ 10%]
+2026-09-13T19:10:03.7563386Z tests/test_audit.py::test_generate_diff_omits_sensitive_fields PASSED    [ 10%]
+2026-09-13T19:10:03.7572381Z tests/test_audit.py::test_generate_diff_serializes_complex_types PASSED  [ 11%]
+2026-09-13T19:10:03.7664378Z tests/test_audit.py::test_record_user_audit PASSED                       [ 11%]
+2026-09-13T19:10:03.7726382Z tests/test_audit.py::test_record_system_audit PASSED                     [ 12%]
+2026-09-13T19:10:03.7942979Z tests/test_auth.py::test_access_token_accepted PASSED                    [ 12%]
+2026-09-13T19:10:03.7963145Z tests/test_auth.py::test_refresh_token_rejected_as_access PASSED         [ 13%]
+2026-09-13T19:10:03.8038076Z tests/test_auth.py::test_refresh_endpoint PASSED                         [ 14%]
+2026-09-13T19:10:03.8088505Z tests/test_auth.py::test_logout_endpoint PASSED                          [ 14%]
+2026-09-13T19:10:03.8107203Z tests/test_auth.py::test_invalid_jwt PASSED                              [ 15%]
+2026-09-13T19:10:03.8312670Z tests/test_binom_connector.py::test_binom_test_connection_success PASSED [ 15%]
+2026-09-13T19:10:03.8509706Z tests/test_binom_connector.py::test_binom_test_connection_fail PASSED    [ 16%]
+2026-09-13T19:10:03.8522396Z tests/test_binom_connector.py::test_binom_normalization PASSED           [ 16%]
+2026-09-13T19:10:03.8708310Z tests/test_binom_connector.py::test_binom_upsert_idempotency PASSED      [ 17%]
+2026-09-13T19:10:03.8839271Z tests/test_binom_connector.py::test_binom_tenant_isolation PASSED        [ 17%]
+2026-09-13T19:10:03.9050555Z tests/test_binom_connector.py::test_binom_retry_429 PASSED               [ 18%]
+2026-09-13T19:10:03.9263110Z tests/test_binom_connector.py::test_binom_retry_5xx_success PASSED       [ 18%]
+2026-09-13T19:10:03.9461540Z tests/test_binom_connector.py::test_binom_unauthorized PASSED            [ 19%]
+2026-09-13T19:10:03.9891590Z tests/test_binom_connector.py::test_binom_smoke PASSED                   [ 20%]
+2026-09-13T19:10:04.0520183Z tests/test_campaigns.py::test_get_ad_account_cost PASSED                 [ 20%]
+2026-09-13T19:10:04.0657430Z tests/test_campaigns.py::test_upsert_campaign_run_stat PASSED            [ 21%]
+2026-09-13T19:10:04.0699878Z tests/test_celery_tenant_isolation.py::test_tenant_task_session_sets_context PASSED [ 21%]
+2026-09-13T19:10:04.0732037Z tests/test_celery_tenant_isolation.py::test_tenant_task_session_cleans_up PASSED [ 22%]
+2026-09-13T19:10:04.0876307Z tests/test_computation.py::test_pnl_calculation_and_rounding PASSED      [ 22%]
+2026-09-13T19:10:04.0953152Z tests/test_computation.py::test_pnl_div_by_zero PASSED                   [ 23%]
+2026-09-13T19:10:04.1139014Z tests/test_computation.py::test_cashflow_runway PASSED                   [ 23%]
+2026-09-13T19:10:04.1253208Z tests/test_computation.py::test_health_score_bounds PASSED               [ 24%]
+2026-09-13T19:10:04.1262337Z tests/test_connector_base_contract.py::test_connector_base_contract PASSED [ 24%]
+2026-09-13T19:10:04.1279739Z tests/test_connectors.py::test_credentials_encryption PASSED             [ 25%]
+2026-09-13T19:10:04.1895183Z tests/test_connectors.py::test_api_create_connector PASSED               [ 25%]
+2026-09-13T19:10:04.2485509Z tests/test_connectors.py::test_api_tenant_isolation PASSED               [ 26%]
+2026-09-13T19:10:04.2497764Z tests/test_connectors.py::test_keitaro_normalize PASSED                  [ 27%]
+2026-09-13T19:10:04.2701600Z tests/test_connectors.py::test_keitaro_fetch_401 PASSED                  [ 27%]
+2026-09-13T19:10:04.2913278Z tests/test_connectors.py::test_keitaro_fetch_429 PASSED                  [ 28%]
+2026-09-13T19:10:04.3123465Z tests/test_connectors.py::test_keitaro_fetch_500 PASSED                  [ 28%]
+2026-09-13T19:10:04.3328455Z tests/test_connectors.py::test_keitaro_fetch_timeout PASSED              [ 29%]
+2026-09-13T19:10:04.3524198Z tests/test_connectors.py::test_keitaro_malformed_json PASSED             [ 29%]
+2026-09-13T19:10:04.3533887Z tests/test_connectors.py::test_keitaro_normalize_utc PASSED              [ 30%]
+2026-09-13T19:10:04.3542942Z tests/test_connectors.py::test_keitaro_normalize_missing_fields PASSED   [ 30%]
+2026-09-13T19:10:04.3739580Z tests/test_connectors.py::test_keitaro_fetch_403 PASSED                  [ 31%]
+2026-09-13T19:10:04.3749341Z tests/test_connectors.py::test_keitaro_normalize_bad_money PASSED        [ 31%]
+2026-09-13T19:10:04.3768115Z tests/test_connectors_api.py::test_rotate_secret_revives_unauthorized_connector ERROR [ 32%]
+2026-09-13T19:10:04.3785318Z tests/test_connectors_api.py::test_rotate_secret_never_leaks ERROR       [ 32%]
+2026-09-13T19:10:04.3802035Z tests/test_connectors_api.py::test_rotate_with_validate_false_on_unauthorized ERROR [ 33%]
+2026-09-13T19:10:04.3820749Z tests/test_connectors_api.py::test_soft_deleted_connector_can_be_recreated ERROR [ 34%]
+2026-09-13T19:10:04.3832631Z tests/test_connectors_api.py::test_create_unknown_connector_returns_422 ERROR [ 34%]
+2026-09-13T19:10:04.3848609Z tests/test_connectors_api.py::test_manual_sync_endpoint ERROR            [ 35%]
+2026-09-13T19:10:04.4426417Z tests/test_connectors_persistence.py::test_api_persistence_create PASSED [ 35%]
+2026-09-13T19:10:04.6249474Z tests/test_connectors_persistence.py::test_api_persistence_patch_status FAILED [ 36%]
+2026-09-13T19:10:04.6765839Z tests/test_connectors_persistence.py::test_api_persistence_soft_delete FAILED [ 36%]
+2026-09-13T19:10:04.6775775Z tests/test_consumables.py::test_pan_masking PASSED                       [ 37%]
+2026-09-13T19:10:04.6784423Z tests/test_consumables.py::test_full_pan_raises_error_if_required PASSED [ 37%]
+2026-09-13T19:10:04.6901573Z tests/test_credential_rotation.py::test_credential_rotation PASSED       [ 38%]
+2026-09-13T19:10:04.6979406Z tests/test_credential_rotation_rollback.py::test_credential_rotation_rollback PASSED [ 38%]
+2026-09-13T19:10:04.7186749Z tests/test_google_ads_connector.py::test_google_ads_test_connection_success PASSED [ 39%]
+2026-09-13T19:10:04.7558958Z tests/test_google_ads_connector.py::test_google_ads_test_connection_auth_failure PASSED [ 40%]
+2026-09-13T19:10:04.7761958Z tests/test_google_ads_connector.py::test_google_ads_fetch_ad_accounts PASSED [ 40%]
+2026-09-13T19:10:04.7989579Z tests/test_google_ads_connector.py::test_google_ads_fetch_campaigns PASSED [ 41%]
+2026-09-13T19:10:04.7999213Z tests/test_google_ads_connector.py::test_google_ads_fetch_metrics_converts_micros_to_decimal PASSED [ 41%]
+2026-09-13T19:10:04.8008318Z tests/test_google_ads_connector.py::test_google_ads_metrics_include_stat_date PASSED [ 42%]
+2026-09-13T19:10:04.8017778Z tests/test_google_ads_connector.py::test_google_ads_external_id_is_deterministic PASSED [ 42%]
+2026-09-13T19:10:04.8405183Z tests/test_google_ads_connector.py::test_google_ads_pagination PASSED    [ 43%]
+2026-09-13T19:10:04.8415519Z tests/test_google_ads_connector.py::test_google_ads_optional_metrics PASSED [ 43%]
+2026-09-13T19:10:04.8618197Z tests/test_google_ads_connector.py::test_google_ads_persistence_uses_atomic_upsert PASSED [ 44%]
+2026-09-13T19:10:04.8768798Z tests/test_google_ads_connector.py::test_google_ads_tenant_isolation PASSED [ 44%]
+2026-09-13T19:10:05.0156987Z tests/test_invites.py::test_invites_happy_path PASSED                    [ 45%]
+2026-09-13T19:10:05.0176350Z tests/test_invites.py::test_invites_media_buyer_forbidden PASSED         [ 45%]
+2026-09-13T19:10:05.0195174Z tests/test_invites.py::test_invites_team_lead_forbidden PASSED           [ 46%]
+2026-09-13T19:10:05.0747410Z tests/test_invites.py::test_invites_cross_tenant PASSED                  [ 47%]
+2026-09-13T19:10:05.1765155Z tests/test_invites.py::test_duplicate_invite_email PASSED                [ 47%]
+2026-09-13T19:10:05.2645402Z tests/test_media_buying.py::test_ad_account_crud PASSED                  [ 48%]
+2026-09-13T19:10:05.3518342Z tests/test_media_buying.py::test_campaign_run_stat_upsert PASSED         [ 48%]
+2026-09-13T19:10:05.3733333Z tests/test_meta_ads_connector.py::test_meta_test_connection_success PASSED [ 49%]
+2026-09-13T19:10:05.4819060Z tests/test_meta_ads_connector.py::test_meta_secret_stripping_on_paging PASSED [ 49%]
+2026-09-13T19:10:05.5223867Z tests/test_meta_ads_connector.py::test_meta_nested_insights_paging PASSED [ 50%]
+2026-09-13T19:10:05.5235684Z tests/test_meta_ads_connector.py::test_meta_normalization_with_action_values PASSED [ 50%]
+2026-09-13T19:10:05.5621393Z tests/test_meta_ads_connector.py::test_meta_fetch_campaigns_flattening PASSED [ 51%]
+2026-09-13T19:10:05.5688120Z tests/test_meta_ads_connector.py::test_meta_ad_accounts_status_mapping PASSED [ 51%]
+2026-09-13T19:10:05.5825133Z tests/test_meta_ads_connector.py::test_meta_tenant_isolation PASSED      [ 52%]
+2026-09-13T19:10:05.5981618Z tests/test_meta_ads_connector.py::test_meta_upsert_idempotency PASSED    [ 52%]
+2026-09-13T19:10:05.6205064Z tests/test_meta_ads_connector.py::test_meta_retry_429 PASSED             [ 53%]
+2026-09-13T19:10:05.6596577Z tests/test_meta_ads_connector.py::test_meta_retry_5xx_success PASSED     [ 54%]
+2026-09-13T19:10:05.6796396Z tests/test_meta_ads_connector.py::test_meta_unauthorized PASSED          [ 54%]
+2026-09-13T19:10:05.7183720Z tests/test_meta_ads_connector.py::test_meta_fetch_campaigns_nested_paging_and_safety PASSED [ 55%]
+2026-09-13T19:10:05.7464020Z tests/test_meta_ads_connector.py::test_meta_upsert_fx_rate_success_and_failure PASSED [ 55%]
+2026-09-13T19:10:05.7849177Z tests/test_meta_ads_connector.py::test_meta_test_connection_401_403 PASSED [ 56%]
+2026-09-13T19:10:05.8803622Z tests/test_meta_ads_connector.py::test_meta_scheduler_unauthorized_state FAILED [ 56%]
+2026-09-13T19:10:05.9263148Z tests/test_no_float.py::test_no_float_in_financial_code PASSED           [ 57%]
+2026-09-13T19:10:05.9272191Z tests/test_parsing.py::test_parse_amount PASSED                          [ 57%]
+2026-09-13T19:10:05.9280651Z tests/test_parsing.py::test_parse_amount_errors PASSED                   [ 58%]
+2026-09-13T19:10:05.9292133Z tests/test_payroll_logic.py::test_payroll_fixed_base_salary PASSED       [ 58%]
+2026-09-13T19:10:05.9302170Z tests/test_payroll_logic.py::test_payroll_bonus_calculation PASSED       [ 59%]
+2026-09-13T19:10:06.9332589Z tests/test_retry_429.py::test_retry_429 PASSED                           [ 60%]
+2026-09-13T19:10:06.9345471Z tests/test_retry_5xx.py::test_retry_5xx PASSED                           [ 60%]
+2026-09-13T19:10:06.9357819Z tests/test_retry_exhausted.py::test_retry_exhausted PASSED               [ 61%]
+2026-09-13T19:10:06.9589158Z tests/test_rls_completeness.py::test_all_tables_have_rls PASSED          [ 61%]
+2026-09-13T19:10:06.9608763Z tests/test_scheduler_concurrency.py::test_scheduler_max_concurrency ERROR [ 62%]
+2026-09-13T19:10:06.9624610Z tests/test_scheduler_concurrency.py::test_scheduler_batch_continues_on_error ERROR [ 62%]
+2026-09-13T19:10:06.9636355Z tests/test_scheduler_concurrency.py::test_safe_redis_lock_release PASSED [ 63%]
+2026-09-13T19:10:06.9845683Z tests/test_stage2_hardening.py::test_unauthorized_exception_no_response_body PASSED [ 63%]
+2026-09-13T19:10:07.0048657Z tests/test_stage2_hardening.py::test_connector_error_no_response_body PASSED [ 64%]
+2026-09-13T19:10:07.0166944Z tests/test_stage2_hardening.py::test_binom_upsert_fx_rate_missing_raises PASSED [ 64%]
+2026-09-13T19:10:07.0272049Z tests/test_stage2_hardening.py::test_voluum_upsert_fx_rate_missing_raises PASSED [ 65%]
+2026-09-13T19:10:07.0377567Z tests/test_stage2_hardening.py::test_affise_upsert_fx_rate_missing_raises PASSED [ 65%]
+2026-09-13T19:10:07.0385987Z tests/test_stage2_hardening.py::test_voluum_normalize_no_date_skips PASSED [ 66%]
+2026-09-13T19:10:07.0394481Z tests/test_stage2_hardening.py::test_affise_normalize_no_date_skips PASSED [ 67%]
+2026-09-13T19:10:07.0403165Z tests/test_stage2_hardening.py::test_meta_normalize_no_date_skips PASSED [ 67%]
+2026-09-13T19:10:07.0412040Z tests/test_stage2_hardening.py::test_voluum_normalize_with_date_works PASSED [ 68%]
+2026-09-13T19:10:07.0420597Z tests/test_stage2_hardening.py::test_affise_normalize_with_date_works PASSED [ 68%]
+2026-09-13T19:10:07.0429220Z tests/test_stage2_hardening.py::test_meta_normalize_with_date_works PASSED [ 69%]
+2026-09-13T19:10:07.0533274Z tests/test_stage2_hardening.py::test_scheduler_due_connector_runs PASSED [ 69%]
+2026-09-13T19:10:07.0621371Z tests/test_stage2_hardening.py::test_scheduler_not_due_connector_skipped PASSED [ 70%]
+2026-09-13T19:10:07.0712260Z tests/test_stage2_hardening.py::test_scheduler_null_next_sync_runs PASSED [ 70%]
+2026-09-13T19:10:07.0892257Z tests/test_stage2_hardening.py::test_scheduler_next_sync_at_updated_on_success PASSED [ 71%]
+2026-09-13T19:10:07.1068747Z tests/test_stage2_hardening.py::test_scheduler_unauthorized_sets_null_next_sync PASSED [ 71%]
+2026-09-13T19:10:07.1245483Z tests/test_stage2_hardening.py::test_scheduler_failure_sets_next_sync_with_retry_interval PASSED [ 72%]
+2026-09-13T19:10:07.1973136Z tests/test_stage2_stat_integrity.py::test_campaign_run_stat_soft_delete PASSED [ 72%]
+2026-09-13T19:10:07.2581811Z tests/test_stage2_stat_integrity.py::test_campaign_run_stat_uniqueness_external_id_null PASSED [ 73%]
+2026-09-13T19:10:07.3234876Z tests/test_stage2_stat_integrity.py::test_tenant_isolation_campaign_run_stats PASSED [ 74%]
+2026-09-13T19:10:07.3772951Z tests/test_stage2_stat_integrity.py::test_regression_old_index_different_external_ids PASSED [ 74%]
+2026-09-13T19:10:07.4634914Z tests/test_stage2_upsert_race.py::test_upsert_race_atomic_insert_or_update PASSED [ 75%]
+2026-09-13T19:10:07.5496729Z tests/test_stage2_upsert_race.py::test_upsert_idempotent_multiple_calls PASSED [ 75%]
+2026-09-13T19:10:07.6118110Z tests/test_stage2_upsert_race.py::test_upsert_soft_delete_respects_index_predicate PASSED [ 76%]
+2026-09-13T19:10:07.6841099Z tests/test_stage2_upsert_race.py::test_upsert_tenant_isolation_race PASSED [ 76%]
+2026-09-13T19:10:07.8437670Z tests/test_stage2_upsert_race.py::test_upsert_all_fields_updated_correctly PASSED [ 77%]
+2026-09-13T19:10:07.8596078Z tests/test_stale_source_dq.py::test_stale_source_dq PASSED               [ 77%]
+2026-09-13T19:10:07.8798957Z tests/test_stale_source_dq_deduplication.py::test_stale_source_dq_dedup PASSED [ 78%]
+2026-09-13T19:10:07.8882442Z tests/test_telegram.py::test_telegram_link_token PASSED                  [ 78%]
+2026-09-13T19:10:07.8893150Z tests/test_telegram.py::test_telegram_status_cross_tenant PASSED         [ 79%]
+2026-09-13T19:10:07.8909036Z tests/test_telegram.py::test_telegram_redis_unavailable PASSED           [ 80%]
+2026-09-13T19:10:07.8961744Z tests/test_telegram.py::test_telegram_link_success_and_reuse PASSED      [ 80%]
+2026-09-13T19:10:07.9003416Z tests/test_telegram_link.py::test_telegram_webhook_invalid_hash PASSED   [ 81%]
+2026-09-13T19:10:07.9160952Z tests/test_telegram_link.py::test_telegram_status_command PASSED         [ 81%]
+2026-09-13T19:10:07.9202653Z tests/test_tenant_isolation.py::test_raw_sql_select_returns_zero_rows_without_context PASSED [ 82%]
+2026-09-13T19:10:07.9241465Z tests/test_tenant_isolation.py::test_raw_sql_insert_rejected_by_with_check PASSED [ 82%]
+2026-09-13T19:10:07.9302491Z tests/test_tenant_isolation.py::test_cross_tenant_select_returns_zero_rows PASSED [ 83%]
+2026-09-13T19:10:07.9342432Z tests/test_tenant_isolation.py::test_cross_tenant_insert_rejected PASSED [ 83%]
+2026-09-13T19:10:07.9404522Z tests/test_tenant_isolation.py::test_fk_insert_commits_cleanly PASSED    [ 84%]
+2026-09-13T19:10:08.0244247Z tests/test_tenant_isolation.py::test_every_route_is_tenant_scoped PASSED [ 84%]
+2026-09-13T19:10:08.0457633Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_test_connection_success PASSED [ 85%]
+2026-09-13T19:10:08.0657105Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_test_connection_auth_failure PASSED [ 85%]
+2026-09-13T19:10:08.0862764Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_ad_accounts PASSED [ 86%]
+2026-09-13T19:10:08.1066583Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_campaigns PASSED [ 87%]
+2026-09-13T19:10:08.1454923Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_fetch_metrics PASSED [ 87%]
+2026-09-13T19:10:08.1465359Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_decimal_mapping PASSED [ 88%]
+2026-09-13T19:10:08.1474813Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_stat_date_mapping PASSED [ 88%]
+2026-09-13T19:10:08.1485291Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_external_id_is_deterministic PASSED [ 89%]
+2026-09-13T19:10:08.1694190Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_pagination PASSED    [ 89%]
+2026-09-13T19:10:08.1704255Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_optional_metrics PASSED [ 90%]
+2026-09-13T19:10:08.1882303Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_persistence_uses_atomic_upsert PASSED [ 90%]
+2026-09-13T19:10:08.2068257Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_tenant_isolation PASSED [ 91%]
+2026-09-13T19:10:08.2078337Z tests/test_tiktok_ads_connector.py::test_tiktok_ads_no_real_network_calls PASSED [ 91%]
+2026-09-13T19:10:08.2669470Z tests/test_transactions.py::test_create_transaction PASSED               [ 92%]
+2026-09-13T19:10:08.3320001Z tests/test_transactions.py::test_list_and_get_transaction PASSED         [ 92%]
+2026-09-13T19:10:08.3913225Z tests/test_transactions.py::test_update_transaction PASSED               [ 93%]
+2026-09-13T19:10:08.4504606Z tests/test_transactions.py::test_delete_transaction PASSED               [ 94%]
+2026-09-13T19:10:08.7540973Z tests/test_types.py::test_openapi_schema_money PASSED                    [ 94%]
+2026-09-13T19:10:08.8118679Z tests/test_types.py::test_pnl_returns_string PASSED                      [ 95%]
+2026-09-13T19:10:08.8324794Z tests/test_voluum_connector.py::test_voluum_test_connection_success PASSED [ 95%]
+2026-09-13T19:10:08.8525400Z tests/test_voluum_connector.py::test_voluum_test_connection_fail PASSED  [ 96%]
+2026-09-13T19:10:08.8536974Z tests/test_voluum_connector.py::test_voluum_normalization PASSED         [ 96%]
+2026-09-13T19:10:08.8710458Z tests/test_voluum_connector.py::test_voluum_upsert_idempotency PASSED    [ 97%]
+2026-09-13T19:10:08.8847911Z tests/test_voluum_connector.py::test_voluum_tenant_isolation PASSED      [ 97%]
+2026-09-13T19:10:08.9061959Z tests/test_voluum_connector.py::test_voluum_retry_429 PASSED             [ 98%]
+2026-09-13T19:10:08.9273423Z tests/test_voluum_connector.py::test_voluum_retry_5xx_success PASSED     [ 98%]
+2026-09-13T19:10:08.9500547Z tests/test_voluum_connector.py::test_voluum_unauthorized PASSED          [ 99%]
+2026-09-13T19:10:09.0071545Z tests/test_voluum_connector.py::test_voluum_smoke PASSED                 [100%]
+2026-09-13T19:10:09.0072196Z 
+2026-09-13T19:10:09.0072488Z ==================================== ERRORS ====================================
+2026-09-13T19:10:09.0073353Z _____ ERROR at setup of test_rotate_secret_revives_unauthorized_connector ______
+2026-09-13T19:10:09.0074487Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py, line 11
+2026-09-13T19:10:09.0075364Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0076500Z   async def test_rotate_secret_revives_unauthorized_connector(async_client: AsyncClient, system_session, auth_headers):
+2026-09-13T19:10:09.0077520Z       # Get user
+2026-09-13T19:10:09.0077969Z       res = await system_session.execute(select(User))
+2026-09-13T19:10:09.0078556Z       user = res.scalars().first()
+2026-09-13T19:10:09.0078886Z 
+2026-09-13T19:10:09.0079056Z       # Create unauthorized config
+2026-09-13T19:10:09.0079568Z       config = ConnectorConfig(
+2026-09-13T19:10:09.0080049Z           company_id=user.company_id,
+2026-09-13T19:10:09.0080548Z           connector_name="meta",
+2026-09-13T19:10:09.0081006Z           encrypted_secret="enc1",
+2026-09-13T19:10:09.0081512Z           status="unauthorized",
+2026-09-13T19:10:09.0081982Z           next_sync_at=None,
+2026-09-13T19:10:09.0082425Z           retry_count=5
+2026-09-13T19:10:09.0082796Z       )
+2026-09-13T19:10:09.0083138Z       system_session.add(config)
+2026-09-13T19:10:09.0083588Z       await system_session.commit()
+2026-09-13T19:10:09.0083900Z 
+2026-09-13T19:10:09.0084085Z       response = await async_client.patch(
+2026-09-13T19:10:09.0084654Z           f"/api/v1/connectors/{config.id}?validate=false",
+2026-09-13T19:10:09.0085221Z           headers=auth_headers,
+2026-09-13T19:10:09.0085663Z           json={"secret": "new_secret"}
+2026-09-13T19:10:09.0086429Z       )
+2026-09-13T19:10:09.0086780Z       assert response.status_code == 200
+2026-09-13T19:10:09.0087277Z       data = response.json()
+2026-09-13T19:10:09.0087673Z       assert data["status"] == "active"
+2026-09-13T19:10:09.0087860Z 
+2026-09-13T19:10:09.0087939Z       # Check DB
+2026-09-13T19:10:09.0088595Z       res = await system_session.execute(select(ConnectorConfig).where(ConnectorConfig.id == config.id))
+2026-09-13T19:10:09.0089113Z       db_config = res.scalars().first()
+2026-09-13T19:10:09.0089390Z       assert db_config.status == "active"
+2026-09-13T19:10:09.0089673Z       assert db_config.retry_count == 0
+2026-09-13T19:10:09.0089956Z       assert db_config.next_sync_at is not None
+2026-09-13T19:10:09.0090264Z E       fixture 'async_client' not found
+2026-09-13T19:10:09.0092847Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0095634Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0095885Z 
+2026-09-13T19:10:09.0096731Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py:11
+2026-09-13T19:10:09.0097845Z _______________ ERROR at setup of test_rotate_secret_never_leaks _______________
+2026-09-13T19:10:09.0098685Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py, line 45
+2026-09-13T19:10:09.0099561Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0100379Z   async def test_rotate_secret_never_leaks(async_client: AsyncClient, system_session, auth_headers, caplog):
+2026-09-13T19:10:09.0101362Z       res = await system_session.execute(select(User))
+2026-09-13T19:10:09.0101923Z       user = res.scalars().first()
+2026-09-13T19:10:09.0102224Z 
+2026-09-13T19:10:09.0102406Z       config = ConnectorConfig(
+2026-09-13T19:10:09.0102855Z           company_id=user.company_id,
+2026-09-13T19:10:09.0103339Z           connector_name="meta",
+2026-09-13T19:10:09.0103780Z           encrypted_secret="enc1",
+2026-09-13T19:10:09.0104218Z           status="active"
+2026-09-13T19:10:09.0104587Z       )
+2026-09-13T19:10:09.0104916Z       system_session.add(config)
+2026-09-13T19:10:09.0105370Z       await system_session.commit()
+2026-09-13T19:10:09.0105678Z 
+2026-09-13T19:10:09.0105859Z       secret_val = "SUPER_SECRET_VALUE_123"
+2026-09-13T19:10:09.0106617Z       response = await async_client.patch(
+2026-09-13T19:10:09.0107190Z           f"/api/v1/connectors/{config.id}?validate=false",
+2026-09-13T19:10:09.0107753Z           headers=auth_headers,
+2026-09-13T19:10:09.0108189Z           json={"secret": secret_val}
+2026-09-13T19:10:09.0108622Z       )
+2026-09-13T19:10:09.0108966Z       assert response.status_code == 200
+2026-09-13T19:10:09.0109303Z 
+2026-09-13T19:10:09.0109468Z       # Check audit log via DB
+2026-09-13T19:10:09.0109930Z       from app.db.models import AuditLog
+2026-09-13T19:10:09.0110753Z       res = await system_session.execute(select(AuditLog).where(AuditLog.entity_id == config.id))
+2026-09-13T19:10:09.0111589Z       logs = res.scalars().all()
+2026-09-13T19:10:09.0112018Z       assert len(logs) > 0
+2026-09-13T19:10:09.0112267Z 
+2026-09-13T19:10:09.0112413Z       for log in logs:
+2026-09-13T19:10:09.0112876Z           diff_str = json.dumps(log.diff) if log.diff else ""
+2026-09-13T19:10:09.0113468Z           assert secret_val not in diff_str
+2026-09-13T19:10:09.0113802Z 
+2026-09-13T19:10:09.0113973Z       for record in caplog.records:
+2026-09-13T19:10:09.0114466Z           assert secret_val not in record.message
+2026-09-13T19:10:09.0114994Z E       fixture 'async_client' not found
+2026-09-13T19:10:09.0120631Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0125799Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0126440Z 
+2026-09-13T19:10:09.0126890Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py:45
+2026-09-13T19:10:09.0127639Z ______ ERROR at setup of test_rotate_with_validate_false_on_unauthorized _______
+2026-09-13T19:10:09.0128238Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py, line 80
+2026-09-13T19:10:09.0128723Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0129270Z   async def test_rotate_with_validate_false_on_unauthorized(async_client: AsyncClient, system_session, auth_headers, monkeypatch):
+2026-09-13T19:10:09.0130048Z       res = await system_session.execute(select(User))
+2026-09-13T19:10:09.0130364Z       user = res.scalars().first()
+2026-09-13T19:10:09.0130540Z 
+2026-09-13T19:10:09.0130638Z       config = ConnectorConfig(
+2026-09-13T19:10:09.0130904Z           company_id=user.company_id,
+2026-09-13T19:10:09.0131180Z           connector_name="meta",
+2026-09-13T19:10:09.0131429Z           encrypted_secret="enc1",
+2026-09-13T19:10:09.0131682Z           status="active"
+2026-09-13T19:10:09.0131904Z       )
+2026-09-13T19:10:09.0132098Z       system_session.add(config)
+2026-09-13T19:10:09.0132358Z       await system_session.commit()
+2026-09-13T19:10:09.0132534Z 
+2026-09-13T19:10:09.0132692Z       # mock connector test_connection to raise UnauthorizedError
+2026-09-13T19:10:09.0133103Z       from app.connectors.meta_ads import MetaAdsConnector
+2026-09-13T19:10:09.0133475Z       from app.connectors.base import UnauthorizedError
+2026-09-13T19:10:09.0133707Z 
+2026-09-13T19:10:09.0133830Z       async def mock_test_connection(*args, **kwargs):
+2026-09-13T19:10:09.0134157Z           raise UnauthorizedError("Invalid")
+2026-09-13T19:10:09.0134355Z 
+2026-09-13T19:10:09.0134598Z       monkeypatch.setattr(MetaAdsConnector, "test_connection", mock_test_connection)
+2026-09-13T19:10:09.0134941Z 
+2026-09-13T19:10:09.0135051Z       response = await async_client.patch(
+2026-09-13T19:10:09.0135378Z           f"/api/v1/connectors/{config.id}?validate=true",
+2026-09-13T19:10:09.0135693Z           headers=auth_headers,
+2026-09-13T19:10:09.0136191Z           json={"secret": "bad_secret"}
+2026-09-13T19:10:09.0136468Z       )
+2026-09-13T19:10:09.0136670Z       assert response.status_code == 400
+2026-09-13T19:10:09.0136861Z 
+2026-09-13T19:10:09.0136957Z       # check db unchanged
+2026-09-13T19:10:09.0137201Z       await system_session.refresh(config)
+2026-09-13T19:10:09.0137509Z       assert config.encrypted_secret == "enc1"
+2026-09-13T19:10:09.0137814Z E       fixture 'async_client' not found
+2026-09-13T19:10:09.0140483Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0143077Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0143458Z 
+2026-09-13T19:10:09.0143714Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py:80
+2026-09-13T19:10:09.0144279Z ________ ERROR at setup of test_soft_deleted_connector_can_be_recreated ________
+2026-09-13T19:10:09.0144899Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py, line 114
+2026-09-13T19:10:09.0145384Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0145871Z   async def test_soft_deleted_connector_can_be_recreated(async_client: AsyncClient, system_session, auth_headers):
+2026-09-13T19:10:09.0146651Z       # create
+2026-09-13T19:10:09.0146872Z       response = await async_client.post(
+2026-09-13T19:10:09.0147187Z           "/api/v1/connectors/",
+2026-09-13T19:10:09.0147444Z           headers=auth_headers,
+2026-09-13T19:10:09.0147726Z           json={"connector_name": "binom", "secret": "s1"}
+2026-09-13T19:10:09.0148022Z       )
+2026-09-13T19:10:09.0148221Z       assert response.status_code == 201
+2026-09-13T19:10:09.0148517Z       conn_id = response.json()["id"]
+2026-09-13T19:10:09.0148693Z 
+2026-09-13T19:10:09.0148775Z       # delete
+2026-09-13T19:10:09.0149119Z       response = await async_client.delete(
+2026-09-13T19:10:09.0149413Z           f"/api/v1/connectors/{conn_id}",
+2026-09-13T19:10:09.0149690Z           headers=auth_headers
+2026-09-13T19:10:09.0149918Z       )
+2026-09-13T19:10:09.0150114Z       assert response.status_code == 204
+2026-09-13T19:10:09.0150301Z 
+2026-09-13T19:10:09.0150382Z       # create again
+2026-09-13T19:10:09.0150617Z       response = await async_client.post(
+2026-09-13T19:10:09.0150893Z           "/api/v1/connectors/",
+2026-09-13T19:10:09.0151140Z           headers=auth_headers,
+2026-09-13T19:10:09.0151420Z           json={"connector_name": "binom", "secret": "s2"}
+2026-09-13T19:10:09.0151734Z       )
+2026-09-13T19:10:09.0151987Z       assert response.status_code == 201 # should succeed now
+2026-09-13T19:10:09.0152233Z 
+2026-09-13T19:10:09.0152354Z       # create third time (should fail duplicate)
+2026-09-13T19:10:09.0152665Z       response = await async_client.post(
+2026-09-13T19:10:09.0152937Z           "/api/v1/connectors/",
+2026-09-13T19:10:09.0153183Z           headers=auth_headers,
+2026-09-13T19:10:09.0153460Z           json={"connector_name": "binom", "secret": "s3"}
+2026-09-13T19:10:09.0153746Z       )
+2026-09-13T19:10:09.0153942Z       assert response.status_code == 400
+2026-09-13T19:10:09.0154237Z E       fixture 'async_client' not found
+2026-09-13T19:10:09.0157036Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0159657Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0159899Z 
+2026-09-13T19:10:09.0160154Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py:114
+2026-09-13T19:10:09.0160719Z _________ ERROR at setup of test_create_unknown_connector_returns_422 __________
+2026-09-13T19:10:09.0161308Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py, line 148
+2026-09-13T19:10:09.0161787Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0162201Z   async def test_create_unknown_connector_returns_422(async_client: AsyncClient, auth_headers):
+2026-09-13T19:10:09.0162675Z       response = await async_client.post(
+2026-09-13T19:10:09.0162960Z           "/api/v1/connectors/",
+2026-09-13T19:10:09.0163214Z           headers=auth_headers,
+2026-09-13T19:10:09.0163737Z           json={"connector_name": "nonexistent", "secret": "s1"}
+2026-09-13T19:10:09.0164060Z       )
+2026-09-13T19:10:09.0164261Z       assert response.status_code == 422
+2026-09-13T19:10:09.0164545Z E       fixture 'async_client' not found
+2026-09-13T19:10:09.0167367Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0170006Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0170249Z 
+2026-09-13T19:10:09.0170644Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py:148
+2026-09-13T19:10:09.0171203Z _________________ ERROR at setup of test_manual_sync_endpoint __________________
+2026-09-13T19:10:09.0171784Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py, line 157
+2026-09-13T19:10:09.0172271Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0172727Z   async def test_manual_sync_endpoint(async_client: AsyncClient, system_session, auth_headers, monkeypatch):
+2026-09-13T19:10:09.0173279Z       res = await system_session.execute(select(User))
+2026-09-13T19:10:09.0173599Z       user = res.scalars().first()
+2026-09-13T19:10:09.0173777Z 
+2026-09-13T19:10:09.0173879Z       config = ConnectorConfig(
+2026-09-13T19:10:09.0174147Z           company_id=user.company_id,
+2026-09-13T19:10:09.0174425Z           connector_name="meta",
+2026-09-13T19:10:09.0174681Z           encrypted_secret="enc1",
+2026-09-13T19:10:09.0174943Z           status="active"
+2026-09-13T19:10:09.0175163Z       )
+2026-09-13T19:10:09.0175355Z       system_session.add(config)
+2026-09-13T19:10:09.0175612Z       await system_session.commit()
+2026-09-13T19:10:09.0175789Z 
+2026-09-13T19:10:09.0176103Z       class MockTask:
+2026-09-13T19:10:09.0176415Z           id = "mock-id-123"
+2026-09-13T19:10:09.0176568Z 
+2026-09-13T19:10:09.0176670Z       def mock_delay(*args, **kwargs):
+2026-09-13T19:10:09.0176950Z E       fixture 'async_client' not found
+2026-09-13T19:10:09.0179629Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0182232Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0182472Z 
+2026-09-13T19:10:09.0182729Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_connectors_api.py:157
+2026-09-13T19:10:09.0183275Z _______________ ERROR at setup of test_scheduler_max_concurrency _______________
+2026-09-13T19:10:09.0183876Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_scheduler_concurrency.py, line 11
+2026-09-13T19:10:09.0184387Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0184734Z   async def test_scheduler_max_concurrency(system_session, monkeypatch):
+2026-09-13T19:10:09.0185141Z       # Setup test companies and configs
+2026-09-13T19:10:09.0185563Z       company = Company(name="Test Co")
+2026-09-13T19:10:09.0185844Z       system_session.add(company)
+2026-09-13T19:10:09.0186366Z       await system_session.commit()
+2026-09-13T19:10:09.0186653Z       await system_session.refresh(company)
+2026-09-13T19:10:09.0186850Z 
+2026-09-13T19:10:09.0186937Z       configs = []
+2026-09-13T19:10:09.0187158Z       now_utc = datetime.now(timezone.utc)
+2026-09-13T19:10:09.0187441Z       for i in range(20):
+2026-09-13T19:10:09.0187673Z           c = ConnectorConfig(
+2026-09-13T19:10:09.0187922Z               company_id=company.id,
+2026-09-13T19:10:09.0188184Z               connector_name="meta",
+2026-09-13T19:10:09.0188454Z               encrypted_secret="enc1",
+2026-09-13T19:10:09.0188714Z               status="active",
+2026-09-13T19:10:09.0188992Z               next_sync_at=now_utc - timedelta(minutes=1)
+2026-09-13T19:10:09.0189291Z           )
+2026-09-13T19:10:09.0189487Z           configs.append(c)
+2026-09-13T19:10:09.0189733Z           system_session.add(c)
+2026-09-13T19:10:09.0189991Z       await system_session.commit()
+2026-09-13T19:10:09.0190170Z 
+2026-09-13T19:10:09.0190375Z       in_flight = 0
+2026-09-13T19:10:09.0190583Z       max_in_flight = 0
+2026-09-13T19:10:09.0190813Z       lock = asyncio.Lock()
+2026-09-13T19:10:09.0190959Z 
+2026-09-13T19:10:09.0191064Z       async def mock_sync(cid, conn_id):
+2026-09-13T19:10:09.0191348Z           nonlocal in_flight, max_in_flight
+2026-09-13T19:10:09.0191627Z           async with lock:
+2026-09-13T19:10:09.0191862Z               in_flight += 1
+2026-09-13T19:10:09.0192103Z               if in_flight > max_in_flight:
+2026-09-13T19:10:09.0192374Z                   max_in_flight = in_flight
+2026-09-13T19:10:09.0192645Z           await asyncio.sleep(0.05)
+2026-09-13T19:10:09.0192904Z           async with lock:
+2026-09-13T19:10:09.0193133Z               in_flight -= 1
+2026-09-13T19:10:09.0193284Z 
+2026-09-13T19:10:09.0193484Z       monkeypatch.setattr(scheduler, "sync_connector_instance", mock_sync)
+2026-09-13T19:10:09.0193946Z       monkeypatch.setattr(scheduler, "SYNC_MAX_CONCURRENCY", 5)
+2026-09-13T19:10:09.0194206Z 
+2026-09-13T19:10:09.0194315Z       await scheduler.run_scheduled_syncs()
+2026-09-13T19:10:09.0194501Z 
+2026-09-13T19:10:09.0194598Z       assert max_in_flight <= 5
+2026-09-13T19:10:09.0194844Z       assert max_in_flight > 0
+2026-09-13T19:10:09.0195115Z E       fixture 'system_session' not found
+2026-09-13T19:10:09.0198029Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.0200661Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.0200905Z 
+2026-09-13T19:10:09.0201191Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_scheduler_concurrency.py:11
+2026-09-13T19:10:09.0201779Z __________ ERROR at setup of test_scheduler_batch_continues_on_error ___________
+2026-09-13T19:10:09.0202393Z file /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_scheduler_concurrency.py, line 55
+2026-09-13T19:10:09.0202905Z   @pytest.mark.asyncio
+2026-09-13T19:10:09.0203273Z   async def test_scheduler_batch_continues_on_error(system_session, monkeypatch):
+2026-09-13T19:10:09.0203695Z       company = Company(name="Test Co")
+2026-09-13T19:10:09.0203975Z       system_session.add(company)
+2026-09-13T19:10:09.0204359Z       await system_session.commit()
+2026-09-13T19:10:09.0204735Z       await system_session.refresh(company)
+2026-09-13T19:10:09.0205217Z 
+2026-09-13T19:10:09.0205384Z       configs = []
+2026-09-13T19:10:09.0205746Z       now_utc = datetime.now(timezone.utc)
+2026-09-13T19:10:09.0206393Z       for i in range(20):
+2026-09-13T19:10:09.0220597Z           c = ConnectorConfig(
+2026-09-13T19:10:09.0221101Z               company_id=company.id,
+2026-09-13T19:10:09.0221604Z               connector_name="meta",
+2026-09-13T19:10:09.0222144Z               encrypted_secret="enc1",
+2026-09-13T19:10:09.0222550Z               status="active",
+2026-09-13T19:10:09.0222859Z               next_sync_at=now_utc - timedelta(minutes=1)
+2026-09-13T19:10:09.0223168Z           )
+2026-09-13T19:10:09.0223380Z           configs.append(c)
+2026-09-13T19:10:09.0223626Z           system_session.add(c)
+2026-09-13T19:10:09.0223899Z       await system_session.commit()
+2026-09-13T19:10:09.0224077Z 
+2026-09-13T19:10:09.0224168Z       called = 0
+2026-09-13T19:10:09.0224301Z 
+2026-09-13T19:10:09.0224403Z       async def mock_sync(cid, conn_id):
+2026-09-13T19:10:09.0224695Z           nonlocal called
+2026-09-13T19:10:09.0224939Z           called += 1
+2026-09-13T19:10:09.0225371Z           if called == 1:
+2026-09-13T19:10:09.0225625Z               raise Exception("First task fails")
+2026-09-13T19:10:09.0225840Z 
+2026-09-13T19:10:09.0226318Z       monkeypatch.setattr(scheduler, "sync_connector_instance", mock_sync)
+2026-09-13T19:10:09.0226805Z       monkeypatch.setattr(scheduler, "SYNC_MAX_CONCURRENCY", 5)
+2026-09-13T19:10:09.0227065Z 
+2026-09-13T19:10:09.0227170Z       # Should not raise exception
+2026-09-13T19:10:09.0227454Z       await scheduler.run_scheduled_syncs()
+2026-09-13T19:10:09.0227659Z 
+2026-09-13T19:10:09.0227754Z       assert called == 20
+2026-09-13T19:10:09.0228004Z E       fixture 'system_session' not found
+2026-09-13T19:10:09.1827283Z >       available fixtures: _asyncio_loop_factory, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, app, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client_a, client_b, company_b_fixtures, dispose_engine, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+2026-09-13T19:10:09.1830560Z >       use 'pytest --fixtures [testpath]' for help on them.
+2026-09-13T19:10:09.1830853Z 
+2026-09-13T19:10:09.1831181Z /home/runner/work/inteintefin/inteintefin/04-backend/tests/test_scheduler_concurrency.py:55
+2026-09-13T19:10:09.1831793Z =================================== FAILURES ===================================
+2026-09-13T19:10:09.1832281Z ______________________ test_api_persistence_patch_status _______________________
+2026-09-13T19:10:09.1832866Z tests/test_connectors_persistence.py:41: in test_api_persistence_patch_status
+2026-09-13T19:10:09.1833358Z     assert resp.status_code == 201
+2026-09-13T19:10:09.1833652Z E   assert 422 == 201
+2026-09-13T19:10:09.1833983Z E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:10:09.1834497Z ---------------------------- Captured stdout setup -----------------------------
+2026-09-13T19:10:09.1834930Z client_a: fixture started
+2026-09-13T19:10:09.1835204Z client_a: starting db operations
+2026-09-13T19:10:09.1835497Z client_a: inside system_session
+2026-09-13T19:10:09.1836110Z _______________________ test_api_persistence_soft_delete _______________________
+2026-09-13T19:10:09.1836739Z tests/test_connectors_persistence.py:71: in test_api_persistence_soft_delete
+2026-09-13T19:10:09.1837229Z     assert resp.status_code == 201
+2026-09-13T19:10:09.1837513Z E   assert 422 == 201
+2026-09-13T19:10:09.1837821Z E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:10:09.1838513Z ---------------------------- Captured stdout setup -----------------------------
+2026-09-13T19:10:09.1838890Z client_a: fixture started
+2026-09-13T19:10:09.1839139Z client_a: starting db operations
+2026-09-13T19:10:09.1839408Z client_a: inside system_session
+2026-09-13T19:10:09.1839758Z ____________________ test_meta_scheduler_unauthorized_state ____________________
+2026-09-13T19:10:09.1840272Z tests/test_meta_ads_connector.py:587: in test_meta_scheduler_unauthorized_state
+2026-09-13T19:10:09.1840753Z     await sync_connector_instance(str(company_id), str(conn.id))
+2026-09-13T19:10:09.1841173Z app/connectors/scheduler.py:108: in sync_connector_instance
+2026-09-13T19:10:09.1841534Z     await release_lock(lock_key, token)
+2026-09-13T19:10:09.1841844Z app/connectors/scheduler.py:39: in release_lock
+2026-09-13T19:10:09.1842225Z     await redis_client.eval(RELEASE_LOCK_SCRIPT, 1, lock_key, token)
+2026-09-13T19:10:09.1842851Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/client.py:946: in execute_command
+2026-09-13T19:10:09.1843437Z     result = await conn.retry.call_with_retry(
+2026-09-13T19:10:09.1844131Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/retry.py:69: in call_with_retry
+2026-09-13T19:10:09.1844657Z     return await do()
+2026-09-13T19:10:09.1844869Z            ^^^^^^^^^^
+2026-09-13T19:10:09.1845398Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/client.py:870: in _send_command_parse_response
+2026-09-13T19:10:09.1846135Z     await conn.send_command(*args)
+2026-09-13T19:10:09.1846664Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/connection.py:1215: in send_command
+2026-09-13T19:10:09.1847320Z     self.pack_command(*args), check_health=kwargs.get("check_health", True)
+2026-09-13T19:10:09.1847707Z     ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-13T19:10:09.1848203Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/asyncio/connection.py:1357: in pack_command
+2026-09-13T19:10:09.1848771Z     for arg in map(self.encoder.encode, args):
+2026-09-13T19:10:09.1849295Z /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/redis/_parsers/encoders.py:20: in encode
+2026-09-13T19:10:09.1849805Z     raise DataError(
+2026-09-13T19:10:09.1850259Z E   redis.exceptions.DataError: Invalid input of type: 'bool'. Convert to a bytes, string, int or float first.
+2026-09-13T19:10:09.1850866Z ------------------------------ Captured log call -------------------------------
+2026-09-13T19:10:09.1851416Z ERROR    app.connectors.scheduler:scheduler.py:87 Connector sync unauthorized: Token invalid
+2026-09-13T19:10:09.1851920Z =============================== warnings summary ===============================
+2026-09-13T19:10:09.1852476Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854
+2026-09-13T19:10:09.1853478Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+2026-09-13T19:10:09.1854285Z     from crypt import crypt as _crypt
+2026-09-13T19:10:09.1854471Z 
+2026-09-13T19:10:09.1854575Z app/api/v1/connectors.py:33
+2026-09-13T19:10:09.1855822Z   /home/runner/work/inteintefin/inteintefin/04-backend/app/api/v1/connectors.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+2026-09-13T19:10:09.1857429Z     class ConnectorResponse(BaseModel):
+2026-09-13T19:10:09.1857624Z 
+2026-09-13T19:10:09.1857939Z ../../../../../../opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53
+2026-09-13T19:10:09.1859055Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+2026-09-13T19:10:09.1860262Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+2026-09-13T19:10:09.1860622Z 
+2026-09-13T19:10:09.1860786Z tests/test_ad_accounts_crud.py::test_ad_account_crud
+2026-09-13T19:10:09.1861957Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/passlib/handlers/argon2.py:716: DeprecationWarning: Accessing argon2.__version__ is deprecated and will be removed in a future release. Use importlib.metadata directly to query for argon2-cffi's packaging metadata.
+2026-09-13T19:10:09.1863107Z     _argon2_cffi.__version__, max_version)
+2026-09-13T19:10:09.1863296Z 
+2026-09-13T19:10:09.1863409Z tests/test_auth.py::test_refresh_endpoint
+2026-09-13T19:10:09.1863701Z tests/test_auth.py::test_refresh_endpoint
+2026-09-13T19:10:09.1863985Z tests/test_auth.py::test_logout_endpoint
+2026-09-13T19:10:09.1864277Z tests/test_auth.py::test_invalid_jwt
+2026-09-13T19:10:09.1865434Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/httpx/_client.py:1859: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+2026-09-13T19:10:09.1866983Z     return await self.request(
+2026-09-13T19:10:09.1867164Z 
+2026-09-13T19:10:09.1867295Z tests/test_types.py::test_openapi_schema_money
+2026-09-13T19:10:09.1868368Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pydantic/json_schema.py:2463: PydanticJsonSchemaWarning: Unable to serialize value '0.00' with the plain serializer; excluding default from JSON schema [non-serializable-default]
+2026-09-13T19:10:09.1869439Z     warnings.warn(message, PydanticJsonSchemaWarning)
+2026-09-13T19:10:09.1869675Z 
+2026-09-13T19:10:09.1869884Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-09-13T19:10:09.1870485Z - generated xml file: /home/runner/work/inteintefin/inteintefin/04-backend/pytest-results.xml -
+2026-09-13T19:10:09.1871040Z =========================== short test summary info ============================
+2026-09-13T19:10:09.1871596Z FAILED tests/test_connectors_persistence.py::test_api_persistence_patch_status - assert 422 == 201
+2026-09-13T19:10:09.1872181Z  +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:10:09.1872726Z FAILED tests/test_connectors_persistence.py::test_api_persistence_soft_delete - assert 422 == 201
+2026-09-13T19:10:09.1873268Z  +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+2026-09-13T19:10:09.1874139Z FAILED tests/test_meta_ads_connector.py::test_meta_scheduler_unauthorized_state - redis.exceptions.DataError: Invalid input of type: 'bool'. Convert to a bytes, string, int or float first.
+2026-09-13T19:10:09.1875090Z ERROR tests/test_connectors_api.py::test_rotate_secret_revives_unauthorized_connector
+2026-09-13T19:10:09.1875610Z ERROR tests/test_connectors_api.py::test_rotate_secret_never_leaks
+2026-09-13T19:10:09.1876241Z ERROR tests/test_connectors_api.py::test_rotate_with_validate_false_on_unauthorized
+2026-09-13T19:10:09.1876801Z ERROR tests/test_connectors_api.py::test_soft_deleted_connector_can_be_recreated
+2026-09-13T19:10:09.1877341Z ERROR tests/test_connectors_api.py::test_create_unknown_connector_returns_422
+2026-09-13T19:10:09.1877816Z ERROR tests/test_connectors_api.py::test_manual_sync_endpoint
+2026-09-13T19:10:09.1878269Z ERROR tests/test_scheduler_concurrency.py::test_scheduler_max_concurrency
+2026-09-13T19:10:09.1878804Z ERROR tests/test_scheduler_concurrency.py::test_scheduler_batch_continues_on_error
+2026-09-13T19:10:09.1879314Z ============= 3 failed, 174 passed, 9 warnings, 8 errors in 8.12s ==============
+2026-09-13T19:10:09.5322503Z ##[error]Process completed with exit code 1.

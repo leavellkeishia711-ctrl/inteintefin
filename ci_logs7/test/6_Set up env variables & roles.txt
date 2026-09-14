@@ -1,0 +1,17 @@
+﻿2026-09-13T19:22:25.8484723Z ##[group]Run cp .env.example .env
+2026-09-13T19:22:25.8485013Z [36;1mcp .env.example .env[0m
+2026-09-13T19:22:25.8485611Z [36;1mecho "DATABASE_URL=***localhost:5432/financeintel" >> .env[0m
+2026-09-13T19:22:25.8486312Z [36;1mecho "DATABASE_URL_MIGRATIONS=***localhost:5432/financeintel" >> .env[0m
+2026-09-13T19:22:25.8486832Z [36;1mecho "APP_USER_DATABASE_URL=***localhost:5432/financeintel" >> .env[0m
+2026-09-13T19:22:25.8487135Z [36;1mecho "DB_SSLMODE=prefer" >> .env[0m
+2026-09-13T19:22:25.8487442Z [36;1mpython scripts/setup_ci_db.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:22:25.8521115Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:22:25.8521334Z env:
+2026-09-13T19:22:25.8521563Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:25.8521929Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:22:25.8522271Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:25.8522571Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:25.8522910Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:22:25.8523224Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:22:25.8523497Z ##[endgroup]
+2026-09-13T19:22:26.0770387Z Successfully provisioned app_user role and permissions for CI

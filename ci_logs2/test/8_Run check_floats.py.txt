@@ -1,0 +1,13 @@
+﻿2026-09-13T19:04:09.4908769Z ##[group]Run python scripts/check_floats.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+2026-09-13T19:04:09.4909402Z [36;1mpython scripts/check_floats.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY[0m
+2026-09-13T19:04:09.4945992Z shell: /usr/bin/bash -e {0}
+2026-09-13T19:04:09.4946270Z env:
+2026-09-13T19:04:09.4946538Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.4946992Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-13T19:04:09.4947422Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.4947818Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.4948220Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-13T19:04:09.4948613Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-13T19:04:09.4948941Z ##[endgroup]
+2026-09-13T19:04:09.6479660Z app/connectors/registry.py: Failed to parse AST: unexpected character after line continuation character (registry.py, line 6)
+2026-09-13T19:04:09.6480654Z Float type check failed! Financial applications must use Decimal.

@@ -146,7 +146,7 @@ class TikTokAdsConnector(Connector):
                         "report_type": "BASIC",
                         "data_level": "AUCTION_CAMPAIGN",
                         "dimensions": json.dumps(["campaign_id", "stat_time_day"]),
-                        "metrics": json.dumps(["spend", "total_purchase_value"]),
+                        "metrics": json.dumps(["spend", "total_purchase_value", "clicks", "impressions", "conversion"]),
                         "start_date": start_date.strftime("%Y-%m-%d"),
                         "end_date": today.strftime("%Y-%m-%d"),
                         "page": p,
@@ -198,6 +198,28 @@ class TikTokAdsConnector(Connector):
                 revenue = Decimal(rev_str)
                 currency = row.get("_currency", "USD")
                 
+                clicks_str = str(metrics.get("clicks") or "0").replace(",", "")
+                impressions_str = str(metrics.get("impressions") or "0").replace(",", "")
+                conversions_str = str(metrics.get("conversion") or "0").replace(",", "")
+                
+                try:
+                    clicks = int(clicks_str)
+                    if clicks < 0: clicks = 0
+                except ValueError:
+                    clicks = 0
+                
+                try:
+                    impressions = int(impressions_str)
+                    if impressions < 0: impressions = 0
+                except ValueError:
+                    impressions = 0
+                
+                try:
+                    conversions = Decimal(conversions_str)
+                    if conversions < 0: conversions = Decimal("0")
+                except (InvalidOperation, TypeError, ValueError):
+                    conversions = Decimal("0")
+                
                 normalized.append(
                     NormalizedRecord(
                         source="tiktok_ads",
@@ -205,7 +227,10 @@ class TikTokAdsConnector(Connector):
                         stat_date=stat_date,
                         spend=spend,
                         revenue=revenue,
-                        currency=currency
+                        currency=currency,
+                        clicks=clicks,
+                        impressions=impressions,
+                        conversions=conversions
                     )
                 )
             except (ValueError, TypeError, InvalidOperation) as e:
