@@ -152,7 +152,7 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
             )
         )
         
-        if external_id is not None:
+        if normalized_record.external_id is not None:
             stmt = stmt.on_conflict_do_update(
                 index_elements=[
                     CampaignRunStat.company_id,
