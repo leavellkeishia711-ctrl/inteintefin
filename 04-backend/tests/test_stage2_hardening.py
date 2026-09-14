@@ -52,7 +52,7 @@ async def test_unauthorized_exception_no_response_body(mock_get, monkeypatch):
         "401", request=MagicMock(), response=mock_resp
     )
 
-    config = DummyConfig(uuid.uuid4(), connector_name="meta_ads")
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
 
     with pytest.raises(UnauthorizedError) as exc_info:
@@ -77,7 +77,7 @@ async def test_connector_error_no_response_body(mock_get, monkeypatch):
         "400", request=MagicMock(), response=mock_resp
     )
 
-    config = DummyConfig(uuid.uuid4(), connector_name="meta_ads")
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
 
     with pytest.raises(ConnectorError) as exc_info:
@@ -218,7 +218,7 @@ def test_affise_normalize_no_date_skips():
 
 def test_meta_normalize_no_date_skips():
     """Meta Ads must skip records without 'date_start' field."""
-    config = DummyConfig(uuid.uuid4(), connector_name="meta_ads")
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
     raw = [{"campaign_id": "100", "spend": "10.00"}]
     normalized = connector.normalize(raw)
@@ -247,7 +247,7 @@ def test_affise_normalize_with_date_works():
 
 def test_meta_normalize_with_date_works():
     """Meta Ads must normalize records WITH 'date_start' field correctly."""
-    config = DummyConfig(uuid.uuid4(), connector_name="meta_ads")
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
     raw = [{"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.00"}]
     normalized = connector.normalize(raw)
