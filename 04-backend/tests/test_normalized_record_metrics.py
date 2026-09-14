@@ -147,7 +147,7 @@ def test_all_connectors_return_metrics():
         (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01"}]),
         (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}}]),
         (BinomConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"camp_id": "1", "date": "2026-01-01"}]),
-        (VoluumConnector(DummyConfig(), '{"access_key":"a","access_token":"b"}'), [{"campaignId": "1", "reportDate": "2026-01-01"}]),
+        (VoluumConnector(DummyConfig(), '{"access_key":"a","access_token":"b"}'), [{"campaignId": "1", "date": "2026-01-01"}]),
         (AffiseConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"offer_id": "1", "date": "2026-01-01"}]),
         (KeitaroConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"campaign_id": "1", "date": "2026-01-01"}])
     ]

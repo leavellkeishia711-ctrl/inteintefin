@@ -161,7 +161,7 @@ async def test_sync_finds_campaign_via_mapping(client_a, monkeypatch):
         assert stat.spend == Decimal('100.0000')
 
 @pytest.mark.asyncio
-async def test_campaign_run_stat_persists_performance_metrics(system_session, client_a, tenant_a_id):
+async def test_campaign_run_stat_persists_performance_metrics(client_a, tenant_a_id):
     # Create CampaignRun and Mapping
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
     from app.connectors.base import NormalizedRecord
@@ -171,9 +171,7 @@ async def test_campaign_run_stat_persists_performance_metrics(system_session, cl
     
     run_id = uuid.uuid4()
     run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Perf Metrics Test", status="active")
-    system_session.add(run)
-    await system_session.commit()
-    
+    from app.db.session import system_session
     mapping_id = uuid.uuid4()
     mapping = ExternalCampaignMapping(
         id=mapping_id,
@@ -182,8 +180,10 @@ async def test_campaign_run_stat_persists_performance_metrics(system_session, cl
         external_id="perf-meta-1",
         campaign_run_id=run_id
     )
-    system_session.add(mapping)
-    await system_session.commit()
+    async with system_session() as sys_db:
+        sys_db.add(run)
+        sys_db.add(mapping)
+        await sys_db.commit()
     
     # Do upsert
     from app.connectors.meta_ads import MetaAdsConnector
@@ -217,7 +217,7 @@ async def test_campaign_run_stat_persists_performance_metrics(system_session, cl
         assert stat.conversions == Decimal("5.5")
 
 @pytest.mark.asyncio
-async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(system_session, client_a, tenant_a_id):
+async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(client_a, tenant_a_id):
     from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping, CampaignRunStat
     from app.connectors.base import NormalizedRecord
     from datetime import date
@@ -226,9 +226,7 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
     
     run_id = uuid.uuid4()
     run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Perf Update Test", status="active")
-    system_session.add(run)
-    await system_session.commit()
-    
+    from app.db.session import system_session
     mapping = ExternalCampaignMapping(
         id=uuid.uuid4(),
         company_id=tenant_a_id,
@@ -236,8 +234,10 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
         external_id="perf-meta-2",
         campaign_run_id=run_id
     )
-    system_session.add(mapping)
-    await system_session.commit()
+    async with system_session() as sys_db:
+        sys_db.add(run)
+        sys_db.add(mapping)
+        await sys_db.commit()
     
     class DummyConfig:
         company_id = tenant_a_id
@@ -286,17 +286,19 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
         assert stat.conversions == Decimal("3")
 
 @pytest.mark.asyncio
-async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(system_session, client_a, tenant_a_id):
+async def test_campaign_run_stat_legacy_rows_receive_zero_defaults(client_a, tenant_a_id):
     # This test verifies that inserting manually without specifying metrics defaults to 0
     from app.db.models.campaigns import CampaignRunStat, CampaignRun
     from datetime import date
     import uuid
     from decimal import Decimal
+    from app.db.session import system_session
     
     run_id = uuid.uuid4()
     run = CampaignRun(id=run_id, company_id=tenant_a_id, campaign_name="Legacy Default Test", status="active")
-    system_session.add(run)
-    await system_session.commit()
+    async with system_session() as sys_db:
+        sys_db.add(run)
+        await sys_db.commit()
     
     # Direct insert simulating older code that doesn't provide clicks/impressions/conversions
     async with tenant_session(tenant_a_id) as session:
