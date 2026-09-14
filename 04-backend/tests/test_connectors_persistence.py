@@ -188,7 +188,7 @@ async def test_campaign_run_stat_persists_performance_metrics(system_session, cl
     class DummyConfig:
         company_id = tenant_a_id
         connector_name = "meta_ads"
-    connector = MetaAdsConnector(DummyConfig())
+    connector = MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}')
     
     record = NormalizedRecord(
         source="meta",
@@ -239,7 +239,7 @@ async def test_campaign_run_stat_atomic_update_refreshes_performance_metrics(sys
         company_id = tenant_a_id
         connector_name = "meta_ads"
     from app.connectors.meta_ads import MetaAdsConnector
-    connector = MetaAdsConnector(DummyConfig())
+    connector = MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}')
     
     record_a = NormalizedRecord(
         source="meta",

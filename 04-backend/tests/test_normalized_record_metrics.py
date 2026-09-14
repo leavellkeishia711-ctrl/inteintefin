@@ -52,7 +52,7 @@ class DummyConfig:
     settings = {"currency": "USD"}
 
 def test_google_ads_normalize_metrics():
-    connector = GoogleAdsConnector(DummyConfig())
+    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e"}')
     raw = [{
         "campaign": {"id": "123"},
         "segments": {"date": "2026-01-01"},
@@ -74,7 +74,7 @@ def test_google_ads_normalize_metrics():
     assert res[0].revenue == Decimal("5.5")
 
 def test_meta_normalize_metrics():
-    connector = MetaAdsConnector(DummyConfig())
+    connector = MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}')
     raw = [{
         "campaign_id": "123",
         "date_start": "2026-01-01",
@@ -95,7 +95,7 @@ def test_meta_normalize_metrics():
     assert res[0].spend == Decimal("10.5")
 
 def test_tiktok_normalize_metrics():
-    connector = TikTokAdsConnector(DummyConfig())
+    connector = TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}')
     raw = [{
         "dimensions": {"campaign_id": "123", "stat_time_day": "2026-01-01"},
         "metrics": {
@@ -114,7 +114,7 @@ def test_tiktok_normalize_metrics():
     assert res[0].conversions == Decimal("5")
 
 def test_missing_metrics_default_to_zero():
-    connector = GoogleAdsConnector(DummyConfig())
+    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e"}')
     raw = [{
         "campaign": {"id": "123"},
         "segments": {"date": "2026-01-01"},
@@ -143,13 +143,13 @@ def test_all_connectors_return_metrics():
         settings = {"currency": "USD"}
     
     connectors = [
-        (GoogleAdsConnector(DummyConfig()), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}}]),
-        (MetaAdsConnector(DummyConfig()), [{"campaign_id": "1", "date_start": "2026-01-01"}]),
-        (TikTokAdsConnector(DummyConfig()), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}}]),
-        (BinomConnector(DummyConfig()), [{"camp_id": "1", "date": "2026-01-01"}]),
-        (VoluumConnector(DummyConfig()), [{"campaignId": "1", "reportDate": "2026-01-01"}]),
-        (AffiseConnector(DummyConfig()), [{"offer_id": "1", "date": "2026-01-01"}]),
-        (KeitaroConnector(DummyConfig()), [{"campaign_id": "1", "date": "2026-01-01"}])
+        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}}]),
+        (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01"}]),
+        (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}}]),
+        (BinomConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"camp_id": "1", "date": "2026-01-01"}]),
+        (VoluumConnector(DummyConfig(), '{"access_key":"a","access_token":"b"}'), [{"campaignId": "1", "reportDate": "2026-01-01"}]),
+        (AffiseConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"offer_id": "1", "date": "2026-01-01"}]),
+        (KeitaroConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"campaign_id": "1", "date": "2026-01-01"}])
     ]
     
     for conn, raw in connectors:
