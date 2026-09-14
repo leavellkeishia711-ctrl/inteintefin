@@ -231,10 +231,12 @@ class TikTokAdsConnector(Connector):
         base_currency = company.base_currency or "USD"
         
         for record in normalized_data:
-            stmt = select(CampaignRun).where(
+            stmt = select(CampaignRun).join(ExternalCampaignMapping, CampaignRun.id == ExternalCampaignMapping.campaign_run_id).where(
                 and_(
-                    CampaignRun.company_id == company_id,
-                    CampaignRun.note == record.external_id,
+                    ExternalCampaignMapping.company_id == company_id,
+                    ExternalCampaignMapping.platform == self.config.connector_name,
+                    ExternalCampaignMapping.external_id == record.external_id,
+                    ExternalCampaignMapping.deleted_at.is_(None),
                     CampaignRun.deleted_at.is_(None)
                 )
             )

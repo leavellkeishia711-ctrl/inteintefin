@@ -65,6 +65,26 @@ class CampaignRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         CheckConstraint("ended_at IS NULL OR started_at <= ended_at", name="check_campaign_run_dates"),
     )
 
+
+class ExternalCampaignMapping(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
+    __tablename__ = "external_campaign_mappings"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
+    platform: Mapped[str] = mapped_column(String, nullable=False)
+    external_id: Mapped[str] = mapped_column(String, nullable=False)
+    campaign_run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("campaign_runs.id"), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("platform IN ('meta', 'google_ads', 'tiktok_ads', 'binom', 'voluum', 'affise', 'keitaro')", name="check_mapping_platform"),
+        sa.Index(
+            "uix_company_platform_external_campaign",
+            "company_id", "platform", "external_id",
+            unique=True,
+            postgresql_where=sa.text("deleted_at IS NULL"),
+            sqlite_where=sa.text("deleted_at IS NULL")
+        ),
+    )
+
 class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "campaign_run_stats"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -103,7 +123,6 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         campaign_run_id: uuid.UUID,
         stat_date: date,
         source: str,
-        external_id: str | None,
         normalized_record,
         connector_name: str,
         fx_rate_to_base: Decimal,
@@ -124,7 +143,7 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                 campaign_run_id=campaign_run_id,
                 stat_date=stat_date,
                 source=source,
-                external_id=external_id,
+                external_id=normalized_record.external_id,
                 spend=normalized_record.spend,
                 revenue=normalized_record.revenue,
                 currency=currency,

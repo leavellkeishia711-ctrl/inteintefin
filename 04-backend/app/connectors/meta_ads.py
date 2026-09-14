@@ -278,10 +278,12 @@ class MetaAdsConnector(Connector):
         skipped = 0
 
         for record in normalized_data:
-            stmt = select(CampaignRun).where(
+            stmt = select(CampaignRun).join(ExternalCampaignMapping, CampaignRun.id == ExternalCampaignMapping.campaign_run_id).where(
                 and_(
-                    CampaignRun.company_id == self.config.company_id,
-                    CampaignRun.note == record.external_id,
+                    ExternalCampaignMapping.company_id == self.config.company_id,
+                    ExternalCampaignMapping.platform == self.config.connector_name,
+                    ExternalCampaignMapping.external_id == record.external_id,
+                    ExternalCampaignMapping.deleted_at.is_(None),
                     CampaignRun.deleted_at.is_(None)
                 )
             )

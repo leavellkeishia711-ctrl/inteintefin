@@ -48,3 +48,8 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Production validation with real external API credentials
 - Keitaro: full implementation (`test_connection`, `fetch_campaigns`, `fetch_metrics`)
 - Ad accounts mapping for Binom, Voluum, Affise (currently only Meta)
+
+### Source Data Storage Design
+- **Idempotency**: All CampaignRunStat records upserted using ON CONFLICT DO UPDATE.
+- **Soft Delete**: Uses deleted_at instead of physical deletion.
+- **Mapping**: ExternalCampaignMapping table links (company_id, platform, external_id) to campaign_run_id (1-to-many: one CampaignRun can have many external_id).
