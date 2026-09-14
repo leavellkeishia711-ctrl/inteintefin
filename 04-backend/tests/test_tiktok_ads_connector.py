@@ -26,7 +26,7 @@ def get_creds():
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_tiktok_ads_test_connection_success(mock_get):
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     mock_resp = MagicMock()
@@ -45,7 +45,7 @@ async def test_tiktok_ads_test_connection_success(mock_get):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_tiktok_ads_test_connection_auth_failure(mock_get):
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     mock_resp = MagicMock()
@@ -58,7 +58,7 @@ async def test_tiktok_ads_test_connection_auth_failure(mock_get):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_tiktok_ads_fetch_ad_accounts(mock_get):
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     mock_resp = MagicMock()
@@ -83,7 +83,7 @@ async def test_tiktok_ads_fetch_ad_accounts(mock_get):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_tiktok_ads_fetch_campaigns(mock_get):
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     mock_resp = MagicMock()
@@ -104,7 +104,7 @@ async def test_tiktok_ads_fetch_campaigns(mock_get):
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_tiktok_ads_fetch_metrics(mock_get):
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     async def side_effect(*args, **kwargs):
@@ -133,7 +133,7 @@ async def test_tiktok_ads_fetch_metrics(mock_get):
     assert metrics[0]["_currency"] == "JPY"
 
 def test_tiktok_ads_decimal_mapping():
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     raw = [{
@@ -148,7 +148,7 @@ def test_tiktok_ads_decimal_mapping():
     assert normalized[0].revenue == Decimal("500")
 
 def test_tiktok_ads_stat_date_mapping():
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     raw = [{
@@ -161,7 +161,7 @@ def test_tiktok_ads_stat_date_mapping():
     assert normalized[0].stat_date == date(2024, 2, 29)
 
 def test_tiktok_ads_external_id_is_deterministic():
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     raw1 = [{
@@ -181,7 +181,7 @@ def test_tiktok_ads_external_id_is_deterministic():
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
 async def test_tiktok_ads_pagination(mock_get):
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     resp_page1 = MagicMock()
@@ -199,7 +199,7 @@ async def test_tiktok_ads_pagination(mock_get):
     assert mock_get.call_count == 2
 
 def test_tiktok_ads_optional_metrics():
-    config = DummyConfig(uuid.uuid4(), connector_name="sda_kotkit")
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     raw = [{
@@ -218,7 +218,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
     company_id = uuid.UUID(company_b_fixtures.ids["company_id"])
     user_id = uuid.UUID(company_b_fixtures.ids["user_id"])
     
-    config = DummyConfig(company_id, connector_name="sda_kotkit")
+    config = DummyConfig(company_id, connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
     
     async with system_session() as db_session:
@@ -232,7 +232,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
         await db_session.flush()
         mapping = ExternalCampaignMapping(
             company_id=company_id,
-            platform="sda_kotkit",
+            platform="tiktok_ads",
             external_id="12345",
             campaign_run_id=run.id
         )
@@ -291,13 +291,13 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
         run2 = CampaignRun(company_id=c2.id, buyer_id=user2.id, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc), note="ext1")
         db_session.add_all([run1, run2])
         await db_session.flush()
-        mapping_a = ExternalCampaignMapping(company_id=run1.company_id, platform="sda_kotkit", external_id=run1.note, campaign_run_id=run1.id)
-        mapping_b = ExternalCampaignMapping(company_id=run2.company_id, platform="sda_kotkit", external_id=run2.note, campaign_run_id=run2.id)
+        mapping_a = ExternalCampaignMapping(company_id=run1.company_id, platform="tiktok_ads", external_id=run1.note, campaign_run_id=run1.id)
+        mapping_b = ExternalCampaignMapping(company_id=run2.company_id, platform="tiktok_ads", external_id=run2.note, campaign_run_id=run2.id)
         db_session.add_all([mapping_a, mapping_b])
         await db_session.commit()
         
         # Upsert as tenant 1
-        config = DummyConfig(c1_id, connector_name="sda_kotkit")
+        config = DummyConfig(c1_id, connector_name="tiktok_ads")
         connector = TikTokAdsConnector(config, get_creds())
         
         with patch("app.connectors.tiktok_ads.resolve_fx_rate", new_callable=AsyncMock) as mock_fx:
