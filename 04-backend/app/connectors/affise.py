@@ -164,7 +164,6 @@ class AffiseConnector(Connector):
                 campaign_run_id=run.id,
                 stat_date=record.stat_date,
                 source=record.source,
-                external_id=record.external_id,
                 normalized_record=record,
                 connector_name=self.__class__.__name__,
                 fx_rate_to_base=fx_rate,

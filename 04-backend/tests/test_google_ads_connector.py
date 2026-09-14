@@ -11,7 +11,7 @@ from sqlalchemy import select
 from app.db.session import system_session
 from app.db.models.companies import Company
 from app.db.models.users import User
-from app.db.models.campaigns import Campaign, CampaignRun, CampaignRunStat, AdAccount
+from app.db.models.campaigns import ExternalCampaignMapping, Campaign, CampaignRun, CampaignRunStat, AdAccount
 from app.connectors.google_ads import GoogleAdsConnector
 from app.connectors.base import UnauthorizedError
 

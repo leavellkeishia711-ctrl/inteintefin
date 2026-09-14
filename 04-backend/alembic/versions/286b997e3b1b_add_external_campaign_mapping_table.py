@@ -42,6 +42,7 @@ def upgrade() -> None:
     )
     
     op.execute("ALTER TABLE external_campaign_mappings ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE external_campaign_mappings FORCE ROW LEVEL SECURITY;")
     op.execute("""
         CREATE POLICY tenant_isolation_external_campaign_mappings
         ON external_campaign_mappings

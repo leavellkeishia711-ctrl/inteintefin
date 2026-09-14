@@ -4,11 +4,11 @@ from decimal import Decimal
 import pytest
 import uuid
 from sqlalchemy import select, text
-from app.db.models.campaigns import CampaignRun, CampaignRunStat
+from app.db.models.campaigns import ExternalCampaignMapping, CampaignRun, CampaignRunStat
 from app.connectors.base import NormalizedRecord
 from app.db.session import async_session_maker
 
-from app.db.models.campaigns import CampaignRun, ExternalCampaignMapping
+from app.db.models.campaigns import ExternalCampaignMapping, CampaignRun, ExternalCampaignMapping
 from datetime import datetime, timezone
 
 async def create_dummy_run(client, company_id):
