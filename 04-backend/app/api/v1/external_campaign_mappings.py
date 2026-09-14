@@ -45,7 +45,7 @@ async def create_mapping(
         await db.refresh(new_mapping)
         return new_mapping
     except IntegrityError:
-        await db.rollback()
+        
         raise HTTPException(status_code=409, detail="Mapping already exists")
 
 @router.get("/", response_model=List[ExternalCampaignMappingResponse])
