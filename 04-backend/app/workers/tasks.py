@@ -27,7 +27,7 @@ async def execute_for_all_tenants(task_func):
         async with system_session() as db:
             result = await db.execute(select(Company.id))
             company_ids = result.scalars().all()
-            
+
         for cid in company_ids:
             try:
                 async with tenant_task_session(str(cid)) as tenant_db:
@@ -44,9 +44,9 @@ def check_alerts_task():
             from app.services.alerts import check_financial_alerts
             logger.info(f"Running check_alerts for company {company_id}")
             await check_financial_alerts(db, company_id)
-            
+
         await execute_for_all_tenants(_run_for_company)
-        
+
     asyncio.run(_check_alerts_impl())
 
 @celery_app.task(name="monitor_data_quality")
@@ -56,7 +56,7 @@ def monitor_data_quality_task():
             from app.services.data_quality import monitor_stalled_data
             logger.info(f"Running monitor_data_quality for company {company_id}")
             await monitor_stalled_data(db, company_id)
-            
+
         await execute_for_all_tenants(_run_for_company)
 
     asyncio.run(_monitor_impl())
@@ -70,6 +70,35 @@ def sync_connectors_task():
 def manual_sync_connector_task(company_id: str, connector_id: str):
     from app.connectors.scheduler import sync_connector_instance
     asyncio.run(sync_connector_instance(company_id, connector_id))
+
+
+@celery_app.task(name='reconcile_company_data_task')
+def reconcile_company_data_task(company_id: str):
+    async def _reconcile_impl():
+        import uuid
+        from app.db.models.campaigns import CampaignRunStat
+        from app.services.reconciliation_persistence import upsert_reconciliation_for_group
+
+        async with tenant_task_session(company_id) as db:
+            # For a manual full-reconciliation trigger, we fetch all distinct groups.
+            # In a future PR, this should be scoped to specific updated groups.
+            stmt = select(CampaignRunStat.campaign_run_id, CampaignRunStat.stat_date).distinct().where(
+                CampaignRunStat.company_id == uuid.UUID(company_id),
+                CampaignRunStat.deleted_at.is_(None)
+            )
+            result = await db.execute(stmt)
+            groups = result.all()
+
+            for cr_id, s_date in groups:
+                await upsert_reconciliation_for_group(
+                    session=db,
+                    company_id=uuid.UUID(company_id),
+                    campaign_run_id=cr_id,
+                    stat_date=s_date
+                )
+            await db.commit()
+
+    asyncio.run(_reconcile_impl())
 
 # Setup Celery Beat
 celery_app.conf.beat_schedule = {
