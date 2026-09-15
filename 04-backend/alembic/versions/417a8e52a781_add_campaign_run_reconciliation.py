@@ -73,7 +73,7 @@ def upgrade() -> None:
         "FOR UPDATE USING (company_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::uuid) "
         "WITH CHECK (company_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::uuid);"
     )
-    op.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON campaign_run_reconciliations TO api_user;")
+    op.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON campaign_run_reconciliations TO app_user;")
 
 def downgrade() -> None:
     op.execute("DROP POLICY update_reconciliations ON campaign_run_reconciliations;")
