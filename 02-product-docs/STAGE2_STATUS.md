@@ -34,13 +34,12 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
 ## Source Data Storage Design
 
-Data from different sources (e.g., Meta spend + Binom tracker revenue) for the same campaign and date are stored as **separate rows** keyed by `(company_id, campaign_run_id, stat_date, source, external_id)`. This is a deliberate side-by-side design for media buying analytics. **Cross-source reconciliation / conflict resolution is NOT yet implemented** and remains an OPEN GAP.
+Data from different sources (e.g., Meta spend + Binom tracker revenue) for the same campaign and date are stored as **separate rows** keyed by `(company_id, campaign_run_id, stat_date, source, external_id)`. This is a deliberate side-by-side design for media buying analytics. Cross-source reconciliation / conflict resolution is **implemented** via the `CampaignRunReconciliation` table and `reconcile_company_data_task`.
 
 ## Open Scope (Pending Next PRs)
 
 The following requirements remain OPEN and must be implemented before full Stage 2 completion:
 
-- Cross-source conflict resolution / reconciliation layer: NOT IMPLEMENTED
 - Credential rotation (safe update, re-encryption endpoint) - **OPEN**
 - Stale-source Data Quality (DQ) alerts - **OPEN**
 - ECB FX rate auto-fetch
@@ -55,8 +54,14 @@ The following requirements remain OPEN and must be implemented before full Stage
 - **Mapping**: ExternalCampaignMapping table links (company_id, platform, external_id) to campaign_run_id (1-to-many: one CampaignRun can have many external_id).
 
 ## Performance Metrics Updates (PR #25)
-- **clicks, impressions, conversions added** to \NormalizedRecord\ and \CampaignRunStat\.
-- **conversions** stored as \NUMERIC(20,4)\ (Decimal), never float. Protected from negative values via Pydantic \ge=Decimal("0")\.
-- **Default values**: If a source (e.g. Trackers) does not provide \conversions\, it defaults to \\ / \Decimal("0")\.
+- **clicks, impressions, conversions added** to `NormalizedRecord` and `CampaignRunStat`.
+- **conversions** stored as `NUMERIC(20,4)` (Decimal), never float. Protected from negative values via Pydantic `ge=Decimal("0")`.
+- **Default values**: If a source (e.g. Trackers) does not provide `conversions`, it defaults to `0` / `Decimal("0")`.
 - Stage 3 Analytics (ROI, CPM, forecasting) is **NOT** implemented yet (explicitly out of scope).
-- Reconciliation logic is **NOT** implemented yet.
+
+## Reconciliation Status (PR #26)
+- **Implemented**: `CampaignRunReconciliation` tracks `status` (reconciled, partial, conflict, no_data).
+- **Thresholds**: 1% relative difference threshold (`abs(a-b)/max(abs(a),abs(b)) > 0.01`) strictly using `Decimal` for spend, revenue, conversions, clicks, and impressions.
+- **Duplicates**: Multiple stats for the same source are deterministically reduced (`priority` -> `external_id asc` -> `stat id asc`).
+- **Currency**: Different currencies instantly flag a conflict.
+- **Trigger**: No automatic DB trigger; manually executed via `reconcile_company_data_task` background task.
