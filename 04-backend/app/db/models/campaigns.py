@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String, CHAR, ForeignKey, Date, Numeric, DateTime, UniqueConstraint, CheckConstraint, Index, Integer
 import sqlalchemy as sa
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from app.db.session import Base
 from .base import TimestampMixin, SoftDeleteMixin, CompanyScoped
 
