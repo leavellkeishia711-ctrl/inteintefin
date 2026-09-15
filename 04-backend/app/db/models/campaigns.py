@@ -1,9 +1,10 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String, CHAR, ForeignKey, Date, Numeric, DateTime, UniqueConstraint, CheckConstraint, Index, Integer
 import sqlalchemy as sa
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from app.db.session import Base
 from .base import TimestampMixin, SoftDeleteMixin, CompanyScoped
 
@@ -137,8 +138,8 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         - session is tied to company_id via RLS (tenant isolation enforced).
         - partial unique index exists on (company_id, campaign_run_id, stat_date, source, external_id) WHERE deleted_at IS NULL.
         """
-        from sqlalchemy.dialects.postgresql import insert
-        
+        from sqlalchemy.dialects.postgresql import JSONB, insert
+
         stmt = (
             insert(CampaignRunStat)
             .values(
@@ -157,7 +158,7 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                 conversions=normalized_record.conversions,
             )
         )
-        
+
         if normalized_record.external_id is not None:
             stmt = stmt.on_conflict_do_update(
                 index_elements=[
@@ -197,13 +198,52 @@ class CampaignRunStat(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
                     CampaignRunStat.updated_at: sa.func.now(),
                 }
             )
-            
+
         stmt = stmt.returning(CampaignRunStat)
         result = await session.execute(
             stmt,
             execution_options={"populate_existing": True}
         )
         return result.scalars().first()
+
+class CampaignRunReconciliation(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
+    __tablename__ = "campaign_run_reconciliations"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
+    campaign_run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("campaign_runs.id"), nullable=False)
+    stat_date: Mapped[date] = mapped_column(Date, nullable=False)
+
+    status: Mapped[str] = mapped_column(String, nullable=False)
+    chosen_source: Mapped[str | None] = mapped_column(String, nullable=True)
+    chosen_stat_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("campaign_run_stats.id"), nullable=True)
+
+    canonical_spend: Mapped[Decimal | None] = mapped_column(Numeric(20, 4, asdecimal=True), nullable=True)
+    canonical_revenue: Mapped[Decimal | None] = mapped_column(Numeric(20, 4, asdecimal=True), nullable=True)
+    canonical_clicks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    canonical_impressions: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    canonical_conversions: Mapped[Decimal | None] = mapped_column(Numeric(20, 4, asdecimal=True), nullable=True)
+    canonical_currency: Mapped[str | None] = mapped_column(CHAR(3), nullable=True)
+
+    observed_source_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    conflict_fields: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default="'{}'::jsonb")
+    source_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default="'{}'::jsonb")
+    decision_reason: Mapped[str] = mapped_column(String, nullable=False)
+    calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), server_default=sa.func.now())
+
+    __table_args__ = (
+        CheckConstraint("status IN ('reconciled', 'partial', 'conflict', 'no_data')", name="check_reconciliation_status"),
+        sa.Index(
+            "uq_campaign_run_reconciliations_active",
+            "company_id", "campaign_run_id", "stat_date",
+            unique=True,
+            postgresql_where=sa.text("deleted_at IS NULL"),
+            sqlite_where=sa.text("deleted_at IS NULL")
+        ),
+        Index("ix_reconciliation_company_date", "company_id", "stat_date"),
+        Index("ix_reconciliation_company_status_date", "company_id", "status", "stat_date"),
+    )
+
 
 class Consumable(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "consumables"
