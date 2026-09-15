@@ -60,6 +60,7 @@ def upgrade() -> None:
 
     # RLS Enablement
     op.execute("ALTER TABLE campaign_run_reconciliations ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE campaign_run_reconciliations FORCE ROW LEVEL SECURITY;")
     op.execute(
         "CREATE POLICY select_reconciliations ON campaign_run_reconciliations "
         "FOR SELECT USING (company_id = NULLIF(current_setting('app.company_id', TRUE), '')::uuid);"
