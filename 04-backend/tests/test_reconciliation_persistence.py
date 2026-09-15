@@ -12,23 +12,29 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 async def setup_company_and_run():
+    from app.db.models import User
     async with system_session() as db:
         cid = uuid.uuid4()
         comp = Company(id=cid, name="Test Company", base_currency="USD")
         db.add(comp)
         await db.commit()
         
-        c = Campaign(id=uuid.uuid4(), company_id=cid, name="C1")
+        uid = uuid.uuid4()
+        user = User(id=uid, company_id=cid, name="Test User", email=f"user_{uid}@test.com", password_hash="hash", role="admin")
+        db.add(user)
+        await db.commit()
+        
+        c = Campaign(id=uuid.uuid4(), company_id=cid, platform="meta")
         db.add(c)
         await db.commit()
         
+        from datetime import datetime, timezone
         crun = CampaignRun(
             id=uuid.uuid4(),
             company_id=cid,
             campaign_id=c.id,
-            buyer_id=uuid.uuid4(),
-            started_at=date(2026, 1, 1),
-            platform="meta"
+            buyer_id=uid,
+            started_at=datetime.now(timezone.utc)
         )
         db.add(crun)
         await db.commit()
@@ -125,17 +131,21 @@ async def test_reconciliation_unique_key_prevents_duplicate_results(setup_compan
     async with tenant_session(str(cid)) as db:
         # manual insert to test unique key
         from sqlalchemy.dialects.postgresql import insert
-        stmt = insert(CampaignRunReconciliation).values(
-            company_id=cid, campaign_run_id=crun_id, stat_date=stat_date,
+        stmt1 = insert(CampaignRunReconciliation).values(
+            id=uuid.uuid4(), company_id=cid, campaign_run_id=crun_id, stat_date=stat_date,
             status="no_data", decision_reason="Test"
         )
-        await db.execute(stmt)
+        await db.execute(stmt1)
         await db.flush()
         
+        stmt2 = insert(CampaignRunReconciliation).values(
+            id=uuid.uuid4(), company_id=cid, campaign_run_id=crun_id, stat_date=stat_date,
+            status="no_data", decision_reason="Test2"
+        )
         # Another insert without ON CONFLICT should fail with IntegrityError
         from sqlalchemy.exc import IntegrityError
         with pytest.raises(IntegrityError):
-            await db.execute(stmt)
+            await db.execute(stmt2)
 
 async def test_reconciliation_tenant_isolation(setup_company_and_run):
     cid_a, crun_id_a = setup_company_and_run

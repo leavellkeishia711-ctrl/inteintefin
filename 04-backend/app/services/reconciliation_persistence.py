@@ -45,6 +45,7 @@ async def upsert_reconciliation_for_group(
     insert_stmt = (
         insert(CampaignRunReconciliation)
         .values(
+            id=uuid.uuid4(),
             company_id=company_id,
             campaign_run_id=campaign_run_id,
             stat_date=stat_date,
