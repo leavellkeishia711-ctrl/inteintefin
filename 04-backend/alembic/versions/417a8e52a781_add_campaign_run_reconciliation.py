@@ -62,16 +62,16 @@ def upgrade() -> None:
     op.execute("ALTER TABLE campaign_run_reconciliations ENABLE ROW LEVEL SECURITY;")
     op.execute(
         "CREATE POLICY select_reconciliations ON campaign_run_reconciliations "
-        "FOR SELECT USING (company_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::uuid);"
+        "FOR SELECT USING (company_id = NULLIF(current_setting('app.company_id', TRUE), '')::uuid);"
     )
     op.execute(
         "CREATE POLICY insert_reconciliations ON campaign_run_reconciliations "
-        "FOR INSERT WITH CHECK (company_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::uuid);"
+        "FOR INSERT WITH CHECK (company_id = NULLIF(current_setting('app.company_id', TRUE), '')::uuid);"
     )
     op.execute(
         "CREATE POLICY update_reconciliations ON campaign_run_reconciliations "
-        "FOR UPDATE USING (company_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::uuid) "
-        "WITH CHECK (company_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::uuid);"
+        "FOR UPDATE USING (company_id = NULLIF(current_setting('app.company_id', TRUE), '')::uuid) "
+        "WITH CHECK (company_id = NULLIF(current_setting('app.company_id', TRUE), '')::uuid);"
     )
     op.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON campaign_run_reconciliations TO app_user;")
 
