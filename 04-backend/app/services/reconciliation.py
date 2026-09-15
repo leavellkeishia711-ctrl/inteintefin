@@ -8,12 +8,28 @@ from datetime import date
 # or define a clean struct for pure logic.
 from app.db.models.campaigns import CampaignRunStat
 
+def is_conflict(a: Decimal | int, b: Decimal | int, relative_threshold: Decimal = Decimal("0.01")) -> bool:
+    """
+    Evaluates if two values conflict based on a relative threshold.
+    - If both are 0, no conflict.
+    - If one is 0 and the other is not, conflict.
+    - Otherwise, abs(a-b)/max(abs(a), abs(b)) > threshold.
+    """
+    da = Decimal(str(a))
+    db = Decimal(str(b))
+    if da == Decimal("0") and db == Decimal("0"):
+        return False
+    if da == Decimal("0") or db == Decimal("0"):
+        return True
+    
+    relative_difference = abs(da - db) / max(abs(da), abs(db))
+    return relative_difference > relative_threshold
+
+
 @dataclass
 class ReconciliationThresholds:
-    spend_revenue_diff: Decimal = Decimal("0.0001")
-    clicks_diff: int = 0
-    impressions_diff: int = 0
-    conversions_diff: Decimal = Decimal("0.0001")
+    relative_threshold: Decimal = Decimal("0.01")
+
 
 @dataclass
 class ReconciliationDecision:
@@ -50,9 +66,6 @@ def reconcile_stat_group(
 ) -> ReconciliationDecision:
     """
     Pure function to determine the canonical state for a given group of stats.
-    Preconditions:
-      - All stats must belong to the same (company_id, campaign_run_id, stat_date).
-      - All stats must be active (deleted_at IS NULL).
     """
     if thresholds is None:
         thresholds = ReconciliationThresholds()
@@ -101,10 +114,10 @@ def reconcile_stat_group(
             decision_reason="No active sources available."
         )
 
+    # Build snapshot with lists to preserve duplicates
     source_snapshot = {}
     for s in active_stats:
-        # Save snapshot without sensitive tokens
-        source_snapshot[s.source] = {
+        source_snapshot.setdefault(s.source, []).append({
             "stat_id": str(s.id),
             "external_id": s.external_id,
             "spend": str(s.spend),
@@ -114,20 +127,36 @@ def reconcile_stat_group(
             "impressions": s.impressions,
             "conversions": str(s.conversions),
             "fx_rate_to_base": str(s.fx_rate_to_base)
-        }
+        })
 
-    # Deterministic selection based on priority
-    # Sort active_stats by their index in source_priority, fallback to end of list for unknown sources
+    # Sort stats deterministically: priority index, source name, external_id, stat_id
     def sort_key(stat):
         try:
-            return source_priority.index(stat.source)
+            p_idx = source_priority.index(stat.source)
         except ValueError:
-            return len(source_priority)
+            p_idx = len(source_priority)
+        return (p_idx, stat.source, stat.external_id or "", str(stat.id))
             
     sorted_stats = sorted(active_stats, key=sort_key)
-    chosen = sorted_stats[0]
+    
+    # Choose representative per unique source (first one wins due to sort_key)
+    unique_sources = {}
+    has_duplicates = False
+    for stat in sorted_stats:
+        if stat.source not in unique_sources:
+            unique_sources[stat.source] = stat
+        else:
+            has_duplicates = True
+            
+    representatives = list(unique_sources.values())
+    chosen = representatives[0]
+    observed_source_count = len(unique_sources)
 
-    if len(active_stats) == 1:
+    if observed_source_count == 1:
+        reason = "Single source available."
+        if has_duplicates:
+            reason = "Single source available. Chose deterministic representative among duplicate rows."
+        
         return ReconciliationDecision(
             status="partial",
             chosen_source=chosen.source,
@@ -138,34 +167,43 @@ def reconcile_stat_group(
             canonical_impressions=chosen.impressions,
             canonical_conversions=chosen.conversions,
             canonical_currency=chosen.currency,
-            observed_source_count=1,
+            observed_source_count=observed_source_count,
             conflict_fields={},
             source_snapshot=source_snapshot,
-            decision_reason="Single source available."
+            decision_reason=reason
         )
 
-    # Check for conflicts against the chosen source
+    # Check for conflicts against the chosen source among the representatives
     conflict_fields = {}
-    for s in sorted_stats[1:]:
-        if abs(chosen.spend - s.spend) > thresholds.spend_revenue_diff:
-            conflict_fields.setdefault("spend", []).append(s.source)
-        if abs(chosen.revenue - s.revenue) > thresholds.spend_revenue_diff:
-            conflict_fields.setdefault("revenue", []).append(s.source)
-        if abs(chosen.clicks - s.clicks) > thresholds.clicks_diff:
-            conflict_fields.setdefault("clicks", []).append(s.source)
-        if abs(chosen.impressions - s.impressions) > thresholds.impressions_diff:
-            conflict_fields.setdefault("impressions", []).append(s.source)
-        if abs(chosen.conversions - s.conversions) > thresholds.conversions_diff:
-            conflict_fields.setdefault("conversions", []).append(s.source)
+    for s in representatives[1:]:
+        # Explicit currency conflict handling
         if chosen.currency != s.currency:
             conflict_fields.setdefault("currency", []).append(s.source)
+            # If currencies differ, we can't meaningfully compare raw numeric spend/revenue 
+            # without ECB FX in this PR, so we explicitly skip numeric comparison for them 
+            # and just flag currency as conflicting.
+        else:
+            if is_conflict(chosen.spend, s.spend, thresholds.relative_threshold):
+                conflict_fields.setdefault("spend", []).append(s.source)
+            if is_conflict(chosen.revenue, s.revenue, thresholds.relative_threshold):
+                conflict_fields.setdefault("revenue", []).append(s.source)
+                
+        if is_conflict(chosen.clicks, s.clicks, thresholds.relative_threshold):
+            conflict_fields.setdefault("clicks", []).append(s.source)
+        if is_conflict(chosen.impressions, s.impressions, thresholds.relative_threshold):
+            conflict_fields.setdefault("impressions", []).append(s.source)
+        if is_conflict(chosen.conversions, s.conversions, thresholds.relative_threshold):
+            conflict_fields.setdefault("conversions", []).append(s.source)
 
     if conflict_fields:
         status = "conflict"
-        decision_reason = f"Conflict detected in fields: {', '.join(conflict_fields.keys())}. Selected canonical based on priority."
+        reason = f"Conflict detected in fields: {', '.join(conflict_fields.keys())}. Selected canonical based on priority."
     else:
         status = "reconciled"
-        decision_reason = "Multiple sources agree within thresholds."
+        reason = "Multiple sources agree within thresholds."
+        
+    if has_duplicates:
+        reason += " Chose deterministic representative among duplicate rows."
 
     return ReconciliationDecision(
         status=status,
@@ -177,8 +215,8 @@ def reconcile_stat_group(
         canonical_impressions=chosen.impressions,
         canonical_conversions=chosen.conversions,
         canonical_currency=chosen.currency,
-        observed_source_count=len(active_stats),
+        observed_source_count=observed_source_count,
         conflict_fields=conflict_fields,
         source_snapshot=source_snapshot,
-        decision_reason=decision_reason
+        decision_reason=reason
     )
