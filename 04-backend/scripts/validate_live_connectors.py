@@ -242,21 +242,25 @@ async def run_google_validation(args):
                 raise HarnessError("schema_mismatch", "Normalized clicks/impressions are not int")
 
             mets = m.get("metrics", {})
-            raw_cost = Decimal(mets.get("costMicros") or "0")
+            for field in ["costMicros", "conversionsValue", "conversions", "clicks", "impressions"]:
+                if field not in mets:
+                    raise HarnessError("malformed_response", f"Missing field in Google metrics: {field}")
+
+            raw_cost = Decimal(str(mets["costMicros"]))
             if raw_cost != r.spend * 1000000:
                 raise HarnessError("schema_mismatch", f"spend {r.spend} does not match costMicros {raw_cost}")
 
-            raw_rev = Decimal(mets.get("conversionsValue") or "0")
+            raw_rev = Decimal(str(mets["conversionsValue"]))
             if raw_rev != r.revenue:
                 raise HarnessError("schema_mismatch", f"revenue {r.revenue} does not match conversionsValue {raw_rev}")
 
-            raw_conv = Decimal(mets.get("conversions") or "0")
+            raw_conv = Decimal(str(mets["conversions"]))
             if raw_conv != r.conversions:
                 raise HarnessError("schema_mismatch", f"conversions {r.conversions} does not match {raw_conv}")
 
-            if int(mets.get("clicks") or "0") != r.clicks:
+            if int(str(mets["clicks"])) != r.clicks:
                 raise HarnessError("schema_mismatch", "clicks mismatch")
-            if int(mets.get("impressions") or "0") != r.impressions:
+            if int(str(mets["impressions"])) != r.impressions:
                 raise HarnessError("schema_mismatch", "impressions mismatch")
             
             cust_id = m.get("customer", {}).get("id")
@@ -340,21 +344,25 @@ async def run_tiktok_validation(args):
                 raise HarnessError("schema_mismatch", "Normalized clicks/impressions are not int")
 
             mets = m.get("metrics", {})
-            raw_spend = Decimal(mets.get("spend") or "0")
+            for field in ["spend", "total_purchase_value", "conversion", "clicks", "impressions"]:
+                if field not in mets:
+                    raise HarnessError("malformed_response", f"Missing field in TikTok metrics: {field}")
+
+            raw_spend = Decimal(str(mets["spend"]).replace(',', ''))
             if raw_spend != r.spend:
                 raise HarnessError("schema_mismatch", f"spend {r.spend} does not match {raw_spend}")
 
-            raw_rev = Decimal(mets.get("total_purchase_value") or "0")
+            raw_rev = Decimal(str(mets["total_purchase_value"]).replace(',', ''))
             if raw_rev != r.revenue:
                 raise HarnessError("schema_mismatch", f"revenue {r.revenue} does not match {raw_rev}")
 
-            raw_conv = Decimal(mets.get("conversion") or "0")
+            raw_conv = Decimal(str(mets["conversion"]).replace(',', ''))
             if raw_conv != r.conversions:
                 raise HarnessError("schema_mismatch", f"conversions {r.conversions} does not match {raw_conv}")
 
-            if int(mets.get("clicks") or "0") != r.clicks:
+            if int(str(mets["clicks"]).replace(',', '')) != r.clicks:
                 raise HarnessError("schema_mismatch", "clicks mismatch")
-            if int(mets.get("impressions") or "0") != r.impressions:
+            if int(str(mets["impressions"]).replace(',', '')) != r.impressions:
                 raise HarnessError("schema_mismatch", "impressions mismatch")
 
         print_result("pass", platform="tiktok_ads", advertiser_id=f"{adv_id[:3]}***{adv_id[-2:]}", rows_fetched=len(norm), date=args.date, pages_fetched=getattr(connector, "last_pages_fetched", 1), saw_next_page=getattr(connector, "last_saw_next_page", False), page_size_used=args.page_size)
