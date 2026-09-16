@@ -25,7 +25,7 @@ class SecretRegistry:
         self.register(os.environ.get("GOOGLE_ADS_REFRESH_TOKEN", ""))
 
     def register(self, secret: str):
-        if secret and isinstance(secret, str) and len(secret) > 4:
+        if secret and isinstance(secret, str) and len(secret) > 0:
             self._secrets.add(secret)
 
     def sanitize(self, s: str) -> str:
@@ -204,6 +204,8 @@ async def run_google_validation(args):
         for a in accts:
             if "customer" not in a or "id" not in a["customer"] or "currencyCode" not in a["customer"]:
                 raise HarnessError("malformed_response", "Google account missing id or currencyCode")
+            if str(a["customer"]["id"]) != str(connector.customer_id):
+                raise HarnessError("schema_mismatch", "Account response customer.id does not match requested")
         connector.normalize_ad_accounts(accts)
 
         # 3. fetch_campaigns
@@ -211,6 +213,8 @@ async def run_google_validation(args):
         for c in camps:
             if "campaign" not in c or "id" not in c["campaign"]:
                 raise HarnessError("malformed_response", "Google campaign missing campaign.id")
+            if "customer" in c and str(c["customer"].get("id")) != str(connector.customer_id):
+                raise HarnessError("schema_mismatch", "Campaign response customer.id does not match requested")
 
         # 4. fetch_metrics
         target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
@@ -254,6 +258,12 @@ async def run_google_validation(args):
                 raise HarnessError("schema_mismatch", "clicks mismatch")
             if int(mets.get("impressions") or "0") != r.impressions:
                 raise HarnessError("schema_mismatch", "impressions mismatch")
+            
+            cust_id = m.get("customer", {}).get("id")
+            if cust_id and str(cust_id) != str(connector.customer_id):
+                raise HarnessError("schema_mismatch", "Metrics response customer.id does not match requested")
+            if not m.get("campaign", {}).get("id"):
+                raise HarnessError("malformed_response", "Campaign metrics missing campaign.id")
 
         print_result("pass", platform="google_ads", customer_id=f"{cid[:3]}***{cid[-2:]}", rows_fetched=len(norm), date=args.date, is_mcc=bool(login_cid), pages_fetched=getattr(connector, "last_pages_fetched", 1), saw_next_page=getattr(connector, "last_saw_next_page", False), page_size_used=args.page_size)
 

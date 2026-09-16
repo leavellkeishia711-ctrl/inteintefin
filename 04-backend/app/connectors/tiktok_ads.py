@@ -218,7 +218,7 @@ class TikTokAdsConnector(Connector):
 
                 currency = row.get("_currency")
                 if not currency:
-                    raise ValueError("Missing currency in TikTok Ads metrics")
+                    raise ConnectorError("Missing currency in TikTok Ads metrics")
 
                 clicks_str = str(metrics.get("clicks") or "0").replace(",", "")
                 impressions_str = str(metrics.get("impressions") or "0").replace(",", "")
@@ -255,8 +255,10 @@ class TikTokAdsConnector(Connector):
                         conversions=conversions
                     )
                 )
+            except ConnectorError:
+                raise
             except (ValueError, TypeError, InvalidOperation) as e:
-                logger.warning(f"Failed to normalize TikTok row: {e}, row={row}")
+                logger.warning(f"Failed to normalize TikTok row: {e}")
                 continue
 
         # Dedupe by (external_id, stat_date) preferring last seen (simplistic approach, similar to others)

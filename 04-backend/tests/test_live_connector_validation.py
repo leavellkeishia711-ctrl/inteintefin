@@ -110,6 +110,12 @@ class TestLiveValidationLogic:
             s = sanitize_string("Token is secret_token_123")
             assert "secret_token_123" not in s
             assert "***MASKED***" in s
+            
+            # Short secret test
+            registry.register("ab")
+            s2 = sanitize_string("Token is ab!")
+            assert "ab" not in s2
+            assert "***MASKED***!" in s2
 
     def test_validation_exit_codes_match_error_categories(self):
         with patch("scripts.validate_live_connectors.sys.exit") as mock_exit:
