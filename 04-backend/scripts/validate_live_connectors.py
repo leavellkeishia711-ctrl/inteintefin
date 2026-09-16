@@ -15,26 +15,30 @@ from app.connectors.base import UnauthorizedError, RateLimitError, ConnectorErro
 from app.connectors.google_ads import GoogleAdsConnector
 from app.connectors.tiktok_ads import TikTokAdsConnector
 
-def get_secret_registry():
-    registry = [
-        os.environ.get("TIKTOK_ACCESS_TOKEN", ""),
-        os.environ.get("GOOGLE_ADS_DEVELOPER_TOKEN", ""),
-        os.environ.get("GOOGLE_ADS_CLIENT_ID", ""),
-        os.environ.get("GOOGLE_ADS_CLIENT_SECRET", ""),
-        os.environ.get("GOOGLE_ADS_REFRESH_TOKEN", "")
-    ]
-    return [s for s in registry if s and len(s) > 4]
+class SecretRegistry:
+    def __init__(self):
+        self._secrets = set()
+        self.register(os.environ.get("TIKTOK_ACCESS_TOKEN", ""))
+        self.register(os.environ.get("GOOGLE_ADS_DEVELOPER_TOKEN", ""))
+        self.register(os.environ.get("GOOGLE_ADS_CLIENT_ID", ""))
+        self.register(os.environ.get("GOOGLE_ADS_CLIENT_SECRET", ""))
+        self.register(os.environ.get("GOOGLE_ADS_REFRESH_TOKEN", ""))
 
-def sanitize_string(s: str, extra_secrets=None) -> str:
-    if not isinstance(s, str):
-        s = str(s)
-    secrets = get_secret_registry()
-    if extra_secrets:
-        secrets.extend([x for x in extra_secrets if x and len(x) > 4])
-    
-    for sec in secrets:
-        s = s.replace(sec, "***MASKED***")
-    return s
+    def register(self, secret: str):
+        if secret and isinstance(secret, str) and len(secret) > 4:
+            self._secrets.add(secret)
+
+    def sanitize(self, s: str) -> str:
+        if not isinstance(s, str):
+            s = str(s)
+        for sec in self._secrets:
+            s = s.replace(sec, "***MASKED***")
+        return s
+
+registry = SecretRegistry()
+
+def sanitize_string(s: str) -> str:
+    return registry.sanitize(s)
 
 class HarnessError(Exception):
     def __init__(self, category: str, message: str):
@@ -44,10 +48,14 @@ class HarnessError(Exception):
 
 def print_result(status: str, **kwargs):
     out = {"status": status}
+    if status == "empty_result":
+        out["schema_validated"] = False
+    elif status == "pass":
+        out["schema_validated"] = True
     out.update(kwargs)
     
     # Check if argv contains secrets before printing
-    secrets = get_secret_registry()
+    secrets = registry._secrets
     for sec in secrets:
         if sec and len(sec) > 4:
             for arg in sys.argv:
@@ -58,23 +66,35 @@ def print_result(status: str, **kwargs):
     raw_str = json.dumps(out)
     print(sanitize_string(raw_str))
     
-    if status in ("pass", "empty_result"):
+    if status == "pass":
         sys.exit(0)
+    elif status == "empty_result":
+        if "--allow-empty" in sys.argv:
+            sys.exit(0)
+        else:
+            sys.exit(2)
     else:
         sys.exit(1)
 
-def validate_raw_number(val, is_float_allowed=False, is_negative_allowed=False, field_name=""):
+def validate_field(val, expected="int_string", is_negative_allowed=False, field_name=""):
     if val is None:
         raise HarnessError("schema_mismatch", f"Missing required field {field_name}")
     
-    if isinstance(val, float):
-        raise HarnessError("schema_mismatch", f"Unexpected float type in {field_name}, expected string or int")
-
-    if isinstance(val, str) and '.' in val and not is_float_allowed:
-        raise HarnessError("schema_mismatch", f"Unexpected float string in {field_name}")
+    if expected == "int_string":
+        if isinstance(val, float):
+            raise HarnessError("schema_mismatch", f"Unexpected float type in {field_name}, expected int_string")
+        if isinstance(val, str) and '.' in val:
+            raise HarnessError("schema_mismatch", f"Unexpected float string in {field_name}, expected int_string")
+    elif expected == "decimal_string":
+        if isinstance(val, float):
+            raise HarnessError("schema_mismatch", f"Unexpected float type in {field_name}, expected decimal_string")
+        # float string or int string is OK
+    elif expected == "decimal_number":
+        # float type, int type, or string is OK
+        pass
         
     try:
-        dec = Decimal(str(val))
+        dec = Decimal(repr(val)) if isinstance(val, float) else Decimal(str(val))
     except Exception:
         raise HarnessError("schema_mismatch", f"Cannot parse {field_name} as Decimal")
         
@@ -83,36 +103,48 @@ def validate_raw_number(val, is_float_allowed=False, is_negative_allowed=False, 
 
 def map_google_error(e: Exception) -> HarnessError:
     s = str(e)
-    if "DEVELOPER_TOKEN_NOT_APPROVED" in s:
-        return HarnessError("developer_token_not_approved", s)
-    if "CUSTOMER_NOT_ENABLED" in s or "USER_PERMISSION_DENIED" in s or "NOT_ADS_USER" in s:
-        return HarnessError("insufficient_permission", s)
-    if "unsupported_api_version" in s.lower() or "version" in s.lower() or "404" in s:
-        # Check if 404 is related to version sunset
-        return HarnessError("unsupported_api_version", s)
-    if isinstance(e, UnauthorizedError) or "401" in s or "403" in s:
-        return HarnessError("invalid_credentials", s)
-    if isinstance(e, RateLimitError) or "429" in s:
-        return HarnessError("rate_limited", s)
+    if isinstance(e, ConnectorError):
+        code = getattr(e, "api_error_code", None)
+        status = getattr(e, "status_code", None)
+        
+        if code == "DEVELOPER_TOKEN_NOT_APPROVED":
+            return HarnessError("developer_token_not_approved", s)
+        if code in ("CUSTOMER_NOT_ENABLED", "USER_PERMISSION_DENIED", "NOT_ADS_USER"):
+            return HarnessError("insufficient_permission", s)
+            
+        if status == 404:
+            return HarnessError("unsupported_api_version", s)
+            
+        if isinstance(e, UnauthorizedError) or status in (401, 403):
+            return HarnessError("invalid_credentials", s)
+        if isinstance(e, RateLimitError) or status == 429:
+            return HarnessError("rate_limited", s)
+
     if isinstance(e, httpx.RequestError):
         return HarnessError("network_failure", s)
+        
     return HarnessError("malformed_response", type(e).__name__ + ": " + s)
 
 def map_tiktok_error(e: Exception) -> HarnessError:
     s = str(e)
-    # Business errors mapped
-    if "40105" in s or "40102" in s or "40103" in s or "40112" in s or isinstance(e, UnauthorizedError):
-        return HarnessError("invalid_credentials", s)
-    if "40104" in s or isinstance(e, RateLimitError):
-        return HarnessError("rate_limited", s)
-    if "API Error" in s:
-        return HarnessError("unknown_business_error", s)
+    if isinstance(e, ConnectorError):
+        code = getattr(e, "api_error_code", None)
+        status = getattr(e, "status_code", None)
+        
+        if isinstance(e, UnauthorizedError) or status in (401, 403) or str(code) in ("40105", "40102", "40103", "40112"):
+            return HarnessError("invalid_credentials", s)
+        if isinstance(e, RateLimitError) or status == 429 or str(code) == "40104":
+            return HarnessError("rate_limited", s)
+            
+        if code and code != "None":
+            return HarnessError("unknown_business_error", s)
+
     if isinstance(e, httpx.RequestError):
         return HarnessError("network_failure", s)
     return HarnessError("malformed_response", type(e).__name__ + ": " + s)
 
 
-class MockConfig:
+class HarnessConnectorConfig:
     def __init__(self, company_id, connector_name):
         self.company_id = company_id
         self.connector_name = connector_name
@@ -143,7 +175,7 @@ async def run_google_validation(args):
     creds_json = json.dumps(creds_dict)
     
     # We will pass extra_secrets to print_result if needed, but registry handles env vars.
-    config = MockConfig(company_id="00000000-0000-0000-0000-000000000000", connector_name="google_ads")
+    config = HarnessConnectorConfig(company_id="00000000-0000-0000-0000-000000000000", connector_name="google_ads")
     
     try:
         connector = GoogleAdsConnector(config, creds_json)
@@ -159,7 +191,9 @@ async def run_google_validation(args):
         # 1. test_connection
         is_ok = await connector.test_connection()
         if not is_ok:
-            raise HarnessError("invalid_credentials", "test_connection returned False")
+            # Re-trigger explicitly to catch the precise exception
+            await connector.fetch_ad_accounts()
+            raise HarnessError("invalid_credentials", "test_connection returned False but no specific exception was raised")
             
         # 2. fetch_ad_accounts
         accts = await connector.fetch_ad_accounts()
@@ -171,7 +205,7 @@ async def run_google_validation(args):
         # 4. fetch_metrics
         target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
         start_date = target_date - timedelta(days=args.days - 1)
-        metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=2)
+        metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=args.page_size)
         
         if not metrics:
             print_result("empty_result", platform="google_ads", date=args.date)
@@ -196,16 +230,26 @@ async def run_google_validation(args):
             if "conversions" not in mets:
                 raise HarnessError("malformed_response", "Missing conversions")
                 
-            validate_raw_number(mets.get("costMicros"), is_float_allowed=False, field_name="costMicros")
-            validate_raw_number(mets.get("conversionsValue"), is_float_allowed=True, field_name="conversionsValue")
-            validate_raw_number(mets.get("conversions"), is_float_allowed=True, field_name="conversions")
-            validate_raw_number(mets.get("clicks"), is_float_allowed=False, field_name="clicks")
-            validate_raw_number(mets.get("impressions"), is_float_allowed=False, field_name="impressions")
+            validate_field(mets.get("costMicros"), expected="int_string", field_name="costMicros")
+            validate_field(mets.get("conversionsValue"), expected="decimal_number", field_name="conversionsValue")
+            validate_field(mets.get("conversions"), expected="decimal_number", field_name="conversions")
+            validate_field(mets.get("clicks"), expected="int_string", field_name="clicks")
+            validate_field(mets.get("impressions"), expected="int_string", field_name="impressions")
             
         # 5. normalize
         norm = connector.normalize(metrics)
-        
-        print_result("pass", platform="google_ads", customer_id=f"{cid[:3]}***{cid[-2:]}", rows_fetched=len(norm), date=args.date, is_mcc=bool(login_cid))
+        if len(norm) != len(metrics):
+            print_result("fail", error_category="schema_mismatch", message=f"Normalization dropped records: raw={len(metrics)} norm={len(norm)}")
+            
+        for r in norm:
+            if not r.external_id or len(r.external_id) < 1:
+                raise HarnessError("schema_mismatch", "Normalized record missing external_id")
+            if not r.currency or len(r.currency) != 3:
+                raise HarnessError("schema_mismatch", f"Normalized currency invalid: {r.currency}")
+            if not isinstance(r.spend, Decimal):
+                raise HarnessError("schema_mismatch", "spend is not Decimal")
+            
+        print_result("pass", platform="google_ads", customer_id=f"{cid[:3]}***{cid[-2:]}", rows_fetched=len(norm), date=args.date, is_mcc=bool(login_cid), pages_fetched=getattr(connector, "last_pages_fetched", 1), saw_next_page=getattr(connector, "last_saw_next_page", False), page_size_used=args.page_size)
         
     except HarnessError as e:
         print_result("fail", platform="google_ads", error_category=e.category, message=e.message)
@@ -227,7 +271,7 @@ async def run_tiktok_validation(args):
     }
     creds_json = json.dumps(creds_dict)
     
-    config = MockConfig(company_id="00000000-0000-0000-0000-000000000000", connector_name="tiktok_ads")
+    config = HarnessConnectorConfig(company_id="00000000-0000-0000-0000-000000000000", connector_name="tiktok_ads")
     
     try:
         connector = TikTokAdsConnector(config, creds_json)
@@ -237,7 +281,8 @@ async def run_tiktok_validation(args):
     try:
         is_ok = await connector.test_connection()
         if not is_ok:
-            raise HarnessError("invalid_credentials", "test_connection returned False")
+            await connector.fetch_ad_accounts()
+            raise HarnessError("invalid_credentials", "test_connection returned False but no specific exception was raised")
             
         accts = await connector.fetch_ad_accounts()
         connector.normalize_ad_accounts(accts)
@@ -246,7 +291,7 @@ async def run_tiktok_validation(args):
         
         target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
         start_date = target_date - timedelta(days=args.days - 1)
-        metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=2)
+        metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=args.page_size)
         
         if not metrics:
             print_result("empty_result", platform="tiktok_ads", date=args.date)
@@ -271,15 +316,25 @@ async def run_tiktok_validation(args):
             if "conversion" not in mets:
                 raise HarnessError("malformed_response", "Missing conversion")
                 
-            validate_raw_number(mets.get("spend"), is_float_allowed=True, field_name="spend")
-            validate_raw_number(mets.get("total_purchase_value"), is_float_allowed=True, field_name="total_purchase_value")
-            validate_raw_number(mets.get("conversion"), is_float_allowed=True, field_name="conversion")
-            validate_raw_number(mets.get("clicks"), is_float_allowed=False, field_name="clicks")
-            validate_raw_number(mets.get("impressions"), is_float_allowed=False, field_name="impressions")
+            validate_field(mets.get("spend"), expected="decimal_string", field_name="spend")
+            validate_field(mets.get("total_purchase_value"), expected="decimal_string", field_name="total_purchase_value")
+            validate_field(mets.get("conversion"), expected="decimal_string", field_name="conversion")
+            validate_field(mets.get("clicks"), expected="int_string", field_name="clicks")
+            validate_field(mets.get("impressions"), expected="int_string", field_name="impressions")
             
         norm = connector.normalize(metrics)
-        
-        print_result("pass", platform="tiktok_ads", advertiser_id=f"{adv_id[:3]}***{adv_id[-2:]}", rows_fetched=len(norm), date=args.date)
+        if len(norm) != len(metrics):
+            print_result("fail", error_category="schema_mismatch", message=f"Normalization dropped records: raw={len(metrics)} norm={len(norm)}")
+            
+        for r in norm:
+            if not r.external_id or len(r.external_id) < 1:
+                raise HarnessError("schema_mismatch", "Normalized record missing external_id")
+            if not r.currency or len(r.currency) != 3:
+                raise HarnessError("schema_mismatch", f"Normalized currency invalid: {r.currency}")
+            if not isinstance(r.spend, Decimal):
+                raise HarnessError("schema_mismatch", "spend is not Decimal")
+                
+        print_result("pass", platform="tiktok_ads", advertiser_id=f"{adv_id[:3]}***{adv_id[-2:]}", rows_fetched=len(norm), date=args.date, pages_fetched=getattr(connector, "last_pages_fetched", 1), saw_next_page=getattr(connector, "last_saw_next_page", False), page_size_used=args.page_size)
         
     except HarnessError as e:
         print_result("fail", platform="tiktok_ads", error_category=e.category, message=e.message)
@@ -293,7 +348,7 @@ def main():
         sys.exit(1)
         
     # Check argv for secrets
-    secrets = get_secret_registry()
+    secrets = registry._secrets
     for sec in secrets:
         if sec and len(sec) > 4:
             for arg in sys.argv:
@@ -308,9 +363,10 @@ def main():
     parser.add_argument("--date", help="End date in YYYY-MM-DD", default=(datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d"))
     parser.add_argument("--days", type=int, default=1, help="Number of days to fetch")
     parser.add_argument("--api-version", help="Override Google Ads API version")
-    parser.add_argument("--json", action="store_true", help="JSON output only")
     parser.add_argument("--timeout", type=int, default=15)
     parser.add_argument("--max-pages", type=int, default=2)
+    parser.add_argument("--page-size", type=int, default=10)
+    parser.add_argument("--allow-empty", action="store_true", help="Treat empty results as pass instead of inconclusive")
     
     args = parser.parse_args()
     

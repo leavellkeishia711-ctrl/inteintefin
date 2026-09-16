@@ -123,10 +123,13 @@ class GoogleAdsConnector(Connector):
 
             next_page_token = data.get("nextPageToken")
             if not next_page_token:
+                self.last_saw_next_page = (pages_fetched > 1)
                 break
+            self.last_saw_next_page = True
             if max_pages and pages_fetched >= max_pages:
                 break
 
+        self.last_pages_fetched = pages_fetched
         return all_results
 
     async def test_connection(self) -> bool:

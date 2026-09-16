@@ -58,6 +58,8 @@ class VoluumConnector(Connector):
             return data if isinstance(data, list) else []
 
     async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
+        if start_date or end_date:
+            raise NotImplementedError(f"{self.__class__.__name__} does not support date range in fetch_metrics yet")
         async with httpx.AsyncClient() as client:
             headers = self._get_headers()
             response = await with_retry(lambda: client.get(

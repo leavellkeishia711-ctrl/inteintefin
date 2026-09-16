@@ -164,6 +164,8 @@ class MetaAdsConnector(Connector):
         return flat_campaigns
 
     async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
+        if start_date or end_date:
+            raise NotImplementedError(f"{self.__class__.__name__} does not support date range in fetch_metrics yet")
         url = f"{self.base_url}/me/adaccounts?fields=insights.level(campaign){{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
         accounts = await self._fetch_all_pages(url)
         

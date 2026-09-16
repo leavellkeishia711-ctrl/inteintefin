@@ -38,34 +38,32 @@ class TikTokAdsConnector(Connector):
         }
 
     def _raise_for_status(self, response: httpx.Response) -> None:
-        if response.status_code in {401, 403}:
-            raise UnauthorizedError("TikTok Ads: Invalid or missing access token / permissions")
-        if response.status_code == 429:
-            raise RateLimitError("TikTok Ads: Rate limit exceeded")
-
         try:
-            response.raise_for_status()
             data = response.json()
-            if int(data.get("code", 0)) != 0:
-                msg = data.get("message", "Unknown TikTok API Error")
+        except Exception:
+            data = {}
+            
+        api_code = str(data.get("code", "")) if "code" in data else None
+            
+        if response.status_code in {401, 403}:
+            raise UnauthorizedError("TikTok Ads: Invalid or missing access token / permissions", status_code=response.status_code, api_error_code=api_code)
+        if response.status_code == 429:
+            raise RateLimitError("TikTok Ads: Rate limit exceeded", status_code=response.status_code, api_error_code=api_code)
 
-                # Check TikTok-specific auth/permission codes
-                if data.get("code") in {40105, 40102, 40103, 40112}:
-                    raise UnauthorizedError(f"TikTok Ads: {msg}")
-                # Check TikTok-specific rate limit codes
-                if data.get("code") == 40104:
-                    raise RateLimitError(f"TikTok Ads: {msg}")
-
-                raise ConnectorError(f"TikTok Ads API error: {msg}")
-        except httpx.HTTPStatusError as e:
-            raise ConnectorError(f"TikTok Ads HTTP error: {e}")
-        except ValueError as e:
-             raise ConnectorError(f"TikTok Ads invalid response: {e}")
+        response.raise_for_status()
+        
+        if "code" in data and int(data.get("code", 0)) != 0:
+            msg = data.get("message", "Unknown TikTok API Error")
+            code_int = int(data.get("code", 0))
+            if code_int in [40105, 40102, 40103, 40112]:
+                raise UnauthorizedError(f"TikTok Ads API error: {msg}", status_code=response.status_code, api_error_code=api_code)
+            elif code_int == 40104:
+                raise RateLimitError(f"TikTok Ads API error: {msg}", status_code=response.status_code, api_error_code=api_code)
+            raise ConnectorError(f"TikTok Ads API error: {msg}", status_code=response.status_code, api_error_code=api_code)
 
     async def test_connection(self) -> bool:
         async with httpx.AsyncClient(timeout=30) as client:
             try:
-                # Use advertiser/info to verify token and advertiser_id
                 response = await with_retry(lambda: client.get(
                     f"{self.base_url}/advertiser/info/",
                     headers=self._get_headers(),
@@ -73,7 +71,7 @@ class TikTokAdsConnector(Connector):
                 ))
                 self._raise_for_status(response)
                 return True
-            except (UnauthorizedError, ValueError):
+            except Exception:
                 return False
 
     async def fetch_ad_accounts(self) -> List[Dict[str, Any]]:
@@ -164,10 +162,14 @@ class TikTokAdsConnector(Connector):
                 total_page = page_info.get("total_page", 1)
 
                 if page >= total_page:
+                    self.last_saw_next_page = (total_page > 1)
                     break
+                
+                self.last_saw_next_page = True
                 if max_pages and pages_fetched >= max_pages:
                     break
                 page += 1
+        self.last_pages_fetched = pages_fetched
 
         # To normalize, we also need currency. We can fetch it from advertiser_info.
         accounts = await self.fetch_ad_accounts()
