@@ -106,8 +106,10 @@ class NormalizedAdAccount(BaseModel):
     name: str | None = None
 
 class Connector(ABC):
-    def __init__(self, config: Any):
+    def __init__(self, config: Any, timeout: int = 30):
         self.config = config
+        self.timeout = timeout
+        self.register_secret = lambda s: None
 
     @abstractmethod
     async def test_connection(self) -> bool:

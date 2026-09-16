@@ -20,8 +20,8 @@ GOOGLE_ADS_API_VERSION = settings.GOOGLE_ADS_API_VERSION
 GOOGLE_OAUTH2_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 class GoogleAdsConnector(Connector):
-    def __init__(self, config: Any, decrypted_api_key: str):
-        super().__init__(config)
+    def __init__(self, config: Any, decrypted_api_key: str, timeout: int = 30):
+        super().__init__(config, timeout=timeout)
         try:
             creds = json.loads(decrypted_api_key)
             self.developer_token = creds["developer_token"]
@@ -54,11 +54,12 @@ class GoogleAdsConnector(Connector):
                 "grant_type": "refresh_token"
             }
             response = await with_retry(
-                lambda: client.post(GOOGLE_OAUTH2_TOKEN_URL, data=data, timeout=15)
+                lambda: client.post(GOOGLE_OAUTH2_TOKEN_URL, data=data, timeout=self.timeout)
             )
             response.raise_for_status()
             token_data = response.json()
             self.access_token = token_data["access_token"]
+            self.register_secret(self.access_token)
 
     def _get_headers(self) -> Dict[str, str]:
         if not self.access_token:
@@ -92,7 +93,7 @@ class GoogleAdsConnector(Connector):
                             url,
                             headers=self._get_headers(),
                             json=payload,
-                            timeout=30
+                            timeout=self.timeout
                         )
                     )
                     res.raise_for_status()
@@ -105,7 +106,7 @@ class GoogleAdsConnector(Connector):
                             url,
                             headers=self._get_headers(),
                             json=payload,
-                            timeout=30
+                            timeout=self.timeout
                         )
                     )
                     res.raise_for_status()
@@ -114,22 +115,29 @@ class GoogleAdsConnector(Connector):
         all_results = []
         next_page_token = None
         pages_fetched = 0
+        self.last_pages_fetched = 0
+        self.last_saw_next_page = False
 
         while True:
-            data = await fetch_page(next_page_token)
+            try:
+                data = await fetch_page(next_page_token)
+            except Exception:
+                self.last_pages_fetched = pages_fetched
+                raise
+
             results = data.get("results", [])
             all_results.extend(results)
             pages_fetched += 1
+            self.last_pages_fetched = pages_fetched
 
             next_page_token = data.get("nextPageToken")
+            self.last_saw_next_page = bool(next_page_token)
+
             if not next_page_token:
-                self.last_saw_next_page = (pages_fetched > 1)
                 break
-            self.last_saw_next_page = True
             if max_pages and pages_fetched >= max_pages:
                 break
 
-        self.last_pages_fetched = pages_fetched
         return all_results
 
     async def test_connection(self) -> bool:
@@ -182,7 +190,7 @@ class GoogleAdsConnector(Connector):
         lookback_days = 7
         end_dt = end_date or datetime.now(timezone.utc).date()
         start_dt = start_date or (end_dt - timedelta(days=lookback_days - 1))
-        
+
         start_str = start_dt.strftime("%Y-%m-%d")
         end_str = end_dt.strftime("%Y-%m-%d")
 
@@ -319,3 +327,4 @@ class GoogleAdsConnector(Connector):
 
         if skipped > 0:
             logger.warning(f"Google Ads upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")
+

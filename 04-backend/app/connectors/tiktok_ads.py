@@ -16,8 +16,8 @@ from app.services.fx import resolve_fx_rate
 logger = logging.getLogger(__name__)
 
 class TikTokAdsConnector(Connector):
-    def __init__(self, config: Any, decrypted_api_key: str):
-        super().__init__(config)
+    def __init__(self, config: Any, decrypted_api_key: str, timeout: int = 30):
+        super().__init__(config, timeout=timeout)
         # decrypted_api_key must be a JSON string containing access_token and advertiser_id
         try:
             creds = json.loads(decrypted_api_key)
@@ -42,16 +42,16 @@ class TikTokAdsConnector(Connector):
             data = response.json()
         except Exception:
             data = {}
-            
+
         api_code = str(data.get("code", "")) if "code" in data else None
-            
+
         if response.status_code in {401, 403}:
             raise UnauthorizedError("TikTok Ads: Invalid or missing access token / permissions", status_code=response.status_code, api_error_code=api_code)
         if response.status_code == 429:
             raise RateLimitError("TikTok Ads: Rate limit exceeded", status_code=response.status_code, api_error_code=api_code)
 
         response.raise_for_status()
-        
+
         if "code" in data and int(data.get("code", 0)) != 0:
             msg = data.get("message", "Unknown TikTok API Error")
             code_int = int(data.get("code", 0))
@@ -62,7 +62,7 @@ class TikTokAdsConnector(Connector):
             raise ConnectorError(f"TikTok Ads API error: {msg}", status_code=response.status_code, api_error_code=api_code)
 
     async def test_connection(self) -> bool:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await with_retry(lambda: client.get(
                     f"{self.base_url}/advertiser/info/",
@@ -75,7 +75,7 @@ class TikTokAdsConnector(Connector):
                 return False
 
     async def fetch_ad_accounts(self) -> List[Dict[str, Any]]:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await with_retry(lambda: client.get(
                 f"{self.base_url}/advertiser/info/",
                 headers=self._get_headers(),
@@ -101,7 +101,7 @@ class TikTokAdsConnector(Connector):
     async def fetch_campaigns(self) -> List[Dict[str, Any]]:
         campaigns = []
         page = 1
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
             while True:
                 response = await with_retry(lambda p=page: client.get(
                     f"{self.base_url}/campaign/get/",
@@ -136,46 +136,55 @@ class TikTokAdsConnector(Connector):
         metrics = []
         page = 1
         pages_fetched = 0
-        async with httpx.AsyncClient(timeout=30) as client:
+        self.last_pages_fetched = 0
+        self.last_saw_next_page = False
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
             while True:
-                response = await with_retry(lambda p=page: client.get(
-                    f"{self.base_url}/report/integrated/get/",
-                    headers=self._get_headers(),
-                    params={
-                        "advertiser_id": self.advertiser_id,
-                        "report_type": "BASIC",
-                        "data_level": "AUCTION_CAMPAIGN",
-                        "dimensions": json.dumps(["campaign_id", "stat_time_day"]),
-                        "metrics": json.dumps(["spend", "total_purchase_value", "clicks", "impressions", "conversion"]),
-                        "start_date": start_date.strftime("%Y-%m-%d"),
-                        "end_date": end_date.strftime("%Y-%m-%d"),
-                        "page": p,
-                        "page_size": page_size or 100
-                    }
-                ))
-                self._raise_for_status(response)
+                try:
+                    response = await with_retry(lambda p=page: client.get(
+                        f"{self.base_url}/report/integrated/get/",
+                        headers=self._get_headers(),
+                        params={
+                            "advertiser_id": self.advertiser_id,
+                            "report_type": "BASIC",
+                            "data_level": "AUCTION_CAMPAIGN",
+                            "dimensions": json.dumps(["campaign_id", "stat_time_day"]),
+                            "metrics": json.dumps(["spend", "total_purchase_value", "clicks", "impressions", "conversion"]),
+                            "start_date": start_date.strftime("%Y-%m-%d"),
+                            "end_date": end_date.strftime("%Y-%m-%d"),
+                            "page": p,
+                            "page_size": page_size or 100
+                        }
+                    ))
+                    self._raise_for_status(response)
+                except Exception:
+                    self.last_pages_fetched = pages_fetched
+                    raise
+
                 payload = response.json().get("data", {})
                 metrics.extend(payload.get("list", []))
 
                 pages_fetched += 1
+                self.last_pages_fetched = pages_fetched
+
                 page_info = payload.get("page_info", {})
                 total_page = page_info.get("total_page", 1)
 
+                self.last_saw_next_page = (page < total_page)
+
                 if page >= total_page:
-                    self.last_saw_next_page = (total_page > 1)
                     break
-                
-                self.last_saw_next_page = True
+
                 if max_pages and pages_fetched >= max_pages:
                     break
                 page += 1
-        self.last_pages_fetched = pages_fetched
 
         # To normalize, we also need currency. We can fetch it from advertiser_info.
         accounts = await self.fetch_ad_accounts()
         if not accounts or len(accounts) == 0:
             raise ConnectorError("No ad accounts returned, cannot determine currency")
-            
+
         currency = accounts[0].get("currency")
         if not currency:
             raise ConnectorError("Advertiser account is missing currency")
@@ -206,7 +215,10 @@ class TikTokAdsConnector(Connector):
 
                 spend = Decimal(spend_str)
                 revenue = Decimal(rev_str)
-                currency = row.get("_currency", "USD")
+
+                currency = row.get("_currency")
+                if not currency:
+                    raise ValueError("Missing currency in TikTok Ads metrics")
 
                 clicks_str = str(metrics.get("clicks") or "0").replace(",", "")
                 impressions_str = str(metrics.get("impressions") or "0").replace(",", "")
@@ -298,3 +310,4 @@ class TikTokAdsConnector(Connector):
                 fx_rate_to_base=fx_rate,
                 currency=record.currency
             )
+
