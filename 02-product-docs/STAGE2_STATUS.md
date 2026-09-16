@@ -3,7 +3,7 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `b5ad1c0ab3547ce835185606ce51a3223958c41b`
+**Current main SHA:** `4f2b15eebf093253bf8d2536145f5cc9742c8330`
 
 ## Verified Implementation (Post-Merge)
 
@@ -20,8 +20,8 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Voluum integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/voluum.py` |
 | Affise integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/affise.py` |
 | Meta Ads integration (hardened) | **Merged & Post-Merge Verified** | `04-backend/app/connectors/meta_ads.py` |
-| TikTok Ads integration | **Implemented** | `04-backend/app/connectors/tiktok_ads.py` |
-| Google Ads integration | **Implemented and CI-verified; real credential validation pending** | `04-backend/app/connectors/google_ads.py`, `04-backend/tests/test_google_ads_connector.py` |
+| TikTok Ads integration | **Implemented, mock/CI verified, real credential validation pending** | `04-backend/app/connectors/tiktok_ads.py` |
+| Google Ads integration | **Implemented, mock/CI verified, real credential validation pending** | `04-backend/app/connectors/google_ads.py` |
 | Ad accounts mapping (Meta only) | Done | `MetaAdsConnector.fetch_ad_accounts()` / `normalize_ad_accounts()` |
 | Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
