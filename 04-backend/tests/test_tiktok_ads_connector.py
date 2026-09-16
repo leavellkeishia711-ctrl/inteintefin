@@ -167,10 +167,12 @@ def test_tiktok_ads_external_id_is_deterministic():
     raw1 = [{
         "dimensions": {"campaign_id": "c123", "stat_time_day": "2024-01-01"},
         "metrics": {"spend": "0"},
+        "_currency": "USD"
     }]
     raw2 = [{
         "dimensions": {"campaign_id": "c123", "stat_time_day": "2024-01-02"},
         "metrics": {"spend": "0"},
+        "_currency": "USD"
     }]
     
     n1 = connector.normalize(raw1)
