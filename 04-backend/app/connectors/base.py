@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, TypeVar, Callable, Awaitable
+from typing import Dict, Any, List, TypeVar, Callable, Awaitable, Optional
 from pydantic import BaseModel, Field
 import uuid
 import httpx
@@ -97,7 +97,7 @@ class Connector(ABC):
         pass
 
     @abstractmethod
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[Dict[str, Any]]:
         pass
 
     async def fetch(self) -> List[Dict[str, Any]]:

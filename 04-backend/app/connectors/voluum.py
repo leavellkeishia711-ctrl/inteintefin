@@ -57,7 +57,7 @@ class VoluumConnector(Connector):
                 return data["campaigns"]
             return data if isinstance(data, list) else []
 
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
         async with httpx.AsyncClient() as client:
             headers = self._get_headers()
             response = await with_retry(lambda: client.get(

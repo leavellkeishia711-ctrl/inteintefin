@@ -57,7 +57,7 @@ class AffiseConnector(Connector):
                 return data["offers"]
             return data if isinstance(data, list) else []
 
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
         """Fetches stats/metrics."""
         async with httpx.AsyncClient() as client:
             headers = self._get_headers()

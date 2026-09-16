@@ -71,7 +71,7 @@ class GoogleAdsConnector(Connector):
             headers["login-customer-id"] = self.login_customer_id
         return headers
 
-    async def _execute_gaql(self, query: str) -> List[Dict[str, Any]]:
+    async def _execute_gaql(self, query: str, page_size: Optional[int] = None, max_pages: Optional[int] = None) -> List[Dict[str, Any]]:
         """Executes a GAQL query with pagination handling and automatic token refresh."""
         url = f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers/{self.customer_id}/googleAds:search"
 
@@ -82,6 +82,8 @@ class GoogleAdsConnector(Connector):
             payload = {"query": query}
             if page_token:
                 payload["pageToken"] = page_token
+            if page_size:
+                payload["pageSize"] = page_size
 
             async with httpx.AsyncClient() as client:
                 try:
@@ -111,14 +113,18 @@ class GoogleAdsConnector(Connector):
 
         all_results = []
         next_page_token = None
+        pages_fetched = 0
 
         while True:
             data = await fetch_page(next_page_token)
             results = data.get("results", [])
             all_results.extend(results)
+            pages_fetched += 1
 
             next_page_token = data.get("nextPageToken")
             if not next_page_token:
+                break
+            if max_pages and pages_fetched >= max_pages:
                 break
 
         return all_results
@@ -169,16 +175,16 @@ class GoogleAdsConnector(Connector):
         query = "SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type, campaign.start_date, campaign.end_date FROM campaign WHERE campaign.status != 'REMOVED'"
         return await self._execute_gaql(query)
 
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date: Optional[date] = None, end_date: Optional[date] = None, page_size: Optional[int] = None, max_pages: Optional[int] = None) -> List[Dict[str, Any]]:
         lookback_days = 7
-        end_dt = datetime.now(timezone.utc).date()
-        start_dt = end_dt - timedelta(days=lookback_days - 1)
-
+        end_dt = end_date or datetime.now(timezone.utc).date()
+        start_dt = start_date or (end_dt - timedelta(days=lookback_days - 1))
+        
         start_str = start_dt.strftime("%Y-%m-%d")
         end_str = end_dt.strftime("%Y-%m-%d")
 
         query = f"SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros, metrics.conversions_value, metrics.clicks, metrics.impressions, metrics.conversions, customer.id, customer.currency_code FROM campaign WHERE segments.date BETWEEN '{start_str}' AND '{end_str}' AND campaign.status != 'REMOVED'"
-        return await self._execute_gaql(query)
+        return await self._execute_gaql(query, page_size=page_size, max_pages=max_pages)
 
     async def fetch(self) -> List[Dict[str, Any]]:
         return await self.fetch_metrics()

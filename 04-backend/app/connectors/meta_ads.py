@@ -163,7 +163,7 @@ class MetaAdsConnector(Connector):
                     
         return flat_campaigns
 
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
         url = f"{self.base_url}/me/adaccounts?fields=insights.level(campaign){{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
         accounts = await self._fetch_all_pages(url)
         

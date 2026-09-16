@@ -1,85 +1,53 @@
 # Live Connector Validation Runbook
 
-This document describes how to manually validate that Google Ads and TikTok Ads data connectors are fully functional in the production environment (i.e. they authenticate successfully with real API credentials, fetch metrics without errors, and parse responses according to the expected schema).
+## Security Warning
+- **DO NOT** commit `.env` or `.env.local` to version control.
+- **DO NOT** paste real access tokens in Gemini chat or GitHub PRs.
+- **DO NOT** save raw JSON API payloads containing personal or financial tokens.
+- **NEVER** pass secrets through `sys.argv`.
 
-> [!WARNING]
-> This is a manual opt-in validation, NOT a CI/CD process. NEVER run these validation tests within GitHub Actions with real credentials, and NEVER commit your secrets.
+## How to Run
 
-## 1. Prerequisites
+1. Create `04-backend/.env.local` (this is ignored by Git, double-check your `.gitignore`)
+2. Fill it with your real credentials:
+```env
+GOOGLE_ADS_DEVELOPER_TOKEN=your-token
+GOOGLE_ADS_CLIENT_ID=your-id
+GOOGLE_ADS_CLIENT_SECRET=your-secret
+GOOGLE_ADS_REFRESH_TOKEN=your-refresh
+GOOGLE_ADS_CUSTOMER_ID=your-customer
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=optional-mcc-id
 
-### Google Ads
-To run a live validation, you must manually obtain the following from your Google Ads developer account:
-- `GOOGLE_ADS_DEVELOPER_TOKEN` (approved token)
-- `GOOGLE_ADS_CLIENT_ID` (OAuth2 client ID)
-- `GOOGLE_ADS_CLIENT_SECRET` (OAuth2 client secret)
-- `GOOGLE_ADS_REFRESH_TOKEN` (acquired via OAuth flow)
-- `GOOGLE_ADS_CUSTOMER_ID` (target client account ID, without dashes)
-- `GOOGLE_ADS_LOGIN_CUSTOMER_ID` (optional, the manager account ID if authenticating via an MCC)
+TIKTOK_ACCESS_TOKEN=your-token
+TIKTOK_ADVERTISER_ID=your-adv-id
 
-### TikTok Ads
-To run a live validation, you must manually obtain the following from your TikTok Developer app:
-- `TIKTOK_ACCESS_TOKEN` (long-lived access token, authorized for reading ads)
-- `TIKTOK_ADVERTISER_ID` (the specific ad account ID to query)
-- Approved App scopes for Ads reading (`ad.account.read`, `ad.campaign.read`, `ad.report.read`)
-
-## 2. Setting Up Environment Variables Safely
-
-Do not put these in the tracked `.env` file and **do not commit them**. You can export them directly in your shell or use a `.env.local` file that is in `.gitignore`.
-
-**Example (Linux/macOS):**
-```bash
-export LIVE_CONNECTOR_VALIDATION=1
-export GOOGLE_ADS_DEVELOPER_TOKEN="your_token_here"
-export GOOGLE_ADS_CLIENT_ID="your_client_id"
-export GOOGLE_ADS_CLIENT_SECRET="your_client_secret"
-export GOOGLE_ADS_REFRESH_TOKEN="your_refresh_token"
-export GOOGLE_ADS_CUSTOMER_ID="1234567890"
-
-export TIKTOK_ACCESS_TOKEN="your_tiktok_token"
-export TIKTOK_ADVERTISER_ID="your_advertiser_id"
+LIVE_CONNECTOR_VALIDATION=1
 ```
+*(Google Ads API version is automatically read from `settings.GOOGLE_ADS_API_VERSION`, but you can override via `--api-version` if testing.)*
 
-## 3. Running the Validation
-
-Once variables are set, run the validation script from the `04-backend` directory:
-
+3. Run the validation harness:
 ```bash
-# Validate Google Ads
 python scripts/validate_live_connectors.py --platform google_ads
-
-# Validate TikTok Ads
 python scripts/validate_live_connectors.py --platform tiktok_ads
 ```
 
-## 4. Reading the Output
+## Production Harness Value
+This harness imports and exercises the **production connector classes** (`GoogleAdsConnector` and `TikTokAdsConnector`). It simulates the exact code path used in production, injecting credentials via JSON as expected by the Fernet decryption layer.
 
-If the integration is fully functional, the script will exit with code `0` and output a sanitized JSON payload:
-```json
-{"platform": "google_ads", "customer_id": "123***90", "currency": "USD", "date_range": "2026-09-15", "rows_fetched": 3, "status": "pass"}
-```
+## Error Taxonomy & Exit Codes
+The script returns exit code `0` ONLY on pass or `empty_result`. Any failure returns `1`.
+- `invalid_credentials` -> Authentication failed (401/403)
+- `insufficient_permission` -> Auth OK, but lack read permissions (e.g., Google CUSTOMER_NOT_ENABLED)
+- `developer_token_not_approved` -> Google Developer Token not approved
+- `rate_limited` -> 429 after retries
+- `malformed_response` -> Missing required fields
+- `schema_mismatch` -> Data type errors (e.g. unexpected floats, missing currency)
+- `unsupported_api_version` -> Google Ads v16 sunset or version error
+- `network_failure` -> Connection drop
+- `empty_result` -> Auth OK, but no metrics for the requested date
 
-If the validation fails, it will output the error and exit with code `1`:
-```json
-{"platform": "google_ads", "status": "fail", "error": "UnauthorizedError", "message": "OAuth Failed"}
-```
+## Token Rotation
+- **Google Ads**: Revoke refresh token via Google Cloud Console or regenerate developer token.
+- **TikTok Ads**: Revoke App authorization or regenerate access token via TikTok Dev Portal.
 
-## 5. Troubleshooting Common Errors
-
-- **401/403 (UnauthorizedError):**
-  - Google: Your refresh token might be expired, the OAuth client might not have the correct scopes, or the developer token is not approved. Check `login_customer_id` if using an MCC.
-  - TikTok: Ensure the advertiser ID has been authorized by the app, and that the token hasn't expired.
-- **Empty Report / rows_fetched = 0:**
-  - The API connection is valid (pass), but no spend occurred on the specified date (`yesterday` UTC).
-- **Rate Limits (429):**
-  - The script employs exponential backoff. If it ultimately fails, wait 15 minutes before running the check again.
-- **ValueError / Type mismatches:**
-  - If a metric (e.g., spend, conversions) comes back in a new format or contains unexpected characters/negatives. 
-
-## 6. Security & Credential Revocation
-
-1. **DO NOT** send your secrets or API tokens to Gemini or any other AI assistant.
-2. **DO NOT** paste error traces into GitHub issues or pull requests without thoroughly checking for embedded tokens.
-3. **DO NOT** commit your `.env` or any debug files.
-4. **DO NOT** publish the raw API responses.
-
-Once your validation is successfully completed in production, you should rotate/revoke the tokens you used for manual testing or securely save them to the production Vault/Secrets Manager.
+*Note: A green CI run does NOT mean production validation passed. Real validation requires a manual run by the product owner with their credentials.*

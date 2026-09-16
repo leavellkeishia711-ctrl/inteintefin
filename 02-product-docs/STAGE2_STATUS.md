@@ -3,7 +3,8 @@
 Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
-**Current main SHA:** `4f2b15eebf093253bf8d2536145f5cc9742c8330`
+### CI/CD Baseline
+- Current main SHA: `61d64fa4caa349dcdb76ae8890f78a6e87fa566d`
 
 ## Verified Implementation (Post-Merge)
 
@@ -20,8 +21,8 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Voluum integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/voluum.py` |
 | Affise integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/affise.py` |
 | Meta Ads integration (hardened) | **Merged & Post-Merge Verified** | `04-backend/app/connectors/meta_ads.py` |
-| TikTok Ads integration | **Implemented, mock/CI verified, real credential validation pending** | `04-backend/app/connectors/tiktok_ads.py` |
-| Google Ads integration | **Implemented, mock/CI verified, real credential validation pending** | `04-backend/app/connectors/google_ads.py` |
+| TikTok Ads integration | **Implemented, mock/CI verified, real credential validation pending. (Harness uses production classes, manual run pending)** | `04-backend/app/connectors/tiktok_ads.py` |
+| Google Ads integration | **Implemented, mock/CI verified, real credential validation pending. (Harness uses production classes, manual run pending)** | `04-backend/app/connectors/google_ads.py` |
 | Ad accounts mapping (Meta only) | Done | `MetaAdsConnector.fetch_ad_accounts()` / `normalize_ad_accounts()` |
 | Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
