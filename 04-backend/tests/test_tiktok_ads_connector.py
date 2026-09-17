@@ -247,7 +247,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             # Run 1
             raw_1 = [{
                 "dimensions": {"campaign_id": "12345", "stat_time_day": "2024-01-01"},
-                "metrics": {"spend": "10", "total_purchase_value": "5", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
+                "metrics": {"spend": "10", "total_purchase_value": "500", "conversion": "0", "clicks": "0", "impressions": "0"},
                 "_currency": "USD"
             }]
             norm_1 = connector.normalize(raw_1)
@@ -261,7 +261,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             # Run 2 (Update)
             raw_2 = [{
                 "dimensions": {"campaign_id": "12345", "stat_time_day": "2024-01-01"},
-                "metrics": {"spend": "15", "total_purchase_value": "5", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
+                "metrics": {"spend": "15", "total_purchase_value": "500", "conversion": "0", "clicks": "0", "impressions": "0"},
                 "_currency": "USD"
             }]
             norm_2 = connector.normalize(raw_2)
@@ -351,3 +351,23 @@ def test_tiktok_ads_normalize_strict_types():
     norm4 = connector.normalize(raw4)
     assert len(norm4) == 1
     assert norm4[0].spend == 0
+
+
+def test_tiktok_ads_missing_currency():
+    from app.connectors.tiktok_ads import TikTokAdsConnector
+    from app.connectors.base import ConnectorError
+    config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
+    connector = TikTokAdsConnector(config, get_creds())
+
+    raw = [{
+        "dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"},
+        "metrics": {"spend": "1000", "total_purchase_value": "500", "conversion": "0", "clicks": "0", "impressions": "0"}
+    }]
+    
+    import pytest
+    with pytest.raises(ConnectorError) as excinfo:
+        connector.normalize(raw)
+    
+    assert "currency" in str(excinfo.value)
+    assert "access_token" not in str(excinfo.value)
+    assert get_creds() not in str(excinfo.value)

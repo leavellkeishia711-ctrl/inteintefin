@@ -137,9 +137,7 @@ def test_missing_metrics_default_to_zero():
         }
     }]
     res = connector.normalize(raw)
-    assert res[0].clicks == 0
-    assert res[0].impressions == 0
-    assert res[0].conversions == Decimal("0")
+    assert len(res) == 0
 
 def test_all_connectors_return_metrics():
     from app.connectors.google_ads import GoogleAdsConnector
@@ -156,9 +154,9 @@ def test_all_connectors_return_metrics():
         settings = {"currency": "USD"}
 
     connectors = [
-        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"clicks": "10", "conversions": "2"}}]),
-        (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01", "clicks": "10", "actions": [{"action_type": "purchase", "value": "2"}]}]),
-        (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}, "metrics": {"clicks": "10", "conversion": "2"}}]),
+        (GoogleAdsConnector(DummyConfig(), '{"developer_token":"a","client_id":"b","client_secret":"c","refresh_token":"d","login_customer_id":"e","customer_id":"f"}'), [{"campaign": {"id": "1"}, "segments": {"date": "2026-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"clicks": "10", "conversions": "2", "costMicros": "0", "conversionsValue": "0", "impressions": "0"}}]),
+        (MetaAdsConnector(DummyConfig(), '{"access_token":"a","account_id":"b"}'), [{"campaign_id": "1", "date_start": "2026-01-01", "spend": "0", "impressions": "0", "clicks": "10", "actions": [{"action_type": "purchase", "value": "2"}]}]),
+        (TikTokAdsConnector(DummyConfig(), '{"access_token":"a","advertiser_id":"b"}'), [{"dimensions": {"campaign_id": "1", "stat_time_day": "2026-01-01"}, "_currency": "USD", "metrics": {"clicks": "10", "conversion": "2", "spend": "0", "total_purchase_value": "0", "impressions": "0"}}]),
         (BinomConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"camp_id": "1", "date": "2026-01-01", "clicks": "10", "leads": "2"}]),
         (VoluumConnector(DummyConfig(), '{"access_key":"a","access_token":"b"}'), [{"campaignId": "1", "date": "2026-01-01", "clicks": "10", "conversions": "2"}]),
         (AffiseConnector(DummyConfig(), '{"url":"http://a","api_key":"b"}'), [{"offer_id": "1", "date": "2026-01-01", "clicks": "10", "conversions": "2"}]),
