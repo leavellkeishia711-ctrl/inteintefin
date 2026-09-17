@@ -72,6 +72,49 @@ class TestLiveValidationStaticAST:
                     pytest.fail(f"Test {node.name} is empty or only contains 'pass'")
 
 class TestLiveValidationLogic:
+
+    @pytest.mark.asyncio
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
+    async def test_google_invalid_numeric_string_no_nameerror(self, mock_post):
+        from scripts.validate_live_connectors import run_google_validation, registry
+        registry._secrets.clear()
+        class Args:
+            platform = "google_ads"
+            customer_id = "123"
+            date = "2024-01-01"
+            days = 1
+            timeout = 10
+            max_pages = 1
+            page_size = 10
+            allow_empty = False
+
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json = lambda: {
+            "access_token": "access_token_12345", "results": [{
+                "campaign": {"id": "c1"},
+                "segments": {"date": "2024-01-01"},
+                "customer": {"currencyCode": "USD", "id": "123"},
+                "metrics": {
+                    "costMicros": "invalid_number_here",
+                    "conversionsValue": "500",
+                    "conversions": "0",
+                    "clicks": "0",
+                    "impressions": "0"
+                }
+            }]
+        }
+        
+        with patch("scripts.validate_live_connectors.sys.exit", side_effect=SystemExit) as mock_exit, patch.dict("os.environ", {"GOOGLE_ADS_DEVELOPER_TOKEN": "secret_token_12345", "GOOGLE_ADS_CLIENT_ID": "client_id_12345", "GOOGLE_ADS_CLIENT_SECRET": "client_secret_12345", "GOOGLE_ADS_REFRESH_TOKEN": "refresh_token_12345"}):
+            with patch("builtins.print") as mock_print:
+                try: 
+                    await run_google_validation(Args())
+                except SystemExit: 
+                    pass
+                output = str(mock_print.call_args)
+                assert "NameError" not in output
+                assert "schema_mismatch" in output
+                assert "secret_token" not in output
+
     def test_google_validation_rejects_missing_currency(self):
         with pytest.raises(HarnessError) as exc:
             raise HarnessError("malformed_response", "Missing currencyCode")
@@ -119,6 +162,7 @@ class TestLiveValidationLogic:
 
     def test_validation_argv_short_secret(self):
         from scripts.validate_live_connectors import registry, assert_no_secrets_in_argv
+        registry._secrets.clear()
         registry.register("xyz")
         with patch("sys.exit") as mock_exit:
             with patch("builtins.print") as mock_print:
