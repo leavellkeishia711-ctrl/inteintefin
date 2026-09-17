@@ -5,7 +5,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta, timezone, date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation, InvalidOperation
 import httpx
 
 # Ensure python path allows importing from app
@@ -227,21 +227,29 @@ async def run_google_validation(args):
         if not metrics:
             print_result("empty_result", platform="google_ads", date=args.date)
 
+
+
         # 5. raw harness validation before normalize
         for m in metrics:
             mets = m.get("metrics", {})
-            for field in ["costMicros", "conversionsValue", "conversions", "clicks", "impressions"]:
-                if field not in mets:
-                    raise HarnessError("malformed_response", f"Missing field in Google metrics: {field}")
-                val = mets[field]
-                if val is None or val == "":
-                    raise HarnessError("malformed_response", f"Empty or None field in Google metrics: {field}")
-                try:
-                    dec_val = Decimal(str(val))
-                    if dec_val < 0:
-                        raise HarnessError("schema_mismatch", f"Negative value not allowed in {field}")
-                except (ValueError, TypeError, InvalidOperation):
-                    raise HarnessError("schema_mismatch", f"Invalid numeric type for {field}")
+            
+            # Google Contract:
+            # costMicros: int_string
+            # clicks: int_string
+            # impressions: int_string
+            # conversions: decimal_number
+            # conversionsValue: decimal_number
+            
+            validate_field(mets.get("costMicros"), expected="int_string", field_name="costMicros")
+            validate_field(mets.get("clicks"), expected="int_string", field_name="clicks")
+            validate_field(mets.get("impressions"), expected="int_string", field_name="impressions")
+            validate_field(mets.get("conversions"), expected="decimal_number", field_name="conversions")
+            validate_field(mets.get("conversionsValue"), expected="decimal_number", field_name="conversionsValue")
+            
+            if "customer" in m and "id" in m["customer"] and str(m["customer"]["id"]) != str(connector.customer_id):
+                raise HarnessError("schema_mismatch", "Google metrics row customer.id does not match requested")
+            if "campaign" not in m or "id" not in m["campaign"] or not m["campaign"]["id"]:
+                raise HarnessError("malformed_response", "Google metrics row missing campaign.id")
 
         norm = connector.normalize(metrics)
         if len(norm) != len(metrics):
@@ -349,6 +357,8 @@ async def run_tiktok_validation(args):
         if not metrics:
             print_result("empty_result", platform="tiktok_ads", date=args.date)
 
+
+
         # raw harness validation before normalize
         for m in metrics:
             dim = m.get("dimensions", {})
@@ -362,18 +372,18 @@ async def run_tiktok_validation(args):
                 raise HarnessError("schema_mismatch", "TikTok row advertiser_id mismatch")
                 
             mets = m.get("metrics", {})
-            for field in ["spend", "total_purchase_value", "conversion", "clicks", "impressions"]:
-                if field not in mets:
-                    raise HarnessError("malformed_response", f"Missing field in TikTok metrics: {field}")
-                val = mets[field]
-                if val is None or val == "":
-                    raise HarnessError("malformed_response", f"Empty or None field in TikTok metrics: {field}")
-                try:
-                    dec_val = Decimal(str(val).replace(',', ''))
-                    if dec_val < 0:
-                        raise HarnessError("schema_mismatch", f"Negative value not allowed in {field}")
-                except (ValueError, TypeError, InvalidOperation):
-                    raise HarnessError("schema_mismatch", f"Invalid numeric type for {field}")
+            
+            # TikTok Contract:
+            # spend: decimal_string
+            # total_purchase_value: decimal_string
+            # conversion: decimal_string
+            # clicks: int_string
+            # impressions: int_string
+            validate_field(mets.get("spend"), expected="decimal_string", field_name="spend")
+            validate_field(mets.get("total_purchase_value"), expected="decimal_string", field_name="total_purchase_value")
+            validate_field(mets.get("conversion"), expected="decimal_string", field_name="conversion")
+            validate_field(mets.get("clicks"), expected="int_string", field_name="clicks")
+            validate_field(mets.get("impressions"), expected="int_string", field_name="impressions")
 
         norm = connector.normalize(metrics)
         if len(norm) != len(metrics):
@@ -462,8 +472,13 @@ def main():
             asyncio.run(run_google_validation(args))
         elif args.platform == "tiktok_ads":
             asyncio.run(run_tiktok_validation(args))
+
     except Exception as e:
-        print_result("fail", error_category="internal_error", message=str(e))
+        sys.stderr.write(registry.mask_secrets(f"Unexpected internal error: {type(e).__name__} - {str(e)}\n"))
+        import traceback
+        sys.stderr.write(registry.mask_secrets(traceback.format_exc()))
+        sys.exit(99)
+
 
 if __name__ == "__main__":
     main()

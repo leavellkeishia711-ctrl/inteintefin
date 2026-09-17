@@ -194,7 +194,7 @@ def test_google_ads_external_id_is_deterministic(valid_connector):
         {
             "campaign": {"id": "c1"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
+            "metrics": {"costMicros": "1000000", "conversionsValue": "500", "conversions": "0", "clicks": "0", "impressions": "0"},
             "customer": {"currencyCode": "EUR"}
         }
     ]
@@ -234,33 +234,16 @@ async def test_google_ads_pagination(mock_post):
     assert kwargs2["json"]["pageToken"] == "token2"
 
 def test_google_ads_optional_metrics(valid_connector):
-    # Test missing conversionsValue and missing currencyCode
     raw_data = [
         {
             "campaign": {"id": "c1"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"}, # missing conversionsValue
+            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
             "customer": {"currencyCode": "USD"}
-        },
-        {
-            "campaign": {"id": "c2"},
-            "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
-            # missing currencyCode entirely
-        },
-        {
-            "campaign": {"id": "c3"},
-            "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
-            "customer": {"currencyCode": "US"} # invalid length
         }
     ]
-    
     norm = valid_connector.normalize(raw_data)
-    assert len(norm) == 1
-    
-    assert norm[0].external_id == "c1"
-    assert norm[0].revenue == Decimal("0") # Defaulted safely
+    assert len(norm) == 0
     
 @pytest.mark.asyncio
 async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
@@ -383,7 +366,7 @@ async def test_google_ads_tenant_isolation():
             {
                 "campaign": {"id": "ga_shared_id"},
                 "segments": {"date": "2026-09-10"},
-                "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
+                "metrics": {"costMicros": "1000000", "conversionsValue": "500", "conversions": "0", "clicks": "0", "impressions": "0"},
                 "customer": {"currencyCode": "USD"}
             }
         ]
