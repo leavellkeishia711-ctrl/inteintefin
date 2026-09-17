@@ -20,8 +20,8 @@ GOOGLE_ADS_API_VERSION = settings.GOOGLE_ADS_API_VERSION
 GOOGLE_OAUTH2_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 class GoogleAdsConnector(Connector):
-    def __init__(self, config: Any, decrypted_api_key: str):
-        super().__init__(config)
+    def __init__(self, config: Any, decrypted_api_key: str, timeout: int = 30):
+        super().__init__(config, timeout=timeout)
         try:
             creds = json.loads(decrypted_api_key)
             self.developer_token = creds["developer_token"]
@@ -54,11 +54,12 @@ class GoogleAdsConnector(Connector):
                 "grant_type": "refresh_token"
             }
             response = await with_retry(
-                lambda: client.post(GOOGLE_OAUTH2_TOKEN_URL, data=data, timeout=15)
+                lambda: client.post(GOOGLE_OAUTH2_TOKEN_URL, data=data, timeout=self.timeout)
             )
             response.raise_for_status()
             token_data = response.json()
             self.access_token = token_data["access_token"]
+            self.register_secret(self.access_token)
 
     def _get_headers(self) -> Dict[str, str]:
         if not self.access_token:
@@ -71,7 +72,7 @@ class GoogleAdsConnector(Connector):
             headers["login-customer-id"] = self.login_customer_id
         return headers
 
-    async def _execute_gaql(self, query: str) -> List[Dict[str, Any]]:
+    async def _execute_gaql(self, query: str, page_size: Optional[int] = None, max_pages: Optional[int] = None) -> List[Dict[str, Any]]:
         """Executes a GAQL query with pagination handling and automatic token refresh."""
         url = f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers/{self.customer_id}/googleAds:search"
 
@@ -82,6 +83,8 @@ class GoogleAdsConnector(Connector):
             payload = {"query": query}
             if page_token:
                 payload["pageToken"] = page_token
+            if page_size:
+                payload["pageSize"] = page_size
 
             async with httpx.AsyncClient() as client:
                 try:
@@ -90,7 +93,7 @@ class GoogleAdsConnector(Connector):
                             url,
                             headers=self._get_headers(),
                             json=payload,
-                            timeout=30
+                            timeout=self.timeout
                         )
                     )
                     res.raise_for_status()
@@ -103,7 +106,7 @@ class GoogleAdsConnector(Connector):
                             url,
                             headers=self._get_headers(),
                             json=payload,
-                            timeout=30
+                            timeout=self.timeout
                         )
                     )
                     res.raise_for_status()
@@ -111,14 +114,28 @@ class GoogleAdsConnector(Connector):
 
         all_results = []
         next_page_token = None
+        pages_fetched = 0
+        self.last_pages_fetched = 0
+        self.last_saw_next_page = False
 
         while True:
-            data = await fetch_page(next_page_token)
+            try:
+                data = await fetch_page(next_page_token)
+            except Exception:
+                self.last_pages_fetched = pages_fetched
+                raise
+
             results = data.get("results", [])
             all_results.extend(results)
+            pages_fetched += 1
+            self.last_pages_fetched = pages_fetched
 
             next_page_token = data.get("nextPageToken")
+            self.last_saw_next_page = bool(next_page_token)
+
             if not next_page_token:
+                break
+            if max_pages and pages_fetched >= max_pages:
                 break
 
         return all_results
@@ -169,16 +186,16 @@ class GoogleAdsConnector(Connector):
         query = "SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type, campaign.start_date, campaign.end_date FROM campaign WHERE campaign.status != 'REMOVED'"
         return await self._execute_gaql(query)
 
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date: Optional[date] = None, end_date: Optional[date] = None, page_size: Optional[int] = None, max_pages: Optional[int] = None) -> List[Dict[str, Any]]:
         lookback_days = 7
-        end_dt = datetime.now(timezone.utc).date()
-        start_dt = end_dt - timedelta(days=lookback_days - 1)
+        end_dt = end_date or datetime.now(timezone.utc).date()
+        start_dt = start_date or (end_dt - timedelta(days=lookback_days - 1))
 
         start_str = start_dt.strftime("%Y-%m-%d")
         end_str = end_dt.strftime("%Y-%m-%d")
 
         query = f"SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros, metrics.conversions_value, metrics.clicks, metrics.impressions, metrics.conversions, customer.id, customer.currency_code FROM campaign WHERE segments.date BETWEEN '{start_str}' AND '{end_str}' AND campaign.status != 'REMOVED'"
-        return await self._execute_gaql(query)
+        return await self._execute_gaql(query, page_size=page_size, max_pages=max_pages)
 
     async def fetch(self) -> List[Dict[str, Any]]:
         return await self.fetch_metrics()
@@ -211,35 +228,24 @@ class GoogleAdsConnector(Connector):
                 continue
 
             try:
-                cost_micros = metrics.get("costMicros", "0")
-                spend = Decimal(str(cost_micros)) / Decimal("1000000")
-
-                conversions_value = metrics.get("conversionsValue", 0)
-                revenue = Decimal(str(conversions_value or 0))
-
-                if spend < 0 or revenue < 0:
-                    continue
-
-            except (InvalidOperation, TypeError, ValueError):
+                for field in ["costMicros", "conversionsValue", "conversions", "clicks", "impressions"]:
+                    if field not in metrics:
+                        raise ValueError(f"Missing required field {field}")
+                    val = metrics[field]
+                    if val is None or val == "":
+                        raise ValueError(f"Empty or None field {field}")
+                
+                spend = Decimal(str(metrics["costMicros"])) / Decimal("1000000")
+                revenue = Decimal(str(metrics["conversionsValue"]))
+                clicks = int(str(metrics["clicks"]))
+                impressions = int(str(metrics["impressions"]))
+                conversions = Decimal(str(metrics["conversions"]))
+                
+                if spend < 0 or revenue < 0 or clicks < 0 or impressions < 0 or conversions < 0:
+                    raise ValueError("Negative values not allowed")
+            except (InvalidOperation, TypeError, ValueError) as e:
+                logger.warning(f"Failed to normalize Google Ads row: {e}")
                 continue
-
-            try:
-                clicks = int(str(metrics.get("clicks", "0") or "0"))
-                if clicks < 0: clicks = 0
-            except ValueError:
-                clicks = 0
-
-            try:
-                impressions = int(str(metrics.get("impressions", "0") or "0"))
-                if impressions < 0: impressions = 0
-            except ValueError:
-                impressions = 0
-
-            try:
-                conversions = Decimal(str(metrics.get("conversions", "0") or "0"))
-                if conversions < 0: conversions = Decimal("0")
-            except (InvalidOperation, TypeError, ValueError):
-                conversions = Decimal("0")
 
             normalized.append(NormalizedRecord(
                 source="google_ads",
@@ -310,3 +316,4 @@ class GoogleAdsConnector(Connector):
 
         if skipped > 0:
             logger.warning(f"Google Ads upsert skipped {skipped} records (unmatched CampaignRun.note), matched {matched}.")
+

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, TypeVar, Callable, Awaitable
+from typing import Dict, Any, List, TypeVar, Callable, Awaitable, Optional
 from pydantic import BaseModel, Field
 import uuid
 import httpx
@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 
 class ConnectorError(Exception):
     """Base exception for connector errors."""
-    pass
+    def __init__(self, message: str, status_code: Optional[int] = None, api_error_code: Optional[str] = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.api_error_code = api_error_code
 
 class UnauthorizedError(ConnectorError):
     """Raised when the connector receives an HTTP 401 or 403."""
@@ -41,14 +44,32 @@ async def with_retry(
         try:
             return await func()
         except httpx.HTTPStatusError as e:
+            api_err = None
+            try:
+                body = e.response.json()
+                if "error" in body and isinstance(body["error"], dict):
+                    # Google format: body.error.details[0].errors[0].errorCode...
+                    details = body["error"].get("details", [])
+                    if details and "errors" in details[0]:
+                        errs = details[0]["errors"]
+                        if errs and "errorCode" in errs[0]:
+                            err_code_dict = errs[0]["errorCode"]
+                            if isinstance(err_code_dict, dict):
+                                api_err = list(err_code_dict.values())[0]
+                elif "code" in body:
+                    # Generic format
+                    api_err = str(body["code"])
+            except Exception:
+                pass
+
             if e.response.status_code in (401, 403):
-                raise UnauthorizedError(f"Unauthorized: HTTP {e.response.status_code}")
+                raise UnauthorizedError(f"Unauthorized: HTTP {e.response.status_code}", status_code=e.response.status_code, api_error_code=api_err)
             
             if e.response.status_code in retry_statuses:
                 if attempt == max_retries - 1:
                     if e.response.status_code == 429:
-                        raise RateLimitError(f"Rate limited after {max_retries} attempts")
-                    raise ConnectorError(f"Server error {e.response.status_code} after {max_retries} attempts")
+                        raise RateLimitError(f"Rate limited after {max_retries} attempts", status_code=e.response.status_code, api_error_code=api_err)
+                    raise ConnectorError(f"Server error {e.response.status_code} after {max_retries} attempts", status_code=e.response.status_code, api_error_code=api_err)
                 
                 delay = base_delay * (2 ** attempt)
                 logger.warning(f"HTTP {e.response.status_code}. Retrying in {delay}s...")
@@ -56,7 +77,7 @@ async def with_retry(
                 continue
             
             # Other HTTP errors (e.g., 400, 404) do not retry
-            raise ConnectorError(f"HTTP Error: {e.response.status_code}")
+            raise ConnectorError(f"HTTP Error: {e.response.status_code}", status_code=e.response.status_code, api_error_code=api_err)
             
         except (httpx.TimeoutException, httpx.RequestError) as e:
             if attempt == max_retries - 1:
@@ -85,8 +106,10 @@ class NormalizedAdAccount(BaseModel):
     name: str | None = None
 
 class Connector(ABC):
-    def __init__(self, config: Any):
+    def __init__(self, config: Any, timeout: int = 30):
         self.config = config
+        self.timeout = timeout
+        self.register_secret = lambda s: None
 
     @abstractmethod
     async def test_connection(self) -> bool:
@@ -97,7 +120,7 @@ class Connector(ABC):
         pass
 
     @abstractmethod
-    async def fetch_metrics(self) -> List[Dict[str, Any]]:
+    async def fetch_metrics(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[Dict[str, Any]]:
         pass
 
     async def fetch(self) -> List[Dict[str, Any]]:

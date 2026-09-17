@@ -175,5 +175,5 @@ class KeitaroConnector(Connector):
     async def fetch_campaigns(self) -> list:
         return []
 
-    async def fetch_metrics(self) -> list:
+    async def fetch_metrics(self, start_date=None, end_date=None) -> list:
         return []
