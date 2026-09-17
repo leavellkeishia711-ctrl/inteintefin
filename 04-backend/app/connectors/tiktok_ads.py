@@ -67,7 +67,7 @@ class TikTokAdsConnector(Connector):
                 response = await with_retry(lambda: client.get(
                     f"{self.base_url}/advertiser/info/",
                     headers=self._get_headers(),
-                    params={"advertiser_ids": json.dumps([self.advertiser_id])}
+                    params={"advertiser_ids": json.dumps([self.advertiser_id])}, timeout=self.timeout
                 ))
                 self._raise_for_status(response)
                 return True
@@ -79,7 +79,7 @@ class TikTokAdsConnector(Connector):
             response = await with_retry(lambda: client.get(
                 f"{self.base_url}/advertiser/info/",
                 headers=self._get_headers(),
-                params={"advertiser_ids": json.dumps([self.advertiser_id])}
+                params={"advertiser_ids": json.dumps([self.advertiser_id])}, timeout=self.timeout
             ))
             self._raise_for_status(response)
             data = response.json().get("data", {}).get("list", [])
@@ -210,37 +210,31 @@ class TikTokAdsConnector(Connector):
 
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-                spend_str = str(metrics.get("spend") or "0").replace(",", "")
-                rev_str = str(metrics.get("total_purchase_value") or "0").replace(",", "")
+                for field in ["spend", "total_purchase_value", "conversion", "clicks", "impressions"]:
+                    if field not in metrics:
+                        raise ValueError(f"Missing required field {field}")
+                    val = metrics[field]
+                    if val is None or val == "":
+                        raise ValueError(f"Empty or None field {field}")
+
+                spend_str = str(metrics["spend"]).replace(",", "")
+                rev_str = str(metrics["total_purchase_value"]).replace(",", "")
+                clicks_str = str(metrics["clicks"]).replace(",", "")
+                impressions_str = str(metrics["impressions"]).replace(",", "")
+                conversions_str = str(metrics["conversion"]).replace(",", "")
 
                 spend = Decimal(spend_str)
                 revenue = Decimal(rev_str)
+                clicks = int(clicks_str)
+                impressions = int(impressions_str)
+                conversions = Decimal(conversions_str)
+                
+                if spend < 0 or revenue < 0 or clicks < 0 or impressions < 0 or conversions < 0:
+                    raise ValueError("Negative values not allowed")
 
                 currency = row.get("_currency")
                 if not currency:
                     raise ConnectorError("Missing currency in TikTok Ads metrics")
-
-                clicks_str = str(metrics.get("clicks") or "0").replace(",", "")
-                impressions_str = str(metrics.get("impressions") or "0").replace(",", "")
-                conversions_str = str(metrics.get("conversion") or "0").replace(",", "")
-
-                try:
-                    clicks = int(clicks_str)
-                    if clicks < 0: clicks = 0
-                except ValueError:
-                    clicks = 0
-
-                try:
-                    impressions = int(impressions_str)
-                    if impressions < 0: impressions = 0
-                except ValueError:
-                    impressions = 0
-
-                try:
-                    conversions = Decimal(conversions_str)
-                    if conversions < 0: conversions = Decimal("0")
-                except (InvalidOperation, TypeError, ValueError):
-                    conversions = Decimal("0")
 
                 normalized.append(
                     NormalizedRecord(

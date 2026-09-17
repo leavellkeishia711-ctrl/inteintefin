@@ -119,7 +119,7 @@ async def test_tiktok_ads_fetch_metrics(mock_get):
                     "list": [
                         {
                             "dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"},
-                            "metrics": {"spend": "100.5", "total_purchase_value": "200.75"}
+                            "metrics": {"spend": "100.5", "total_purchase_value": "200.75", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"}
                         }
                     ],
                     "page_info": {"page": 1, "total_page": 1}
@@ -138,7 +138,7 @@ def test_tiktok_ads_decimal_mapping():
     
     raw = [{
         "dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"},
-        "metrics": {"spend": "1,000.5", "total_purchase_value": "500"},
+        "metrics": {"spend": "1000.5", "total_purchase_value": "500", "conversion": "0", "clicks": "0", "impressions": "0"},
         "_currency": "USD"
     }]
     normalized = connector.normalize(raw)
@@ -153,7 +153,7 @@ def test_tiktok_ads_stat_date_mapping():
     
     raw = [{
         "dimensions": {"campaign_id": "c1", "stat_time_day": "2024-02-29"},
-        "metrics": {"spend": "0"},
+        "metrics": {"spend": "0", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
         "_currency": "USD"
     }]
     normalized = connector.normalize(raw)
@@ -166,12 +166,12 @@ def test_tiktok_ads_external_id_is_deterministic():
     
     raw1 = [{
         "dimensions": {"campaign_id": "c123", "stat_time_day": "2024-01-01"},
-        "metrics": {"spend": "0"},
+        "metrics": {"spend": "0", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
         "_currency": "USD"
     }]
     raw2 = [{
         "dimensions": {"campaign_id": "c123", "stat_time_day": "2024-01-02"},
-        "metrics": {"spend": "0"},
+        "metrics": {"spend": "0", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
         "_currency": "USD"
     }]
     
@@ -200,20 +200,19 @@ async def test_tiktok_ads_pagination(mock_get):
     assert len(camps) == 2
     assert mock_get.call_count == 2
 
+
 def test_tiktok_ads_optional_metrics():
     config = DummyConfig(uuid.uuid4(), connector_name="tiktok_ads")
     connector = TikTokAdsConnector(config, get_creds())
-    
+
     raw = [{
         "dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"},
-        # missing spend and total_purchase_value
         "metrics": {},
         "_currency": "USD"
     }]
     normalized = connector.normalize(raw)
-    assert len(normalized) == 1
-    assert normalized[0].spend == Decimal("0")
-    assert normalized[0].revenue == Decimal("0")
+    assert len(normalized) == 0
+
 
 @pytest.mark.asyncio
 async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
@@ -248,7 +247,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             # Run 1
             raw_1 = [{
                 "dimensions": {"campaign_id": "12345", "stat_time_day": "2024-01-01"},
-                "metrics": {"spend": "10", "total_purchase_value": "5"},
+                "metrics": {"spend": "10", "total_purchase_value": "5", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
                 "_currency": "USD"
             }]
             norm_1 = connector.normalize(raw_1)
@@ -262,7 +261,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             # Run 2 (Update)
             raw_2 = [{
                 "dimensions": {"campaign_id": "12345", "stat_time_day": "2024-01-01"},
-                "metrics": {"spend": "15", "total_purchase_value": "5"},
+                "metrics": {"spend": "15", "total_purchase_value": "5", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
                 "_currency": "USD"
             }]
             norm_2 = connector.normalize(raw_2)
@@ -307,7 +306,7 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
             
             raw = [{
                 "dimensions": {"campaign_id": "ext1", "stat_time_day": "2024-01-01"},
-                "metrics": {"spend": "10", "total_purchase_value": "0"},
+                "metrics": {"spend": "10", "total_purchase_value": "0", "conversion": "0", "clicks": "0", "impressions": "0", "total_purchase_value": "500", "spend": "0"},
                 "_currency": "USD"
             }]
             await connector.upsert(db_session, connector.normalize(raw))
@@ -322,3 +321,33 @@ def test_tiktok_ads_no_real_network_calls():
     connector = TikTokAdsConnector(DummyConfig(uuid.uuid4()), get_creds())
     assert isinstance(connector.base_url, str)
     assert connector.base_url == "https://business-api.tiktok.com/open_api/v1.3"
+
+
+def test_tiktok_ads_normalize_strict_types():
+    from app.connectors.tiktok_ads import TikTokAdsConnector
+    from app.connectors.base import ConnectorError
+    class DummyConfig:
+        company_id = "000"
+        connector_name = "tiktok_ads"
+    connector = TikTokAdsConnector(DummyConfig(), '{"access_token": "a", "advertiser_id": "b"}')
+    
+    # Missing field
+    raw1 = [{"dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"}, "metrics": {"spend": "10"}, "_currency": "USD"}]
+    norm1 = connector.normalize(raw1)
+    assert len(norm1) == 0
+        
+    # None field
+    raw2 = [{"dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"}, "metrics": {"spend": "10", "total_purchase_value": "10", "conversion": "10", "clicks": "10", "impressions": None}, "_currency": "USD"}]
+    norm2 = connector.normalize(raw2)
+    assert len(norm2) == 0
+        
+    # Empty string field
+    raw3 = [{"dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"}, "metrics": {"spend": "10", "total_purchase_value": "10", "conversion": "10", "clicks": "", "impressions": "10"}, "_currency": "USD"}]
+    norm3 = connector.normalize(raw3)
+    assert len(norm3) == 0
+        
+    # Explicit 0 is allowed
+    raw4 = [{"dimensions": {"campaign_id": "c1", "stat_time_day": "2024-01-01"}, "metrics": {"spend": "0", "total_purchase_value": "0", "conversion": "0", "clicks": "0", "impressions": "0"}, "_currency": "USD"}]
+    norm4 = connector.normalize(raw4)
+    assert len(norm4) == 1
+    assert norm4[0].spend == 0

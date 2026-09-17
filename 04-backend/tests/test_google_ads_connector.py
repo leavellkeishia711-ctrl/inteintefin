@@ -159,7 +159,7 @@ def test_google_ads_fetch_metrics_converts_micros_to_decimal(valid_connector):
         {
             "campaign": {"id": "c1"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1250000", "conversionsValue": "5.5"},
+            "metrics": {"costMicros": "1250000", "conversionsValue": "5.5", "conversions": "0", "clicks": "0", "impressions": "0", "conversions": "0", "clicks": "0", "impressions": "0"},
             "customer": {"currencyCode": "EUR"}
         }
     ]
@@ -180,7 +180,7 @@ def test_google_ads_metrics_include_stat_date(valid_connector):
         {
             "campaign": {"id": "c1"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1250000", "conversionsValue": "5.5"},
+            "metrics": {"costMicros": "1250000", "conversionsValue": "5.5", "conversions": "0", "clicks": "0", "impressions": "0", "conversions": "0", "clicks": "0", "impressions": "0"},
             "customer": {"currencyCode": "EUR"}
         }
     ]
@@ -194,7 +194,7 @@ def test_google_ads_external_id_is_deterministic(valid_connector):
         {
             "campaign": {"id": "c1"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000"},
+            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
             "customer": {"currencyCode": "EUR"}
         }
     ]
@@ -239,19 +239,19 @@ def test_google_ads_optional_metrics(valid_connector):
         {
             "campaign": {"id": "c1"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000"}, # missing conversionsValue
+            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"}, # missing conversionsValue
             "customer": {"currencyCode": "USD"}
         },
         {
             "campaign": {"id": "c2"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000"},
+            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
             # missing currencyCode entirely
         },
         {
             "campaign": {"id": "c3"},
             "segments": {"date": "2026-09-10"},
-            "metrics": {"costMicros": "1000000"},
+            "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
             "customer": {"currencyCode": "US"} # invalid length
         }
     ]
@@ -304,7 +304,7 @@ async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
             {
                 "campaign": {"id": "ga_camp_1"},
                 "segments": {"date": "2026-09-10"},
-                "metrics": {"costMicros": "1000000", "conversionsValue": "5.0"},
+                "metrics": {"costMicros": "1000000", "conversionsValue": "5.0", "conversions": "0", "clicks": "0", "impressions": "0"},
                 "customer": {"currencyCode": "USD"}
             }
         ]
@@ -383,7 +383,7 @@ async def test_google_ads_tenant_isolation():
             {
                 "campaign": {"id": "ga_shared_id"},
                 "segments": {"date": "2026-09-10"},
-                "metrics": {"costMicros": "1000000"},
+                "metrics": {"costMicros": "1000000", "conversions": "0", "clicks": "0", "impressions": "0"},
                 "customer": {"currencyCode": "USD"}
             }
         ]
@@ -397,3 +397,33 @@ async def test_google_ads_tenant_isolation():
         
         assert len(res_a) == 1
         assert len(res_b) == 0
+
+
+def test_google_ads_normalize_strict_types():
+    from app.connectors.google_ads import GoogleAdsConnector
+    from app.connectors.base import ConnectorError
+    class DummyConfig:
+        company_id = "000"
+        connector_name = "google_ads"
+    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "e"}')
+    
+    # Missing field
+    raw1 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "100"}}]
+    norm = connector.normalize(raw1)
+    assert len(norm) == 0  # logger.warning and continue for Google
+        
+    # None field
+    raw2 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "10", "conversionsValue": "10", "conversions": "10", "clicks": "10", "impressions": None}}]
+    norm2 = connector.normalize(raw2)
+    assert len(norm2) == 0
+        
+    # Empty string field
+    raw3 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "10", "conversionsValue": "10", "conversions": "10", "clicks": "", "impressions": "10"}}]
+    norm3 = connector.normalize(raw3)
+    assert len(norm3) == 0
+        
+    # Explicit 0 is allowed
+    raw4 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "0", "conversionsValue": "0", "conversions": "0", "clicks": "0", "impressions": "0"}}]
+    norm4 = connector.normalize(raw4)
+    assert len(norm4) == 1
+    assert norm4[0].spend == 0

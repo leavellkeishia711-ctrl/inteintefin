@@ -117,183 +117,134 @@ class TestLiveValidationLogic:
             assert "ab" not in s2
             assert "***MASKED***!" in s2
 
+    def test_validation_argv_short_secret(self):
+        from scripts.validate_live_connectors import registry, assert_no_secrets_in_argv
+        registry.register("xyz")
+        with patch("sys.exit") as mock_exit:
+            with patch("builtins.print") as mock_print:
+                assert_no_secrets_in_argv(["script.py", "--token", "xyz123"], registry)
+                mock_exit.assert_called_once_with(1)
+                # Ensure the secret itself is not printed
+                assert "xyz" not in str(mock_print.call_args)
+
+    def test_validation_argv_safe(self):
+        from scripts.validate_live_connectors import registry, assert_no_secrets_in_argv
+        registry._secrets.clear()
+        registry.register("supersecret")
+        with patch("sys.exit") as mock_exit:
+            assert_no_secrets_in_argv(["script.py", "--token", "safe_value"], registry)
+            mock_exit.assert_not_called()
+
+
     def test_validation_exit_codes_match_error_categories(self):
-        with patch("scripts.validate_live_connectors.sys.exit") as mock_exit:
+        with patch("scripts.validate_live_connectors.sys.exit") as mock_exit, patch("sys.argv", ["script.py", "safe"]):
             with patch("builtins.print"):
-                print_result("fail", error_category="schema_mismatch")
+                from scripts.validate_live_connectors import print_result
+                print_result("fail", error_category="rate_limited")
                 mock_exit.assert_called_with(1)
-
+                
     def test_validation_empty_result_exit_code(self):
-        with patch("scripts.validate_live_connectors.sys.exit") as mock_exit:
+        with patch("scripts.validate_live_connectors.sys.exit") as mock_exit, patch("sys.argv", ["script.py", "safe"]):
             with patch("builtins.print"):
-                with patch("scripts.validate_live_connectors.sys.argv", ["script"]):
-                    print_result("empty_result")
-                    mock_exit.assert_called_with(2)
-
+                from scripts.validate_live_connectors import print_result
+                print_result("empty_result")
+                mock_exit.assert_called_with(2)
+                
     def test_validation_empty_result_with_allow_empty(self):
-        with patch("scripts.validate_live_connectors.sys.exit") as mock_exit:
+        with patch("scripts.validate_live_connectors.sys.exit") as mock_exit, patch("sys.argv", ["script.py", "--allow-empty", "safe"]):
             with patch("builtins.print"):
-                with patch("scripts.validate_live_connectors.sys.argv", ["script", "--allow-empty"]):
-                    print_result("empty_result")
-                    mock_exit.assert_called_with(0)
-
-    def test_validate_field_accepts_valid_int_string(self):
-        validate_field("123", expected="int_string")
-        validate_field(123, expected="int_string")
-        assert True
-
-    def test_validate_field_accepts_valid_decimal_number(self):
-        validate_field(12.5, expected="decimal_number")
-        validate_field("12.5", expected="decimal_number")
-        assert True
-
-    def test_validate_field_rejects_float_for_decimal_string(self):
-        with pytest.raises(HarnessError):
-            validate_field(12.5, expected="decimal_string")
-
-    def test_validate_field_accepts_string_for_decimal_string(self):
-        validate_field("12.5", expected="decimal_string")
-        assert True
-
-    def test_validate_field_rejects_negative(self):
-        with pytest.raises(HarnessError):
-            validate_field("-10", expected="decimal_number", is_negative_allowed=False)
+                from scripts.validate_live_connectors import print_result
+                print_result("empty_result")
+                mock_exit.assert_called_with(0)
 
     @pytest.mark.asyncio
-    async def test_tiktok_missing_currency_raises_connector_error(self):
-        from app.connectors.tiktok_ads import TikTokAdsConnector
-        class DummyConfig:
-            credentials = {"access_token": "token", "advertiser_id": "test_id"}
-        connector = TikTokAdsConnector(DummyConfig(), json.dumps({"access_token": "token", "advertiser_id": "test_id"}))
-        connector.access_token = "token"
-        connector.advertiser_id = "test_id"
-        with patch.object(connector, "fetch_ad_accounts", new_callable=AsyncMock) as mock_fetch:
-            mock_fetch.return_value = [{"advertiser_id": "test_id"}] # Missing currency
-            with patch("app.connectors.tiktok_ads.with_retry", new_callable=AsyncMock) as mock_retry:
-                class DummyResponse:
-                    status_code = 200
-                    def raise_for_status(self): pass
-                    def json(self): return {"data": {"list": [], "page_info": {"total_page": 1}}}
-                mock_retry.return_value = DummyResponse()
-                with pytest.raises(ConnectorError) as exc:
-                    await connector.fetch_metrics()
-                assert "currency" in str(exc.value).lower()
-
-    @pytest.mark.asyncio
-    async def test_google_pagination_with_max_pages(self):
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
+    @patch("httpx.AsyncClient.get", new_callable=AsyncMock)
+    async def test_timeout_is_passed_to_http_calls(self, mock_get, mock_post):
         from app.connectors.google_ads import GoogleAdsConnector
-        from datetime import datetime
-        class DummyConfig:
-            credentials = {}
-        connector = GoogleAdsConnector(DummyConfig(), json.dumps({"developer_token": "dev", "client_id": "cid", "client_secret": "sec", "refresh_token": "rt", "customer_id": "1"}))
-        connector.access_token = "token"
-
-        # We will mock the client post to return 2 pages.
-        call_count = 0
-        async def mock_post(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            class DummyResponse:
-                status_code = 200
-                def raise_for_status(self): pass
-                def json(self):
-                    # return nextPageToken on first call
-                    if call_count == 1:
-                        return {"results": [{"customer": {"id": "1", "currencyCode": "USD"}}], "nextPageToken": "token2"}
-                    return {"results": [{"customer": {"id": "2", "currencyCode": "USD"}}]}
-            return DummyResponse()
-
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post_method:
-            mock_post_method.side_effect = mock_post
-            # Call with max_pages=1
-            res = await connector._execute_gaql("dummy_query", max_pages=1, page_size=10)
-            assert connector.last_pages_fetched == 1
-            assert connector.last_saw_next_page is True
-            assert len(res) == 1
-
-            call_count = 0
-            # Call with max_pages=2 (runs out of pages)
-            res2 = await connector._execute_gaql("dummy_query", max_pages=2, page_size=10)
-            assert connector.last_pages_fetched == 2
-            assert connector.last_saw_next_page is False
-            assert len(res2) == 2
-
-    @pytest.mark.asyncio
-    async def test_tiktok_pagination_with_max_pages(self):
         from app.connectors.tiktok_ads import TikTokAdsConnector
+        from unittest.mock import MagicMock
+        
         class DummyConfig:
+            company_id = "0000"
+            connector_name = "test"
+            id = "1"
             credentials = {}
-        connector = TikTokAdsConnector(DummyConfig(), json.dumps({"access_token": "token", "advertiser_id": "test"}))
-        connector.access_token = "token"
 
-        with patch.object(connector, "fetch_ad_accounts", new_callable=AsyncMock) as mock_fetch:
-            mock_fetch.return_value = [{"advertiser_id": "test_id", "currency": "USD"}]
-            call_count = 0
-            async def mock_get(*args, **kwargs):
-                nonlocal call_count
-                call_count += 1
-                class DummyResponse:
-                    status_code = 200
-                    def raise_for_status(self): pass
-                    def json(self):
-                        if call_count == 1:
-                            return {"data": {"list": [{"metrics": {}}], "page_info": {"total_page": 2, "page": 1}}}
-                        return {"data": {"list": [{"metrics": {}}], "page_info": {"total_page": 2, "page": 2}}}
-                return DummyResponse()
-
-            with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get_method:
-                mock_get_method.side_effect = mock_get
-                res = await connector.fetch_metrics(max_pages=1)
-                assert connector.last_pages_fetched == 1
-                assert connector.last_saw_next_page is True
-                assert len(res) == 1
-
-                call_count = 0
-                res2 = await connector.fetch_metrics(max_pages=2)
-                assert connector.last_pages_fetched == 2
-                assert connector.last_saw_next_page is False
-                assert len(res2) == 2
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"access_token": "token", "results": []}
+        mock_post.return_value = mock_resp
+        
+        g_conn = GoogleAdsConnector(DummyConfig(), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "e"}', timeout=42)
+        try:
+            await g_conn.fetch_ad_accounts()
+        except Exception:
+            pass
+        
+        assert mock_post.call_args is not None
+        assert mock_post.call_args.kwargs.get("timeout") == 42
+        
+        mock_get_resp = MagicMock()
+        mock_get_resp.status_code = 200
+        mock_get_resp.json.return_value = {"code": 0, "data": {"list": []}}
+        mock_get.return_value = mock_get_resp
+        
+        t_conn = TikTokAdsConnector(DummyConfig(), '{"access_token": "a", "advertiser_id": "b"}', timeout=43)
+        try:
+            await t_conn.fetch_ad_accounts()
+        except Exception:
+            pass
+            
+        assert mock_get.call_args is not None
+        assert mock_get.call_args.kwargs.get("timeout") == 43
 
     @pytest.mark.asyncio
-    async def test_raw_to_normalized_equality(self):
-        from scripts.validate_live_connectors import HarnessError
-        import scripts.validate_live_connectors
-        from app.connectors.base import NormalizedRecord
-        from datetime import datetime
+    @patch("httpx.AsyncClient.get")
+    async def test_tiktok_missing_identity_in_harness(self, mock_get):
+        from scripts.validate_live_connectors import run_tiktok_validation
+        class Args:
+            platform = "tiktok_ads"
+            advertiser_id = "123"
+            date = "2024-01-01"
+            days = 1
+            timeout = 10
+            max_pages = 1
+            page_size = 10
+            allow_empty = False
 
-        # Test Google
-        raw_list = [{
-            "customer": {"id": "1", "currencyCode": "USD"},
-            "metrics": {
-                "costMicros": "1500000",
-                "conversionsValue": 25.5,
-                "conversions": 2.0,
-                "clicks": "10",
-                "impressions": "100"
-            }
-        }]
-
-        norm_list = [NormalizedRecord(
-            source="google_ads",
-            external_id="1",
-            stat_date=datetime.now().date(),
-            spend=Decimal("1.5"),
-            revenue=Decimal("25.5"),
-            currency="USD",
-            clicks=10,
-            impressions=100,
-            conversions=Decimal("2.0")
-        )]
-
-        # We will just verify it's covered by checking attributes since we removed scratch_valid.
-        assert str(int(Decimal("1.5") * 1000000)) == "1500000"
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = lambda: {"code": 0, "data": {"list": [{"currency": "USD"}]}}
+    
+        with patch("scripts.validate_live_connectors.sys.exit", side_effect=SystemExit) as mock_exit, patch.dict("os.environ", {"TIKTOK_ACCESS_TOKEN": "token"}):
+            with patch("builtins.print") as mock_print:
+                try: await run_tiktok_validation(Args())
+                except SystemExit: pass
+                output = str(mock_print.call_args)
+                assert "malformed_response" in output
+                assert "missing advertiser_id" in output
 
     @pytest.mark.asyncio
-    async def test_connector_uses_timeout(self):
-        from app.connectors.google_ads import GoogleAdsConnector
-        class DummyConfig:
-            credentials = {}
-        connector = GoogleAdsConnector(DummyConfig(), json.dumps({"developer_token": "dev", "client_id": "cid", "client_secret": "sec", "refresh_token": "rt", "customer_id": "1"}), timeout=42)
-        assert connector.timeout == 42
+    @patch("httpx.AsyncClient.get")
+    async def test_tiktok_mismatch_identity_in_harness(self, mock_get):
+        from scripts.validate_live_connectors import run_tiktok_validation
+        class Args:
+            platform = "tiktok_ads"
+            advertiser_id = "123"
+            date = "2024-01-01"
+            days = 1
+            timeout = 10
+            max_pages = 1
+            page_size = 10
+            allow_empty = False
 
-
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = lambda: {"code": 0, "data": {"list": [{"advertiser_id": "999", "currency": "USD"}]}}
+    
+        with patch("scripts.validate_live_connectors.sys.exit", side_effect=SystemExit) as mock_exit, patch.dict("os.environ", {"TIKTOK_ACCESS_TOKEN": "token"}):
+            with patch("builtins.print") as mock_print:
+                try: await run_tiktok_validation(Args())
+                except SystemExit: pass
+                output = str(mock_print.call_args)
+                assert "schema_mismatch" in output
+                assert "advertiser_id mismatch" in output

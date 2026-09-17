@@ -228,35 +228,24 @@ class GoogleAdsConnector(Connector):
                 continue
 
             try:
-                cost_micros = metrics.get("costMicros", "0")
-                spend = Decimal(str(cost_micros)) / Decimal("1000000")
-
-                conversions_value = metrics.get("conversionsValue", 0)
-                revenue = Decimal(str(conversions_value or 0))
-
-                if spend < 0 or revenue < 0:
-                    continue
-
-            except (InvalidOperation, TypeError, ValueError):
+                for field in ["costMicros", "conversionsValue", "conversions", "clicks", "impressions"]:
+                    if field not in metrics:
+                        raise ValueError(f"Missing required field {field}")
+                    val = metrics[field]
+                    if val is None or val == "":
+                        raise ValueError(f"Empty or None field {field}")
+                
+                spend = Decimal(str(metrics["costMicros"])) / Decimal("1000000")
+                revenue = Decimal(str(metrics["conversionsValue"]))
+                clicks = int(str(metrics["clicks"]))
+                impressions = int(str(metrics["impressions"]))
+                conversions = Decimal(str(metrics["conversions"]))
+                
+                if spend < 0 or revenue < 0 or clicks < 0 or impressions < 0 or conversions < 0:
+                    raise ValueError("Negative values not allowed")
+            except (InvalidOperation, TypeError, ValueError) as e:
+                logger.warning(f"Failed to normalize Google Ads row: {e}")
                 continue
-
-            try:
-                clicks = int(str(metrics.get("clicks", "0") or "0"))
-                if clicks < 0: clicks = 0
-            except ValueError:
-                clicks = 0
-
-            try:
-                impressions = int(str(metrics.get("impressions", "0") or "0"))
-                if impressions < 0: impressions = 0
-            except ValueError:
-                impressions = 0
-
-            try:
-                conversions = Decimal(str(metrics.get("conversions", "0") or "0"))
-                if conversions < 0: conversions = Decimal("0")
-            except (InvalidOperation, TypeError, ValueError):
-                conversions = Decimal("0")
 
             normalized.append(NormalizedRecord(
                 source="google_ads",

@@ -46,6 +46,15 @@ class HarnessError(Exception):
         self.message = message
         super().__init__(message)
 
+def assert_no_secrets_in_argv(argv, registry):
+    secrets = registry._secrets
+    for sec in secrets:
+        if sec:
+            for arg in argv:
+                if sec in arg:
+                    print(json.dumps({"status": "fail", "error_category": "invalid_credentials", "message": "Secret in argv detected!"}))
+                    sys.exit(1)
+
 def print_result(status: str, **kwargs):
     out = {"status": status}
     if status == "empty_result":
@@ -55,13 +64,7 @@ def print_result(status: str, **kwargs):
     out.update(kwargs)
 
     # Check if argv contains secrets before printing
-    secrets = registry._secrets
-    for sec in secrets:
-        if sec and len(sec) > 4:
-            for arg in sys.argv:
-                if sec in arg:
-                    print(json.dumps({"status": "fail", "error_category": "invalid_credentials", "message": "Secret in argv detected!"}))
-                    sys.exit(1)
+    assert_no_secrets_in_argv(sys.argv, registry)
 
     raw_str = json.dumps(out)
     print(sanitize_string(raw_str))
@@ -224,7 +227,22 @@ async def run_google_validation(args):
         if not metrics:
             print_result("empty_result", platform="google_ads", date=args.date)
 
-        # 5. normalize and exhaustive check
+        # 5. raw harness validation before normalize
+        for m in metrics:
+            mets = m.get("metrics", {})
+            for field in ["costMicros", "conversionsValue", "conversions", "clicks", "impressions"]:
+                if field not in mets:
+                    raise HarnessError("malformed_response", f"Missing field in Google metrics: {field}")
+                val = mets[field]
+                if val is None or val == "":
+                    raise HarnessError("malformed_response", f"Empty or None field in Google metrics: {field}")
+                try:
+                    dec_val = Decimal(str(val))
+                    if dec_val < 0:
+                        raise HarnessError("schema_mismatch", f"Negative value not allowed in {field}")
+                except (ValueError, TypeError, InvalidOperation):
+                    raise HarnessError("schema_mismatch", f"Invalid numeric type for {field}")
+
         norm = connector.normalize(metrics)
         if len(norm) != len(metrics):
             raise HarnessError("schema_mismatch", f"Normalization length mismatch: {len(metrics)} vs {len(norm)}")
@@ -313,12 +331,16 @@ async def run_tiktok_validation(args):
         for a in accts:
             if "advertiser_id" not in a or "currency" not in a:
                 raise HarnessError("malformed_response", "TikTok account missing advertiser_id or currency")
+            if str(a.get("advertiser_id")) != connector.advertiser_id:
+                raise HarnessError("schema_mismatch", "TikTok account advertiser_id mismatch")
         connector.normalize_ad_accounts(accts)
 
         camps = await connector.fetch_campaigns()
         for c in camps:
-            if "campaign_id" not in c:
+            if not c.get("campaign_id"):
                 raise HarnessError("malformed_response", "TikTok campaign missing campaign_id")
+            if "advertiser_id" in c and str(c.get("advertiser_id")) != connector.advertiser_id:
+                raise HarnessError("schema_mismatch", "TikTok campaign advertiser_id mismatch")
 
         target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
         start_date = target_date - timedelta(days=args.days - 1)
@@ -326,6 +348,32 @@ async def run_tiktok_validation(args):
 
         if not metrics:
             print_result("empty_result", platform="tiktok_ads", date=args.date)
+
+        # raw harness validation before normalize
+        for m in metrics:
+            dim = m.get("dimensions", {})
+            if not dim.get("campaign_id"):
+                raise HarnessError("malformed_response", "TikTok row missing campaign_id")
+            if "stat_time_day" not in dim:
+                raise HarnessError("malformed_response", "TikTok row missing stat_time_day")
+            if "advertiser_id" in dim and str(dim["advertiser_id"]) != connector.advertiser_id:
+                raise HarnessError("schema_mismatch", "TikTok row advertiser_id mismatch")
+            if "advertiser_id" in m and str(m["advertiser_id"]) != connector.advertiser_id:
+                raise HarnessError("schema_mismatch", "TikTok row advertiser_id mismatch")
+                
+            mets = m.get("metrics", {})
+            for field in ["spend", "total_purchase_value", "conversion", "clicks", "impressions"]:
+                if field not in mets:
+                    raise HarnessError("malformed_response", f"Missing field in TikTok metrics: {field}")
+                val = mets[field]
+                if val is None or val == "":
+                    raise HarnessError("malformed_response", f"Empty or None field in TikTok metrics: {field}")
+                try:
+                    dec_val = Decimal(str(val).replace(',', ''))
+                    if dec_val < 0:
+                        raise HarnessError("schema_mismatch", f"Negative value not allowed in {field}")
+                except (ValueError, TypeError, InvalidOperation):
+                    raise HarnessError("schema_mismatch", f"Invalid numeric type for {field}")
 
         norm = connector.normalize(metrics)
         if len(norm) != len(metrics):
@@ -364,6 +412,12 @@ async def run_tiktok_validation(args):
                 raise HarnessError("schema_mismatch", "clicks mismatch")
             if int(str(mets["impressions"]).replace(',', '')) != r.impressions:
                 raise HarnessError("schema_mismatch", "impressions mismatch")
+                
+            dimensions = m.get("dimensions", {})
+            if not dimensions.get("campaign_id") or not dimensions.get("stat_time_day"):
+                raise HarnessError("malformed_response", "TikTok report missing campaign_id or stat_time_day")
+            if "advertiser_id" in m and str(m.get("advertiser_id")) != connector.advertiser_id:
+                raise HarnessError("schema_mismatch", "TikTok report advertiser_id mismatch")
 
         print_result("pass", platform="tiktok_ads", advertiser_id=f"{adv_id[:3]}***{adv_id[-2:]}", rows_fetched=len(norm), date=args.date, pages_fetched=getattr(connector, "last_pages_fetched", 1), saw_next_page=getattr(connector, "last_saw_next_page", False), page_size_used=args.page_size)
 
@@ -379,13 +433,7 @@ def main():
         sys.exit(1)
 
     # Check argv for secrets
-    secrets = registry._secrets
-    for sec in secrets:
-        if sec and len(sec) > 4:
-            for arg in sys.argv:
-                if sec in arg:
-                    sys.stderr.write("Secret detected in argv!\n")
-                    sys.exit(1)
+    assert_no_secrets_in_argv(sys.argv, registry)
 
     parser = argparse.ArgumentParser(description="Live Connector Validation")
     parser.add_argument("--platform", choices=["google_ads", "tiktok_ads"], required=True)
