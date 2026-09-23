@@ -24,7 +24,13 @@ class GoogleAdsConnector(Connector):
         super().__init__(config, timeout=timeout)
         try:
             creds = json.loads(decrypted_api_key)
-            self.developer_token = creds["developer_token"]
+            self.access_mode = creds.get("access_mode", "cloud_managed")
+            self.developer_token = creds.get("developer_token")
+            
+            if self.access_mode == "legacy":
+                if not self.developer_token or str(self.developer_token).lower() in ["", "xxx", "placeholder", "changeme", "your_token", "none", "null"]:
+                    raise ValueError("Developer token required for legacy mode")
+
             self.client_id = creds["client_id"]
             self.client_secret = creds["client_secret"]
             self.refresh_token = creds["refresh_token"]
@@ -66,8 +72,12 @@ class GoogleAdsConnector(Connector):
             raise ValueError("Access token is not set")
         headers = {
             "Authorization": f"Bearer {self.access_token}",
-            "developer-token": self.developer_token,
         }
+        if self.access_mode == "legacy":
+            headers["developer-token"] = self.developer_token
+        elif self.access_mode == "cloud_managed" and self.developer_token:
+            headers["developer-token"] = self.developer_token
+            
         if self.login_customer_id:
             headers["login-customer-id"] = self.login_customer_id
         return headers

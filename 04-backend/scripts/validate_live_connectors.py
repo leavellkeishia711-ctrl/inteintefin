@@ -105,28 +105,50 @@ def validate_field(val, expected="int_string", is_negative_allowed=False, field_
         raise HarnessError("schema_mismatch", f"Negative value in {field_name}: {dec}")
 
 def map_google_error(e: Exception) -> HarnessError:
-    s = str(e)
-    if isinstance(e, ConnectorError):
-        code = getattr(e, "api_error_code", None)
-        status = getattr(e, "status_code", None)
-
-        if code == "DEVELOPER_TOKEN_NOT_APPROVED":
-            return HarnessError("developer_token_not_approved", s)
-        if code in ("CUSTOMER_NOT_ENABLED", "USER_PERMISSION_DENIED", "NOT_ADS_USER"):
-            return HarnessError("insufficient_permission", s)
-
-        if status == 404:
-            return HarnessError("unsupported_api_version", s)
-
-        if isinstance(e, UnauthorizedError) or status in (401, 403):
-            return HarnessError("invalid_credentials", s)
-        if isinstance(e, RateLimitError) or status == 429:
-            return HarnessError("rate_limited", s)
-
-    if isinstance(e, httpx.RequestError):
-        return HarnessError("network_failure", s)
-
-    return HarnessError("malformed_response", type(e).__name__ + ": " + s)
+    if isinstance(e, httpx.HTTPStatusError):
+        status = e.response.status_code
+        try:
+            body = e.response.json()
+            errs = body.get("error", {}).get("details", [])
+            for d in errs:
+                if "errors" in d:
+                    for inner in d["errors"]:
+                        err_code = inner.get("errorCode", {})
+                        if "authenticationError" in err_code:
+                            if err_code["authenticationError"] == "CUSTOMER_NOT_FOUND":
+                                return HarnessError("customer_not_found", "Customer not found")
+                            return HarnessError("invalid_credentials", f"Google auth error: {err_code}")
+                        if "authorizationError" in err_code:
+                            if err_code["authorizationError"] == "USER_PERMISSION_DENIED":
+                                return HarnessError("insufficient_permission", "User permission denied")
+                            if err_code["authorizationError"] == "DEVELOPER_TOKEN_NOT_APPROVED":
+                                return HarnessError("access_level_insufficient", "Cloud project without required access level")
+                            if err_code["authorizationError"] == "ACTION_NOT_PERMITTED":
+                                return HarnessError("access_level_insufficient", "Action not permitted (insufficient access level)")
+                            if err_code["authorizationError"] == "CUSTOMER_NOT_ENABLED":
+                                return HarnessError("login_customer_mismatch", "Customer not enabled / mismatch")
+                            return HarnessError("insufficient_permission", f"Google authz error: {err_code}")
+                        if "quotaError" in err_code:
+                            return HarnessError("rate_limit", f"Google quota error: {err_code}")
+                        if "requestError" in err_code and err_code["requestError"] == "UNSUPPORTED_VERSION":
+                            return HarnessError("unsupported_api_version", "Unsupported API version")
+            
+            msg = body.get("error", {}).get("message", "").lower()
+            if "authentication" in msg or "invalid token" in msg:
+                return HarnessError("invalid_credentials", msg)
+            if "unsupported" in msg and "version" in msg:
+                return HarnessError("unsupported_api_version", msg)
+        except Exception:
+            pass
+        return HarnessError("network_failure", f"HTTP {status}")
+    if e.__class__.__name__ == "ConnectorError":
+        api_code = getattr(e, "api_error_code", "")
+        msg = str(e).lower()
+        if api_code == "DEVELOPER_TOKEN_NOT_APPROVED" or "developer_token_not_approved" in msg:
+            return HarnessError("developer_token_not_approved", "Developer token not approved")
+        if getattr(e, "status_code", None) == 404 or "unsupported_api_version" in msg:
+            return HarnessError("unsupported_api_version", "Unsupported API version")
+    return HarnessError("network_failure", str(e))
 
 def map_tiktok_error(e: Exception) -> HarnessError:
     s = str(e)
@@ -437,7 +459,174 @@ async def run_tiktok_validation(args):
         he = map_tiktok_error(e)
         print_result("fail", platform="tiktok_ads", error_category=he.category, message=he.message)
 
+
+def map_meta_error(e: Exception) -> HarnessError:
+    if isinstance(e, httpx.HTTPStatusError):
+        status = e.response.status_code
+        try:
+            body = e.response.json()
+            err = body.get("error", {})
+            code = err.get("code")
+            subcode = err.get("error_subcode")
+            
+            if code == 190:
+                return HarnessError("invalid_credentials", "Meta invalid/expired token")
+            if code in (200, 10, 294):
+                return HarnessError("insufficient_permission", "Meta insufficient permission")
+            if code in (4, 17, 32, 613, 80004):
+                return HarnessError("rate_limit", "Meta rate limit exceeded")
+            if code == 100:
+                return HarnessError("malformed_request", "Meta malformed request")
+            if code == 2635 or "unsupported" in str(err.get("message", "")).lower():
+                return HarnessError("unsupported_api_version", "Meta unsupported API version")
+        except Exception:
+            pass
+        return HarnessError("network_failure", f"Meta HTTP status {status}")
+    return HarnessError("network_failure", str(e))
+
+async def run_meta_validation(args):
+    from app.connectors.meta_ads import MetaAdsConnector
+    import os
+    token = os.environ.get("META_ACCESS_TOKEN")
+    adv_id = os.environ.get("META_AD_ACCOUNT_ID")
+    api_version = os.environ.get("META_API_VERSION", "v26.0")
+    if not token or not adv_id:
+        print_result("fail", error_category="config_error", message="Missing Meta credentials")
+        return
+
+    # Normalize ad account id
+    if not adv_id.startswith("act_"):
+        adv_id = "act_" + adv_id
+
+    try:
+        class DummyConfig:
+            connector_name = "meta_ads"
+            company_id = 1
+            settings = {"api_version": api_version, "currency": "USD"}
+            
+        connector = MetaAdsConnector(config=DummyConfig(), decrypted_api_key=token)
+
+        # 1. Test permissions (me/permissions)
+        async with httpx.AsyncClient() as client:
+            headers = {"Authorization": f"Bearer {token}"}
+            res = await client.get(f"https://graph.facebook.com/{api_version}/me/permissions", headers=headers)
+            res.raise_for_status()
+            perms = res.json().get("data", [])
+            has_ads_read = any(p.get("permission") == "ads_read" and p.get("status") == "granted" for p in perms)
+            if not has_ads_read:
+                raise HarnessError("insufficient_permission", "Missing ads_read permission")
+
+        # 2. Get ad account
+        async with httpx.AsyncClient() as client:
+            res = await client.get(f"https://graph.facebook.com/{api_version}/{adv_id}?fields=account_id,currency,account_status,timezone_name", headers=headers)
+            res.raise_for_status()
+            acct = res.json()
+            currency = acct.get("currency", "USD")
+            connector.config.settings["currency"] = currency
+
+        # 3. List campaigns
+        camps = await connector.fetch_campaigns()
+
+        # 4. Fetch metrics
+        target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
+        start_date = target_date - timedelta(days=args.days - 1)
+        
+        metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=args.page_size)
+
+        if not metrics:
+            print_result("empty_result", platform="meta_ads", date=args.date)
+            return
+            
+        # raw harness validation before normalize
+        for m in metrics:
+            validate_field(m.get("spend"), expected="decimal_string", field_name="spend")
+            validate_field(m.get("clicks"), expected="int_string", field_name="clicks")
+            validate_field(m.get("impressions"), expected="int_string", field_name="impressions")
+
+        norm = connector.normalize(metrics)
+        if len(norm) != len(metrics):
+            raise HarnessError("schema_mismatch", f"Normalization length mismatch: {len(metrics)} vs {len(norm)}")
+
+        for r in norm:
+            if not r.currency or len(r.currency) != 3:
+                raise HarnessError("schema_mismatch", f"Normalized currency invalid: {r.currency}")
+
+        print_result("pass", platform="meta_ads", advertiser_id=f"{adv_id[:4]}***{adv_id[-2:]}", rows_fetched=len(norm), date=args.date)
+
+    except HarnessError as e:
+        print_result("fail", platform="meta_ads", error_category=e.category, message=e.message)
+    except Exception as e:
+        he = map_meta_error(e)
+        print_result("fail", platform="meta_ads", error_category=he.category, message=he.message)
+
+
+def map_binom_error(e: Exception) -> HarnessError:
+    import urllib.parse
+    if isinstance(e, httpx.HTTPStatusError):
+        status = e.response.status_code
+        if status in (401, 403):
+            return HarnessError("invalid_credentials", "Binom invalid credentials / insufficient permission")
+        if status == 404:
+            return HarnessError("unsupported_api_version", f"Binom 404 on endpoint. URL path: {urllib.parse.urlparse(str(e.request.url)).path}")
+        return HarnessError("network_failure", f"Binom HTTP status {status}")
+    if isinstance(e, httpx.RequestError):
+        return HarnessError("network_failure", str(e))
+    return HarnessError("network_failure", str(e))
+
+async def run_binom_validation(args):
+    from app.connectors.binom import BinomConnector
+    import os
+    base_url = os.environ.get("BINOM_BASE_URL")
+    api_key = os.environ.get("BINOM_API_KEY")
+    currency = os.environ.get("BINOM_CURRENCY", "USD")
+    
+    if not base_url or not api_key:
+        print_result("fail", error_category="config_error", message="Missing Binom credentials")
+        return
+
+    try:
+        class DummyConfig:
+            connector_name = "binom"
+            company_id = 1
+            settings = {"base_url": base_url, "currency": currency}
+            
+        connector = BinomConnector(config=DummyConfig(), decrypted_api_key=api_key)
+
+        conn_ok = await connector.test_connection()
+        if not conn_ok:
+            raise HarnessError("invalid_credentials", "Binom test_connection failed")
+
+        camps = await connector.fetch_campaigns()
+        
+        if isinstance(camps, str) and "<html" in camps.lower():
+            raise HarnessError("malformed_response", "Binom returned HTML instead of JSON. base URL probably wrong")
+
+        metrics = await connector.fetch_metrics()
+        
+        if isinstance(metrics, str) and "<html" in metrics.lower():
+            raise HarnessError("malformed_response", "Binom returned HTML instead of JSON. base URL probably wrong")
+
+        if not metrics:
+            print_result("empty_result", platform="binom", date=args.date)
+            return
+
+        norm = connector.normalize(metrics)
+
+        print_result("pass", platform="binom", rows_fetched=len(norm), date=args.date)
+
+    except HarnessError as e:
+        print_result("fail", platform="binom", error_category=e.category, message=e.message)
+    except Exception as e:
+        he = map_binom_error(e)
+        print_result("fail", platform="binom", error_category=he.category, message=he.message)
+
 def main():
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv('.env.local')
+except ImportError:
+    pass
     if os.environ.get("LIVE_CONNECTOR_VALIDATION") != "1":
         sys.stderr.write("Error: LIVE_CONNECTOR_VALIDATION=1 environment variable is required to run this script.\n")
         sys.exit(1)
@@ -446,7 +635,7 @@ def main():
     assert_no_secrets_in_argv(sys.argv, registry)
 
     parser = argparse.ArgumentParser(description="Live Connector Validation")
-    parser.add_argument("--platform", choices=["google_ads", "tiktok_ads"], required=True)
+    parser.add_argument("--platform", choices=["google_ads", "tiktok_ads", "meta_ads", "binom"], required=True)
     parser.add_argument("--customer-id", help="Google Ads customer ID")
     parser.add_argument("--advertiser-id", help="TikTok Ads advertiser ID")
     parser.add_argument("--date", help="End date in YYYY-MM-DD", default=(datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d"))
@@ -472,6 +661,10 @@ def main():
             asyncio.run(run_google_validation(args))
         elif args.platform == "tiktok_ads":
             asyncio.run(run_tiktok_validation(args))
+        elif args.platform == "meta_ads":
+            asyncio.run(run_meta_validation(args))
+        elif args.platform == "binom":
+            asyncio.run(run_binom_validation(args))
 
     except Exception as e:
         sys.stderr.write(registry.mask_secrets(f"Unexpected internal error: {type(e).__name__} - {str(e)}\n"))
