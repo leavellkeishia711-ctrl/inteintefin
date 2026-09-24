@@ -626,6 +626,13 @@ class DummyConfig:
 
 
 
+def get_config_with_mode(mode):
+    class C:
+        connector_name = "dummy"
+        company_id = 1
+        settings = {"access_mode": mode, "api_version": "v25"}
+    return C()
+
 def get_google_creds(access_mode, dev_token):
 
     c = {
@@ -652,7 +659,7 @@ def get_google_creds(access_mode, dev_token):
 
 def test_google_cloud_managed_mode_works_without_developer_token():
 
-    conn = GoogleAdsConnector(DummyConfig(), get_google_creds("cloud_managed", None))
+    conn = GoogleAdsConnector(get_config_with_mode("cloud_managed"), get_google_creds("cloud_managed", None))
 
     assert conn.access_mode == "cloud_managed"
 
@@ -662,7 +669,7 @@ def test_google_cloud_managed_mode_works_without_developer_token():
 
 def test_google_cloud_managed_mode_omits_developer_token_header():
 
-    conn = GoogleAdsConnector(DummyConfig(), get_google_creds("cloud_managed", None))
+    conn = GoogleAdsConnector(get_config_with_mode("cloud_managed"), get_google_creds("cloud_managed", None))
 
     conn.access_token = "tok"
 
@@ -676,11 +683,11 @@ def test_google_legacy_mode_requires_developer_token():
 
     with pytest.raises(ValueError, match="Developer token required"):
 
-        GoogleAdsConnector(DummyConfig(), get_google_creds("legacy", None))
+        GoogleAdsConnector(get_config_with_mode("legacy"), get_google_creds("legacy", None))
 
     with pytest.raises(ValueError, match="Developer token required"):
 
-        GoogleAdsConnector(DummyConfig(), get_google_creds("legacy", ""))
+        GoogleAdsConnector(get_config_with_mode("legacy"), get_google_creds("legacy", ""))
 
 
 
@@ -690,7 +697,7 @@ def test_google_rejects_placeholder_developer_token():
 
         with pytest.raises(ValueError, match="Developer token required"):
 
-            GoogleAdsConnector(DummyConfig(), get_google_creds("legacy", p))
+            GoogleAdsConnector(get_config_with_mode("legacy"), get_google_creds("legacy", p))
 
 
 
@@ -712,7 +719,7 @@ def test_google_existing_encrypted_credentials_with_developer_token_still_work()
 
     }
 
-    conn = GoogleAdsConnector(DummyConfig(), json.dumps(creds))
+    conn = GoogleAdsConnector(get_config_with_mode("cloud_managed"), json.dumps(creds))
 
     assert conn.access_mode == "cloud_managed"
 

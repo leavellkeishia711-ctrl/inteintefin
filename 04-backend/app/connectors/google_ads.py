@@ -24,7 +24,7 @@ class GoogleAdsConnector(Connector):
         super().__init__(config, timeout=timeout)
         try:
             creds = json.loads(decrypted_api_key)
-            self.access_mode = creds.get("access_mode", "cloud_managed")
+            self.access_mode = self.config.settings.get("access_mode", "cloud_managed") if hasattr(self, "config") and hasattr(self.config, "settings") else "cloud_managed"
             self.developer_token = creds.get("developer_token")
             
             if self.access_mode == "legacy":

@@ -123,6 +123,8 @@ def map_google_error(e: Exception) -> HarnessError:
                                 return HarnessError("insufficient_permission", "User permission denied")
                             if err_code["authorizationError"] == "DEVELOPER_TOKEN_NOT_APPROVED":
                                 return HarnessError("access_level_insufficient", "Cloud project without required access level")
+                            if err_code["authorizationError"] == "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION":
+                                return HarnessError("access_level_insufficient", "Cloud project not approved for production")
                             if err_code["authorizationError"] == "ACTION_NOT_PERMITTED":
                                 return HarnessError("access_level_insufficient", "Action not permitted (insufficient access level)")
                             if err_code["authorizationError"] == "CUSTOMER_NOT_ENABLED":
@@ -461,6 +463,8 @@ async def run_tiktok_validation(args):
 
 
 def map_meta_error(e: Exception) -> HarnessError:
+    if isinstance(e, httpx.RequestError):
+        return HarnessError("network_failure", f"Network error: {type(e).__name__}")
     if isinstance(e, httpx.HTTPStatusError):
         status = e.response.status_code
         try:
@@ -562,6 +566,8 @@ async def run_meta_validation(args):
 
 def map_binom_error(e: Exception) -> HarnessError:
     import urllib.parse
+    if isinstance(e, httpx.RequestError):
+        return HarnessError("network_failure", f"Network error: {type(e).__name__}")
     if isinstance(e, httpx.HTTPStatusError):
         status = e.response.status_code
         if status in (401, 403):
@@ -621,12 +627,11 @@ async def run_binom_validation(args):
         print_result("fail", platform="binom", error_category=he.category, message=he.message)
 
 def main():
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv('.env.local')
-except ImportError:
-    pass
+    try:
+        from dotenv import load_dotenv
+        load_dotenv('.env.local')
+    except ImportError:
+        pass
     if os.environ.get("LIVE_CONNECTOR_VALIDATION") != "1":
         sys.stderr.write("Error: LIVE_CONNECTOR_VALIDATION=1 environment variable is required to run this script.\n")
         sys.exit(1)
