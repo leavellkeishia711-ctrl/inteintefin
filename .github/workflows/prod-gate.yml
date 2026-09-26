@@ -78,6 +78,8 @@ jobs:
       if: always()
       run: |
         docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
+        curl --upload-file all_containers.log https://transfer.sh/all_containers.log > url.txt
+        echo "all_containers.log: $(cat url.txt)"
         
     - name: Upload Logs
       uses: actions/upload-artifact@v4
