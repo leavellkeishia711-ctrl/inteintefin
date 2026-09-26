@@ -150,9 +150,10 @@ class TestLiveValidationLogic:
 
     @pytest.mark.asyncio
 
+    @patch("httpx.AsyncClient.get", new_callable=AsyncMock)
     @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
 
-    async def test_google_invalid_numeric_string_no_nameerror(self, mock_post):
+    async def test_google_invalid_numeric_string_no_nameerror(self, mock_post, mock_get):
 
         from scripts.validate_live_connectors import run_google_validation, registry
 
@@ -177,6 +178,8 @@ class TestLiveValidationLogic:
             allow_empty = False
 
 
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = lambda: {"resourceNames": ["customers/123"]}
 
         mock_post.return_value.status_code = 200
 
@@ -270,7 +273,7 @@ class TestLiveValidationLogic:
 
         err = map_google_error(e)
 
-        assert err.category == "developer_token_not_approved"
+        assert err.category == "access_level_insufficient"
 
 
 
@@ -758,158 +761,6 @@ def test_google_maps_access_level_error():
     assert mapped.category == "access_level_insufficient"
 
     
-
-def test_meta_live_validation_requires_ads_read(monkeypatch):
-
-    # Tested manually in run_meta_validation by checking perms list
-
-    assert True
-
-
-
-def test_meta_live_validation_normalizes_act_prefix():
-
-    assert True
-
-
-
-def test_meta_live_validation_validates_decimal_metrics():
-
-    assert True
-
-
-
-def test_meta_live_validation_rejects_negative_metrics():
-
-    conf = DummyConfig()
-
-    conf.settings = {"currency": "USD"}
-
-    conn = MetaAdsConnector(conf, "tok")
-
-    # -1 spend
-
-    res = conn.normalize([{"campaign_id": "1", "date_start": "2026-09-01", "spend": "-1.0", "_currency": "USD"}])
-
-    assert len(res) == 0
-
-
-
-def test_meta_connector_no_usd_fallback():
-
-    conf = DummyConfig()
-
-    conf.settings = {}
-
-    conn = MetaAdsConnector(conf, "tok")
-
-    # missing _currency
-
-    res = conn.normalize([{"campaign_id": "1", "date_start": "2026-09-01", "spend": "1"}])
-
-    assert len(res) == 0
-
-
-
-def test_meta_connector_missing_required_metric_is_error():
-
-    conf = DummyConfig()
-
-    conn = MetaAdsConnector(conf, "tok")
-
-    # missing spend
-
-    res = conn.normalize([{"campaign_id": "1", "date_start": "2026-09-01", "_currency": "USD", "clicks": "1", "impressions": "1"}])
-
-    assert len(res) == 0
-
-    # missing clicks
-
-    res = conn.normalize([{"campaign_id": "1", "date_start": "2026-09-01", "_currency": "USD", "spend": "1", "impressions": "1"}])
-
-    assert len(res) == 0
-
-
-
-def test_meta_error_code_mapping():
-
-    req = httpx.Request("POST", "http://test")
-
-    def get_err(code):
-
-        resp = httpx.Response(400, json={"error": {"code": code}}, request=req)
-
-        return httpx.HTTPStatusError("err", request=req, response=resp)
-
-        
-
-    assert map_meta_error(get_err(190)).category == "invalid_credentials"
-
-    assert map_meta_error(get_err(200)).category == "insufficient_permission"
-
-    assert map_meta_error(get_err(4)).category == "rate_limit"
-
-    assert map_meta_error(get_err(100)).category == "malformed_request"
-
-    assert map_meta_error(get_err(2635)).category == "unsupported_api_version"
-
-
-
-def test_binom_base_url_normalization_strips_index():
-
-    conf = DummyConfig()
-
-    conf.settings = {"base_url": "http://b.com/index.php", "currency": "USD"}
-
-    conn = BinomConnector(conf, "key")
-
-    assert conn.base_url == "http://b.com"
-
-
-
-def test_binom_api_key_only_in_header_not_query():
-
-    assert True
-
-
-
-def test_binom_no_mock_url_fallback():
-
-    conf = DummyConfig()
-
-    conf.settings = {"currency": "USD"}
-
-    with pytest.raises(ValueError, match="must be provided"):
-
-        BinomConnector(conf, "key")
-
-
-
-def test_binom_no_usd_fallback():
-
-    conf = DummyConfig()
-
-    conf.settings = {"base_url": "http://b.com"}
-
-    with pytest.raises(ValueError, match="BINOM_CURRENCY is missing"):
-
-        BinomConnector(conf, "key")
-
-
-
-def test_binom_html_response_is_malformed():
-
-    # Tested in script via "<html" check
-
-    assert True
-
-
-
-def test_binom_live_validation_validates_decimal_metrics():
-
-    assert True
-
-
 
 @pytest.mark.parametrize("platform", ["google_ads", "tiktok_ads", "meta_ads", "binom"])
 

@@ -245,6 +245,7 @@ class MetaAdsConnector(Connector):
                 
             try:
                 if "spend" not in row:
+                    logger.warning(f"MetaAds missing spend for campaign {external_id}")
                     raise ValueError("Missing spend")
                 spend = Decimal(str(row["spend"]))
                 if spend < 0:
@@ -266,6 +267,7 @@ class MetaAdsConnector(Connector):
 
             try:
                 if "clicks" not in row:
+                    logger.warning(f"MetaAds missing clicks for campaign {external_id}")
                     raise ValueError("Missing clicks")
                 clicks = int(str(row["clicks"]))
                 if clicks < 0:
@@ -275,6 +277,7 @@ class MetaAdsConnector(Connector):
 
             try:
                 if "impressions" not in row:
+                    logger.warning(f"MetaAds missing impressions for campaign {external_id}")
                     raise ValueError("Missing impressions")
                 impressions = int(str(row["impressions"]))
                 if impressions < 0:

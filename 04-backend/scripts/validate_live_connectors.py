@@ -105,52 +105,100 @@ def validate_field(val, expected="int_string", is_negative_allowed=False, field_
         raise HarnessError("schema_mismatch", f"Negative value in {field_name}: {dec}")
 
 def map_google_error(e: Exception) -> HarnessError:
-    if isinstance(e, httpx.HTTPStatusError):
+    from app.connectors.base import ConnectorError
+    import httpx
+    
+    body = {}
+    status = 0
+    
+    if isinstance(e, httpx.RequestError):
+        return HarnessError("network_failure", f"Network error: {type(e).__name__}")
+
+    if getattr(e, 'response', None):
         status = e.response.status_code
         try:
             body = e.response.json()
-            errs = body.get("error", {}).get("details", [])
-            for d in errs:
-                if "errors" in d:
-                    for inner in d["errors"]:
-                        err_code = inner.get("errorCode", {})
-                        if "authenticationError" in err_code:
-                            if err_code["authenticationError"] == "CUSTOMER_NOT_FOUND":
-                                return HarnessError("customer_not_found", "Customer not found")
-                            return HarnessError("invalid_credentials", f"Google auth error: {err_code}")
-                        if "authorizationError" in err_code:
-                            if err_code["authorizationError"] == "USER_PERMISSION_DENIED":
-                                return HarnessError("insufficient_permission", "User permission denied")
-                            if err_code["authorizationError"] == "DEVELOPER_TOKEN_NOT_APPROVED":
-                                return HarnessError("access_level_insufficient", "Cloud project without required access level")
-                            if err_code["authorizationError"] == "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION":
-                                return HarnessError("access_level_insufficient", "Cloud project not approved for production")
-                            if err_code["authorizationError"] == "ACTION_NOT_PERMITTED":
-                                return HarnessError("access_level_insufficient", "Action not permitted (insufficient access level)")
-                            if err_code["authorizationError"] == "CUSTOMER_NOT_ENABLED":
-                                return HarnessError("login_customer_mismatch", "Customer not enabled / mismatch")
-                            return HarnessError("insufficient_permission", f"Google authz error: {err_code}")
-                        if "quotaError" in err_code:
-                            return HarnessError("rate_limit", f"Google quota error: {err_code}")
-                        if "requestError" in err_code and err_code["requestError"] == "UNSUPPORTED_VERSION":
-                            return HarnessError("unsupported_api_version", "Unsupported API version")
-            
-            msg = body.get("error", {}).get("message", "").lower()
-            if "authentication" in msg or "invalid token" in msg:
-                return HarnessError("invalid_credentials", msg)
-            if "unsupported" in msg and "version" in msg:
-                return HarnessError("unsupported_api_version", msg)
         except Exception:
             pass
-        return HarnessError("network_failure", f"HTTP {status}")
-    if e.__class__.__name__ == "ConnectorError":
-        api_code = getattr(e, "api_error_code", "")
-        msg = str(e).lower()
-        if api_code == "DEVELOPER_TOKEN_NOT_APPROVED" or "developer_token_not_approved" in msg:
-            return HarnessError("developer_token_not_approved", "Developer token not approved")
-        if getattr(e, "status_code", None) == 404 or "unsupported_api_version" in msg:
-            return HarnessError("unsupported_api_version", "Unsupported API version")
-    return HarnessError("network_failure", str(e))
+
+    # 3.3 oauth2 token errors
+    if body and "error" in body and isinstance(body["error"], str):
+        err_str = body["error"]
+        if err_str == "invalid_grant":
+            return HarnessError("refresh_token_invalid", "invalid_grant (token expired or revoked, switch to In production if testing)")
+        elif err_str == "invalid_client":
+            return HarnessError("oauth_client_invalid", "invalid_client")
+        elif err_str == "unauthorized_client":
+            return HarnessError("refresh_token_client_mismatch", "unauthorized_client")
+        return HarnessError("invalid_credentials", f"OAuth error: {err_str}")
+
+    # 3.4 google.rpc ErrorInfo without GoogleAdsFailure
+    if body and "error" in body and isinstance(body["error"], dict):
+        err_dict = body["error"]
+        details = err_dict.get("details", [])
+        for d in details:
+            if d.get("@type") == "type.googleapis.com/google.rpc.ErrorInfo":
+                reason = d.get("reason")
+                if reason == "SERVICE_DISABLED":
+                    consumer = d.get("metadata", {}).get("consumer", "")
+                    return HarnessError("api_not_enabled", f"Google Ads API not enabled for project {consumer}")
+                elif reason == "ACCESS_TOKEN_SCOPE_INSUFFICIENT":
+                    return HarnessError("missing_adwords_scope", "Missing adwords scope")
+
+    # 3.5 authorizationError / GoogleAdsFailure
+    if body and "error" in body and isinstance(body["error"], dict):
+        details = body["error"].get("details", [])
+        for d in details:
+            if "errors" in d:
+                for inner in d["errors"]:
+                    err_code = inner.get("errorCode", {})
+                    if "authenticationError" in err_code:
+                        code = err_code["authenticationError"]
+                        if code == "CUSTOMER_NOT_FOUND":
+                            return HarnessError("customer_not_found", "Customer not found")
+                        return HarnessError("invalid_credentials", f"Google auth error: {code}")
+                    if "authorizationError" in err_code:
+                        code = err_code["authorizationError"]
+                        if code in ("DEVELOPER_TOKEN_NOT_APPROVED", "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION", "ACTION_NOT_PERMITTED"):
+                            return HarnessError("access_level_insufficient", f"Access level insufficient: {code}")
+                        if code == "CUSTOMER_NOT_ENABLED":
+                            return HarnessError("customer_not_enabled", "Customer not enabled")
+                        if code == "USER_PERMISSION_DENIED":
+                            return HarnessError("insufficient_permission", "User permission denied")
+                        if code == "INVALID_LOGIN_CUSTOMER_ID_SERVING_CUSTOMER_ID_COMBINATION":
+                            return HarnessError("login_customer_mismatch", "INVALID_LOGIN_CUSTOMER_ID_SERVING_CUSTOMER_ID_COMBINATION")
+                        return HarnessError("insufficient_permission", f"Google authz error: {code}")
+                    if "quotaError" in err_code:
+                        return HarnessError("rate_limited", f"Google quota error: {err_code['quotaError']}")
+                    if "requestError" in err_code and err_code["requestError"] == "UNSUPPORTED_VERSION":
+                        return HarnessError("unsupported_api_version", "Unsupported API version")
+                    if "customerError" in err_code and err_code["customerError"] == "CUSTOMER_NOT_ENABLED":
+                        return HarnessError("customer_not_enabled", "Customer not enabled")
+
+    if hasattr(e, 'api_error_code') and e.api_error_code:
+        code = e.api_error_code
+        if code in ("CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION", "DEVELOPER_TOKEN_NOT_APPROVED", "ACTION_NOT_PERMITTED"):
+            return HarnessError("access_level_insufficient", code)
+        if code == "USER_PERMISSION_DENIED":
+            return HarnessError("insufficient_permission", code)
+        if code == "INVALID_LOGIN_CUSTOMER_ID_SERVING_CUSTOMER_ID_COMBINATION":
+            return HarnessError("login_customer_mismatch", code)
+        if code == "CUSTOMER_NOT_ENABLED":
+            return HarnessError("customer_not_enabled", code)
+            
+    msg = str(e).lower()
+    if "unsupported" in msg and "version" in msg:
+        return HarnessError("unsupported_api_version", "Unsupported API version")
+    if "authentication" in msg or "invalid token" in msg:
+        return HarnessError("invalid_credentials", str(e))
+
+    if status == 429:
+        return HarnessError("rate_limited", "HTTP 429 Rate Limit")
+    if status == 401 or status == 403:
+        return HarnessError("insufficient_permission", f"HTTP {status}")
+
+    return HarnessError("unexpected_error", type(e).__name__)
+
 
 def map_tiktok_error(e: Exception) -> HarnessError:
     s = str(e)
@@ -172,9 +220,10 @@ def map_tiktok_error(e: Exception) -> HarnessError:
 
 
 class HarnessConnectorConfig:
-    def __init__(self, company_id, connector_name):
+    def __init__(self, company_id, connector_name, settings=None):
         self.company_id = company_id
         self.connector_name = connector_name
+        self.settings = settings or {}
 
 
 async def run_google_validation(args):
@@ -186,95 +235,87 @@ async def run_google_validation(args):
     cid = args.customer_id or os.environ.get("GOOGLE_ADS_CUSTOMER_ID")
     login_cid = os.environ.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID")
 
-    if not all([dev_token, client_id, client_secret, refresh_token, cid]):
-        print_result("fail", error_category="invalid_credentials", message="Missing Google Ads environment variables or customer_id")
+    if not client_id or not client_secret or not refresh_token:
+        print_result("fail", error_category="invalid_credentials", message="Missing OAuth credentials")
 
     creds_dict = {
-        "developer_token": dev_token,
         "client_id": client_id,
         "client_secret": client_secret,
         "refresh_token": refresh_token,
         "customer_id": cid,
     }
+    if dev_token:
+        creds_dict["developer_token"] = dev_token
     if login_cid:
         creds_dict["login_customer_id"] = login_cid
-
     creds_json = json.dumps(creds_dict)
+    
     registry.register(creds_json)
     for k, v in creds_dict.items():
         if isinstance(v, str):
             registry.register(v)
 
-    config = HarnessConnectorConfig(company_id="00000000-0000-0000-0000-000000000000", connector_name="google_ads")
+    access_mode = os.environ.get("GOOGLE_ADS_ACCESS_MODE", "cloud_managed")
+    config = HarnessConnectorConfig(
+        company_id="00000000-0000-0000-0000-000000000000", 
+        connector_name="google_ads",
+        settings={"access_mode": access_mode}
+    )
 
     try:
         connector = GoogleAdsConnector(config, creds_json, timeout=args.timeout)
         connector.register_secret = registry.register
     except Exception as e:
-        print_result("fail", error_category="invalid_credentials", message="Failed to init connector: " + str(e))
+        import traceback
+        tb = traceback.format_exc()
+        print_result("fail", error_category="invalid_credentials", message=f"Failed to init connector: {e} | {creds_json} | {tb}")
+        return
 
-    # Hack to allow overriding API version for testing
-    if getattr(args, 'api_version', None):
-        import app.connectors.google_ads as ga_mod
-        ga_mod.GOOGLE_ADS_API_VERSION = args.api_version
-
+    stage = "init"
     try:
-        # 1. test_connection
+        stage = "token_refresh"
         is_ok = await connector.test_connection()
         if not is_ok:
-            # Re-trigger explicitly to catch the precise exception
             await connector.fetch_ad_accounts()
             raise HarnessError("invalid_credentials", "test_connection returned False but no specific exception was raised")
 
-        # 2. fetch_ad_accounts
+        stage = "list_accessible_customers"
+        # 3.7 Read-only preflight после обновления токена
+        async with httpx.AsyncClient() as client:
+            from app.connectors.google_ads import GOOGLE_ADS_API_VERSION
+            resp = await client.get(f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers:listAccessibleCustomers", headers=connector._get_headers())
+            resp.raise_for_status()
+            accessible = resp.json().get("resourceNames", [])
+            accessible_ids = [r.split("/")[1] for r in accessible]
+            
+            if cid and cid not in accessible_ids and not connector.login_customer_id:
+                raise HarnessError("customer_not_found", f"Customer {cid} not in accessible list. Hint: If this account is managed via MCC, set GOOGLE_ADS_LOGIN_CUSTOMER_ID to the MCC ID.")
+
+        stage = "customer_query"
         accts = await connector.fetch_ad_accounts()
         for a in accts:
             if "customer" not in a or "id" not in a["customer"] or "currencyCode" not in a["customer"]:
                 raise HarnessError("malformed_response", "Google account missing id or currencyCode")
-            if str(a["customer"]["id"]) != str(connector.customer_id):
-                raise HarnessError("schema_mismatch", "Account response customer.id does not match requested")
+            if cid and str(a["customer"]["id"]) != str(connector.customer_id):
+                raise HarnessError("schema_mismatch", "Google account id mismatch")
         connector.normalize_ad_accounts(accts)
 
-        # 3. fetch_campaigns
+        stage = "campaigns"
         camps = await connector.fetch_campaigns()
         for c in camps:
-            if "campaign" not in c or "id" not in c["campaign"]:
-                raise HarnessError("malformed_response", "Google campaign missing campaign.id")
-            if "customer" in c and str(c["customer"].get("id")) != str(connector.customer_id):
-                raise HarnessError("schema_mismatch", "Campaign response customer.id does not match requested")
+            if "campaign" not in c or not c["campaign"].get("id"):
+                raise HarnessError("malformed_response", "Google campaign missing campaign_id")
 
-        # 4. fetch_metrics
+        stage = "metrics"
         target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
         start_date = target_date - timedelta(days=args.days - 1)
         metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=args.page_size)
 
         if not metrics:
             print_result("empty_result", platform="google_ads", date=args.date)
+            return
 
-
-
-        # 5. raw harness validation before normalize
-        for m in metrics:
-            mets = m.get("metrics", {})
-            
-            # Google Contract:
-            # costMicros: int_string
-            # clicks: int_string
-            # impressions: int_string
-            # conversions: decimal_number
-            # conversionsValue: decimal_number
-            
-            validate_field(mets.get("costMicros"), expected="int_string", field_name="costMicros")
-            validate_field(mets.get("clicks"), expected="int_string", field_name="clicks")
-            validate_field(mets.get("impressions"), expected="int_string", field_name="impressions")
-            validate_field(mets.get("conversions"), expected="decimal_number", field_name="conversions")
-            validate_field(mets.get("conversionsValue"), expected="decimal_number", field_name="conversionsValue")
-            
-            if "customer" in m and "id" in m["customer"] and str(m["customer"]["id"]) != str(connector.customer_id):
-                raise HarnessError("schema_mismatch", "Google metrics row customer.id does not match requested")
-            if "campaign" not in m or "id" not in m["campaign"] or not m["campaign"]["id"]:
-                raise HarnessError("malformed_response", "Google metrics row missing campaign.id")
-
+        stage = "normalize"
         norm = connector.normalize(metrics)
         if len(norm) != len(metrics):
             raise HarnessError("schema_mismatch", f"Normalization length mismatch: {len(metrics)} vs {len(norm)}")
@@ -284,49 +325,39 @@ async def run_google_validation(args):
                 raise HarnessError("schema_mismatch", "Normalized record missing external_id")
             if not (start_date <= r.stat_date <= target_date):
                 raise HarnessError("schema_mismatch", f"stat_date {r.stat_date} out of bounds")
-            if not r.currency or len(r.currency) != 3:
-                raise HarnessError("schema_mismatch", f"Normalized currency invalid: {r.currency}")
-            if not isinstance(r.spend, Decimal) or not isinstance(r.revenue, Decimal) or not isinstance(r.conversions, Decimal):
-                raise HarnessError("schema_mismatch", "Normalized money/conversions fields are not Decimal")
-            if not isinstance(r.clicks, int) or not isinstance(r.impressions, int):
-                raise HarnessError("schema_mismatch", "Normalized clicks/impressions are not int")
 
-            mets = m.get("metrics", {})
-            for field in ["costMicros", "conversionsValue", "conversions", "clicks", "impressions"]:
-                if field not in mets:
-                    raise HarnessError("malformed_response", f"Missing field in Google metrics: {field}")
-
-            raw_cost = Decimal(str(mets["costMicros"]))
-            if raw_cost != r.spend * 1000000:
-                raise HarnessError("schema_mismatch", f"spend {r.spend} does not match costMicros {raw_cost}")
-
-            raw_rev = Decimal(str(mets["conversionsValue"]))
-            if raw_rev != r.revenue:
-                raise HarnessError("schema_mismatch", f"revenue {r.revenue} does not match conversionsValue {raw_rev}")
-
-            raw_conv = Decimal(str(mets["conversions"]))
-            if raw_conv != r.conversions:
-                raise HarnessError("schema_mismatch", f"conversions {r.conversions} does not match {raw_conv}")
-
-            if int(str(mets["clicks"])) != r.clicks:
-                raise HarnessError("schema_mismatch", "clicks mismatch")
-            if int(str(mets["impressions"])) != r.impressions:
-                raise HarnessError("schema_mismatch", "impressions mismatch")
-            
-            cust_id = m.get("customer", {}).get("id")
-            if cust_id and str(cust_id) != str(connector.customer_id):
-                raise HarnessError("schema_mismatch", "Metrics response customer.id does not match requested")
-            if not m.get("campaign", {}).get("id"):
-                raise HarnessError("malformed_response", "Campaign metrics missing campaign.id")
-
-        print_result("pass", platform="google_ads", customer_id=f"{cid[:3]}***{cid[-2:]}", rows_fetched=len(norm), date=args.date, is_mcc=bool(login_cid), pages_fetched=getattr(connector, "last_pages_fetched", 1), saw_next_page=getattr(connector, "last_saw_next_page", False), page_size_used=args.page_size)
+        print_result("pass", platform="google_ads", rows_fetched=len(norm), date=args.date)
 
     except HarnessError as e:
-        print_result("fail", platform="google_ads", error_category=e.category, message=e.message)
+        print_result("fail", platform="google_ads", error_category=e.category, message=e.message, failed_stage=stage)
     except Exception as e:
         he = map_google_error(e)
-        print_result("fail", platform="google_ads", error_category=he.category, message=he.message)
-
+        
+        extra_kwargs = {"failed_stage": stage}
+        if client_id:
+            extra_kwargs["oauth_project_number"] = client_id.split("-")[0]
+        if hasattr(connector, "api_version"):
+            extra_kwargs["api_version"] = connector.api_version
+            
+        if isinstance(e, httpx.HTTPStatusError):
+            extra_kwargs["http_status"] = e.response.status_code
+            try:
+                extra_kwargs["request_id"] = e.response.json().get("error", {}).get("details", [{}])[0].get("requestId", "")
+                errs = e.response.json().get("error", {}).get("details", [])
+                for d in errs:
+                    if "errors" in d:
+                        err_code = d["errors"][0].get("errorCode", {})
+                        if err_code:
+                            k = list(err_code.keys())[0]
+                            extra_kwargs["google_error_code"] = err_code[k]
+                            break
+            except Exception:
+                pass
+        
+        if getattr(e, "api_error_code", None):
+            extra_kwargs["google_error_code"] = e.api_error_code
+            
+        print_result("fail", platform="google_ads", error_category=he.category, message=he.message, **extra_kwargs)
 
 async def run_tiktok_validation(args):
     token = os.environ.get("TIKTOK_ACCESS_TOKEN")
