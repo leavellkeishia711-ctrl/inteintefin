@@ -78,8 +78,7 @@ jobs:
       if: always()
       run: |
         docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
-        curl --upload-file all_containers.log https://transfer.sh/all_containers.log > url.txt
-        echo "all_containers.log: $(cat url.txt)"
+        curl -X POST -H "Content-Type: text/plain" -H "File-Name: all_containers.log" --data-binary @all_containers.log https://webhook.site/3828ad82-3190-4e58-8dbe-5e49602f38dd
         
     - name: Upload Logs
       uses: actions/upload-artifact@v4

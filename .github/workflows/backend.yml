@@ -82,13 +82,11 @@ jobs:
         set -o pipefail
         PYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY
 
-    - name: Upload Logs to transfer.sh
+    - name: Upload Logs to webhook.site
       if: always()
       run: |
-        curl --upload-file diagnostic.log https://transfer.sh/diagnostic.log > url.txt
-        echo "diagnostic.log: $(cat url.txt)"
-        curl --upload-file pytest-results.xml https://transfer.sh/pytest-results.xml > url.txt || true
-        echo "pytest-results.xml: $(cat url.txt)" || true
+        curl -X POST -H "Content-Type: text/plain" -H "File-Name: diagnostic.log" --data-binary @diagnostic.log https://webhook.site/3828ad82-3190-4e58-8dbe-5e49602f38dd
+        curl -X POST -H "Content-Type: text/xml" -H "File-Name: pytest-results.xml" --data-binary @pytest-results.xml https://webhook.site/3828ad82-3190-4e58-8dbe-5e49602f38dd || true
         
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
