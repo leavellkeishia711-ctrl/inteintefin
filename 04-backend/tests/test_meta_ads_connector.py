@@ -658,7 +658,9 @@ async def test_meta_fetch_metrics_url(mock_get):
     
     # Assert URL includes time_range and time_increment
     call_args = mock_get.call_args[0][0]
-    assert ".time_range({'since':'2026-09-01','until':'2026-09-05'}).time_increment(1)" in call_args
+    import urllib.parse
+    call_args_unquoted = urllib.parse.unquote(call_args)
+    assert ".time_range({'since':'2026-09-01','until':'2026-09-05'}).time_increment(1)" in call_args_unquoted
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")

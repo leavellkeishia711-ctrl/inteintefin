@@ -762,19 +762,7 @@ def test_google_maps_access_level_error():
 
     
 
-@pytest.mark.parametrize("platform", ["google_ads", "tiktok_ads", "meta_ads", "binom"])
 
-def test_all_platforms_output_contains_no_credentials(platform):
-
-    assert True
-
-
-
-@pytest.mark.parametrize("platform", ["google_ads", "tiktok_ads", "meta_ads", "binom"])
-
-def test_all_platforms_read_only(platform):
-
-    assert True
 
 
 

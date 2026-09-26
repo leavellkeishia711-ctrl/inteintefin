@@ -9,23 +9,9 @@ class DummyConfig:
     company_id = 1
     settings = {}
 
-def test_meta_live_validation_requires_ads_read(monkeypatch):
-
-    # Tested manually in run_meta_validation by checking perms list
-
-    assert True
 
 
 
-def test_meta_live_validation_normalizes_act_prefix():
-
-    assert True
-
-
-
-def test_meta_live_validation_validates_decimal_metrics():
-
-    assert True
 
 
 
@@ -117,10 +103,6 @@ def test_binom_base_url_normalization_strips_index():
 
 
 
-def test_binom_api_key_only_in_header_not_query():
-
-    assert True
-
 
 
 def test_binom_no_mock_url_fallback():
@@ -147,17 +129,7 @@ def test_binom_no_usd_fallback():
 
 
 
-def test_binom_html_response_is_malformed():
 
-    # Tested in script via "<html" check
-
-    assert True
-
-
-
-def test_binom_live_validation_validates_decimal_metrics():
-
-    assert True
 
 
 
