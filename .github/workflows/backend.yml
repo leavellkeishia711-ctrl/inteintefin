@@ -67,6 +67,16 @@ jobs:
       run: |
         python scripts/check_floats.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
         
+    - name: Run Pytest Diagnostic
+      run: |
+        echo "=== IMPORT APP MAIN ===" > diagnostic.log
+        PYTHONPATH=. python -c "import app.main" 2>> diagnostic.log || true
+        echo "=== IMPORT TESTS ===" >> diagnostic.log
+        PYTHONPATH=. python -c "import tests.test_live_connector_validation_meta_binom" 2>> diagnostic.log || true
+        echo "=== PYTEST COLLECT ONLY ===" >> diagnostic.log
+        PYTHONPATH=. pytest tests/ --collect-only -v 2>> diagnostic.log || true
+        cat diagnostic.log | tee -a $GITHUB_STEP_SUMMARY
+        
     - name: Run Pytest
       run: |
         set -o pipefail
@@ -77,4 +87,6 @@ jobs:
       if: always()
       with:
         name: pytest-results
-        path: 04-backend/pytest-results.xml
+        path: |
+          04-backend/pytest-results.xml
+          04-backend/diagnostic.log
