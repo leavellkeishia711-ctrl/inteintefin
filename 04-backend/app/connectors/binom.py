@@ -9,6 +9,7 @@ from app.db.models.campaigns import ExternalCampaignMapping, CampaignRunStat, Ca
 from app.db.models.companies import Company
 from app.services.fx import resolve_fx_rate
 from sqlalchemy import select, and_
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -16,19 +17,29 @@ class BinomConnector(Connector):
     def __init__(self, config: Any, decrypted_api_key: str):
         super().__init__(config)
         self.api_key = decrypted_api_key
-        # Binom is self-hosted, so base_url must be provided in settings
         settings = getattr(config, 'settings', {}) or {}
-        self.base_url = settings.get("base_url", "").rstrip("/")
-        if not self.base_url:
-            self.base_url = "https://mock.binom.local"
+        
+        base_url = settings.get("base_url", "").strip()
+        if not base_url:
+            raise ValueError("Binom base_url must be provided")
+            
+        # Normalize base_url
+        if base_url.endswith("/index") or base_url.endswith("/index.php"):
+            logger.warning(f"Normalizing Binom base_url from {base_url}")
+            base_url = base_url.replace("/index.php", "").replace("/index", "")
+            
+        self.base_url = base_url.rstrip("/")
+        
+        self.currency = settings.get("currency")
+        if not self.currency or len(self.currency) != 3:
+            raise ValueError("BINOM_CURRENCY is missing or invalid in configuration")
 
     async def test_connection(self) -> bool:
-        """Verifies connection by fetching a simple endpoint."""
         async with httpx.AsyncClient() as client:
             try:
                 headers = {"Api-Key": self.api_key}
                 response = await with_retry(lambda: client.get(
-                    f"{self.base_url}/?page=status",
+                    f"{self.base_url}/api/v2/campaigns",
                     headers=headers,
                     timeout=10
                 ))
@@ -42,11 +53,10 @@ class BinomConnector(Connector):
                 return False
 
     async def fetch_campaigns(self) -> List[Dict[str, Any]]:
-        """Fetches raw campaign list."""
         async with httpx.AsyncClient() as client:
             headers = {"Api-Key": self.api_key}
             response = await with_retry(lambda: client.get(
-                f"{self.base_url}/?page=Campaigns",
+                f"{self.base_url}/api/v2/campaigns",
                 headers=headers,
                 timeout=15
             ))
@@ -57,11 +67,11 @@ class BinomConnector(Connector):
     async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
         if start_date or end_date:
             raise NotImplementedError(f"{self.__class__.__name__} does not support date range in fetch_metrics yet")
-        """Fetches stats/metrics."""
+            
         async with httpx.AsyncClient() as client:
             headers = {"Api-Key": self.api_key}
             response = await with_retry(lambda: client.get(
-                f"{self.base_url}/?page=Stats&group1=1&group2=3",
+                f"{self.base_url}/api/v2/stats",
                 headers=headers,
                 timeout=15
             ))
@@ -70,21 +80,16 @@ class BinomConnector(Connector):
             return data if isinstance(data, list) else []
 
     async def fetch(self) -> List[Dict[str, Any]]:
-        """Main entry point for stats."""
         return await self.fetch_metrics()
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
         normalized = []
-        settings = getattr(self.config, 'settings', {}) or {}
-        currency = str(settings.get("currency", "USD"))
-        if len(currency) != 3:
-            currency = "USD"
 
         for row in raw_data:
             if not isinstance(row, dict):
                 continue
 
-            external_id = row.get("camp_id")
+            external_id = row.get("camp_id") or row.get("id")
             if external_id is None:
                 continue
 
@@ -130,7 +135,7 @@ class BinomConnector(Connector):
                 stat_date=stat_date,
                 spend=spend,
                 revenue=revenue,
-                currency=currency,
+                currency=self.currency,
                 clicks=clicks,
                 impressions=impressions,
                 conversions=conversions
