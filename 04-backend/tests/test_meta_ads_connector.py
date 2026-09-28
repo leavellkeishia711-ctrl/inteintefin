@@ -703,3 +703,23 @@ async def test_meta_fetch_metrics_nested_currency(mock_get):
     assert metrics[0]["_currency"] == "EUR"
     assert metrics[1]["campaign_id"] == "c2"
     assert metrics[1]["_currency"] == "EUR"
+
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.get")
+async def test_meta_fetch_without_dates_uses_explicit_daily_range(mock_get):
+    import urllib.parse
+    config = DummyConfig(uuid.uuid4(), connector_name="meta")
+    connector = MetaAdsConnector(config, "secret_token")
+    
+    resp_accounts = MagicMock()
+    resp_accounts.status_code = 200
+    resp_accounts.json.return_value = {"data": []}
+    mock_get.return_value = resp_accounts
+    
+    await connector.fetch()
+    
+    call_args = mock_get.call_args[0][0]
+    call_args_unquoted = urllib.parse.unquote(call_args)
+    assert "time_range(" in call_args_unquoted
+    assert "time_increment(1)" in call_args_unquoted
