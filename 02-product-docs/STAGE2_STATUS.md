@@ -22,7 +22,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Affise integration | **Merged & Post-Merge Verified** | `04-backend/app/connectors/affise.py` |
 | Meta Ads integration (hardened) | **Merged & Post-Merge Verified** | `04-backend/app/connectors/meta_ads.py` |
 | TikTok Ads integration | **Implemented, mock/CI verified, real credential validation pending. (Harness uses production classes, manual run pending)** | `04-backend/app/connectors/tiktok_ads.py` |
-| Google Ads integration | **Implemented, mock/CI verified, real credential validation pending. (Harness uses production classes, manual run pending)** | `04-backend/app/connectors/google_ads.py` |
+| Google Ads integration | **Implemented, mock/CI verified. Live auth path validated on Google Ads test account (2026-09-28, empty_result, cloud_managed, no developer token). Schema validation on production data PENDING (requires Cloud project Explorer access + production account with spend).** | `04-backend/app/connectors/google_ads.py` |
 | Ad accounts mapping (Meta only) | Done | `MetaAdsConnector.fetch_ad_accounts()` / `normalize_ad_accounts()` |
 | Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
@@ -45,11 +45,15 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Stale-source Data Quality (DQ) alerts - **OPEN**
 - ECB FX rate auto-fetch
 - Expanded observability (structured logging, metrics)
-- Production validation with real external API credentials (Harness updated, execution pending)
+- Production validation with real external API credentials:
+  - **Google**: auth validated / schema pending.
+  - **TikTok**: pending.
+  - **Meta**: pending.
+  - **Binom**: pending.
   - **Live validation harness now fully supports Google, TikTok, Meta, and Binom.**
-  - **Google:** Added `cloud_managed` mode (without developer token) and precise error mappings.
-  - **Meta:** Upgraded to Graph API v26.0 and implemented proper `time_range` filtering natively.
-  - **Binom:** Upgraded to API v2 endpoints and normalized `base_url` handling.
+  - **Google Details:** Added `cloud_managed` mode (without developer token) and precise error mappings.
+  - **Meta Details:** scheduled sync always requests daily stats for an explicit date range (default lookback 7 days, configurable via settings.lookback_days, 1..90); aggregated rows (date_start != date_stop) are dropped.
+  - **Binom Details:** Upgraded to API v2 endpoints and normalized `base_url` handling.
 - Keitaro: full implementation (`test_connection`, `fetch_campaigns`, `fetch_metrics`)
 - Ad accounts mapping for Binom, Voluum, Affise (currently only Meta)
 

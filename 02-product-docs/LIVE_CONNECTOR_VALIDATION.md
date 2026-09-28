@@ -61,3 +61,14 @@ The script returns exit code `0` ONLY on pass or `empty_result`. Any failure ret
 - **TikTok Ads**: Revoke App authorization or regenerate access token via TikTok Dev Portal.
 
 *Note: A green CI run does NOT mean production validation passed. Real validation requires a manual run by the product owner with their credentials.*
+## Validation Log
+| Date | Platform | Account Type | Access Mode | Status | Stages Passed | Schema Validated | Notes |
+|---|---|---|---|---|---|---|---|
+| 2026-09-28 | Google Ads | Test Manager -> Test Client | cloud_managed | empty_result | token_refresh, list_accessible_customers, customer_query, campaigns | false | Live auth path validated on test account, no metrics/spend available. |
+
+## Google Ads: Path to Full Validation
+To complete validation for Google Ads on production data, perform the following steps:
+1. **Apply for Explorer Access**: Navigate to Google Cloud Console → Google Ads API page → apply for Explorer access.
+2. **Production Account**: Obtain access to a production Google Ads account with non-zero spend on the target date.
+3. **Refresh Token**: Generate an OAuth refresh token from a Google account (Gmail) that has access to this production ad account.
+4. **Final Run**: Rerun the live validation harness WITHOUT the --allow-empty flag. The expected outcome is status=pass and schema_validated=true.
