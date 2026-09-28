@@ -304,22 +304,28 @@ async def run_google_validation(args):
         connector.normalize_ad_accounts(accts)
 
         is_test_account = False
-        async with httpx.AsyncClient() as client:
-            from app.connectors.google_ads import GOOGLE_ADS_API_VERSION
-            q = "SELECT customer.id, customer.test_account, customer.currency_code FROM customer LIMIT 1"
-            headers = connector._get_headers()
-            payload = {"query": q}
-            resp = await client.post(
-                f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers/{connector.customer_id}/googleAds:search",
-                headers=headers,
-                json=payload
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            if data.get("results"):
-                cust = data["results"][0].get("customer", {})
-                if cust.get("testAccount") is True:
-                    is_test_account = True
+        from app.connectors.google_ads import GOOGLE_ADS_API_VERSION
+        from app.connectors.base import with_retry
+        
+        async def fetch_test_account_status():
+            async with httpx.AsyncClient(timeout=args.timeout) as client:
+                q = "SELECT customer.id, customer.test_account, customer.currency_code FROM customer LIMIT 1"
+                headers = connector._get_headers()
+                payload = {"query": q}
+                res = await client.post(
+                    f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers/{connector.customer_id}/googleAds:search",
+                    headers=headers,
+                    json=payload
+                )
+                res.raise_for_status()
+                return res
+                
+        resp = await with_retry(fetch_test_account_status)
+        data = resp.json()
+        if data.get("results"):
+            cust = data["results"][0].get("customer", {})
+            if cust.get("testAccount") is True:
+                is_test_account = True
 
         stage = "campaigns"
         camps = await connector.fetch_campaigns()
