@@ -72,7 +72,7 @@ def print_result(status: str, **kwargs):
     if status == "pass":
         sys.exit(0)
     elif status == "empty_result":
-        if "--allow-empty" in sys.argv:
+        if "--allow-empty" in sys.argv or kwargs.get("is_test_account"):
             sys.exit(0)
         else:
             sys.exit(2)
@@ -160,7 +160,7 @@ def map_google_error(e: Exception) -> HarnessError:
                     if "authorizationError" in err_code:
                         code = err_code["authorizationError"]
                         if code in ("DEVELOPER_TOKEN_NOT_APPROVED", "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION", "ACTION_NOT_PERMITTED"):
-                            return HarnessError("access_level_insufficient", f"Access level insufficient: {code}")
+                            return HarnessError("access_level_insufficient", f"Access level insufficient: {code}. Hint: Ensure you have applied for Explorer access in Google Cloud Console, or use a Test Account.")
                         if code == "CUSTOMER_NOT_ENABLED":
                             return HarnessError("customer_not_enabled", "Customer not enabled")
                         if code == "USER_PERMISSION_DENIED":
@@ -180,7 +180,7 @@ def map_google_error(e: Exception) -> HarnessError:
     if hasattr(e, 'api_error_code') and e.api_error_code:
         code = e.api_error_code
         if code in ("CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION", "DEVELOPER_TOKEN_NOT_APPROVED", "ACTION_NOT_PERMITTED"):
-            return HarnessError("access_level_insufficient", code)
+            return HarnessError("access_level_insufficient", f"{code}. Hint: Ensure you have applied for Explorer access in Google Cloud Console, or use a Test Account.")
         if code == "USER_PERMISSION_DENIED":
             return HarnessError("insufficient_permission", code)
         if code == "INVALID_LOGIN_CUSTOMER_ID_SERVING_CUSTOMER_ID_COMBINATION":
@@ -248,6 +248,8 @@ async def run_google_validation(args):
     }
     if dev_token:
         creds_dict["developer_token"] = dev_token
+    if dev_token:
+        sys.stderr.write("Warning: GOOGLE_ADS_DEVELOPER_TOKEN is set but its value is masked.\n")
     if login_cid:
         creds_dict["login_customer_id"] = login_cid
     creds_json = json.dumps(creds_dict)
@@ -268,10 +270,7 @@ async def run_google_validation(args):
         connector = GoogleAdsConnector(config, creds_json, timeout=args.timeout)
         connector.register_secret = registry.register
     except Exception as e:
-        import logging
-        import traceback
-        logging.getLogger(__name__).debug(f"Init error: {traceback.format_exc()}")
-        print_result("fail", error_category="invalid_credentials", message=f"Failed to init connector: {e}")
+        print_result("fail", error_category="invalid_credentials", message="Failed to init connector. (Exception text masked for security)")
         return
 
     stage = "init"
@@ -304,6 +303,24 @@ async def run_google_validation(args):
                 raise HarnessError("schema_mismatch", "Google account id mismatch")
         connector.normalize_ad_accounts(accts)
 
+        is_test_account = False
+        async with httpx.AsyncClient() as client:
+            from app.connectors.google_ads import GOOGLE_ADS_API_VERSION
+            q = "SELECT customer.id, customer.test_account, customer.currency_code FROM customer LIMIT 1"
+            headers = connector._get_headers()
+            payload = {"query": q}
+            resp = await client.post(
+                f"https://googleads.googleapis.com/{GOOGLE_ADS_API_VERSION}/customers/{connector.customer_id}/googleAds:search",
+                headers=headers,
+                json=payload
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("results"):
+                cust = data["results"][0].get("customer", {})
+                if cust.get("testAccount") is True:
+                    is_test_account = True
+
         stage = "campaigns"
         camps = await connector.fetch_campaigns()
         for c in camps:
@@ -316,7 +333,11 @@ async def run_google_validation(args):
         metrics = await connector.fetch_metrics(start_date=start_date, end_date=target_date, max_pages=args.max_pages, page_size=args.page_size)
 
         if not metrics:
-            print_result("empty_result", platform="google_ads", date=args.date)
+            kwargs = {"platform": "google_ads", "date": args.date, "is_test_account": is_test_account}
+            if is_test_account:
+                kwargs["auth_path_validated"] = True
+                kwargs["stages_passed"] = ["init", "token_refresh", "list_accessible_customers", "customer_query", "campaigns"]
+            print_result("empty_result", **kwargs)
             return
 
         stage = "normalize"
@@ -330,7 +351,7 @@ async def run_google_validation(args):
             if not (start_date <= r.stat_date <= target_date):
                 raise HarnessError("schema_mismatch", f"stat_date {r.stat_date} out of bounds")
 
-        print_result("pass", platform="google_ads", rows_fetched=len(norm), date=args.date)
+        print_result("pass", platform="google_ads", rows_fetched=len(norm), date=args.date, is_test_account=is_test_account)
 
     except HarnessError as e:
         print_result("fail", platform="google_ads", error_category=e.category, message=e.message, failed_stage=stage)

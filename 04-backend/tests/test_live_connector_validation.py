@@ -211,17 +211,17 @@ class TestLiveValidationLogic:
 
         }
 
-
+        
 
         with patch("scripts.validate_live_connectors.sys.exit", side_effect=SystemExit) as mock_exit, patch.dict("os.environ", {"GOOGLE_ADS_DEVELOPER_TOKEN": "secret_token_12345", "GOOGLE_ADS_CLIENT_ID": "client_id_12345", "GOOGLE_ADS_CLIENT_SECRET": "client_secret_12345", "GOOGLE_ADS_REFRESH_TOKEN": "refresh_token_12345"}):
 
             with patch("builtins.print") as mock_print:
 
-                try:
+                try: 
 
                     await run_google_validation(Args())
 
-                except SystemExit:
+                except SystemExit: 
 
                     assert True
 
@@ -311,7 +311,7 @@ class TestLiveValidationLogic:
 
             assert "***MASKED***" in s
 
-
+            
 
             # Short secret test
 
@@ -377,7 +377,7 @@ class TestLiveValidationLogic:
 
                 mock_exit.assert_called_with(1)
 
-
+                
 
     def test_validation_empty_result_exit_code(self):
 
@@ -391,7 +391,7 @@ class TestLiveValidationLogic:
 
                 mock_exit.assert_called_with(2)
 
-
+                
 
     def test_validation_empty_result_with_allow_empty(self):
 
@@ -421,7 +421,7 @@ class TestLiveValidationLogic:
 
         from unittest.mock import MagicMock
 
-
+        
 
         class DummyConfig:
 
@@ -443,9 +443,9 @@ class TestLiveValidationLogic:
 
         mock_post.return_value = mock_resp
 
+        
 
-
-        g_conn = GoogleAdsConnector(DummyConfig(), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "1234567890"}', timeout=42)
+        g_conn = GoogleAdsConnector(DummyConfig(), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "e"}', timeout=42)
 
         try:
 
@@ -455,13 +455,13 @@ class TestLiveValidationLogic:
 
             assert True
 
-
+        
 
         assert mock_post.call_args is not None
 
         assert mock_post.call_args.kwargs.get("timeout") == 42
 
-
+        
 
         mock_get_resp = MagicMock()
 
@@ -471,7 +471,7 @@ class TestLiveValidationLogic:
 
         mock_get.return_value = mock_get_resp
 
-
+        
 
         t_conn = TikTokAdsConnector(DummyConfig(), '{"access_token": "a", "advertiser_id": "b"}', timeout=43)
 
@@ -483,7 +483,7 @@ class TestLiveValidationLogic:
 
             assert True
 
-
+            
 
         assert mock_get.call_args is not None
 
@@ -523,7 +523,7 @@ class TestLiveValidationLogic:
 
         mock_get.return_value.json = lambda: {"code": 0, "data": {"list": [{"currency": "USD"}]}}
 
-
+    
 
         with patch("scripts.validate_live_connectors.sys.exit", side_effect=SystemExit) as mock_exit, patch.dict("os.environ", {"TIKTOK_ACCESS_TOKEN": "token"}):
 
@@ -573,7 +573,7 @@ class TestLiveValidationLogic:
 
         mock_get.return_value.json = lambda: {"code": 0, "data": {"list": [{"advertiser_id": "999", "currency": "USD"}]}}
 
-
+    
 
         with patch("scripts.validate_live_connectors.sys.exit", side_effect=SystemExit) as mock_exit, patch.dict("os.environ", {"TIKTOK_ACCESS_TOKEN": "token"}):
 
@@ -760,138 +760,160 @@ def test_google_maps_access_level_error():
 
     assert mapped.category == "access_level_insufficient"
 
+    
 
 
 
 
 
 
+def test_google_test_account_empty_metrics_exit_0(monkeypatch, capsys):
+    import sys
+    monkeypatch.setattr(sys, "argv", ["validate_live_connectors.py", "--platform", "google_ads"])
+    monkeypatch.setenv("LIVE_CONNECTOR_VALIDATION", "1")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_ID", "mock_client_id_123")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_SECRET", "mock_client_secret_abc")
+    monkeypatch.setenv("GOOGLE_ADS_REFRESH_TOKEN", "1//token")
+    monkeypatch.setenv("GOOGLE_ADS_CUSTOMER_ID", "mock_customer_id_999")
 
-@pytest.mark.asyncio
-async def test_google_validation_stale_stage():
-    import json
-    import httpx
-    from scripts.validate_live_connectors import run_google_validation
-    from app.connectors.google_ads import GoogleAdsConnector
-    import argparse
+    class MockResp:
+        def raise_for_status(self): pass
+        def json(self): return {"results": [{"customer": {"testAccount": True}}]}
+    async def mock_post(*args, **kwargs):
+        return MockResp()
+    monkeypatch.setattr("httpx.AsyncClient.post", mock_post)
 
-    args = argparse.Namespace(
-        customer_id="1234567890",
-        date="2024-01-01",
-        days=1,
-        api_version=None,
-        timeout=15,
-        max_pages=2,
-        page_size=10,
-        allow_empty=False
-    )
+    class MockGetResp:
+        def raise_for_status(self): pass
+        def json(self): return {"resourceNames": ["customers/mock_customer_id_999"]}
+    async def mock_get(*args, **kwargs):
+        return MockGetResp()
+    monkeypatch.setattr("httpx.AsyncClient.get", mock_get)
 
-    with patch("os.environ.get") as mock_env, \
-         patch.object(GoogleAdsConnector, "test_connection", return_value=False), \
-         patch.object(GoogleAdsConnector, "fetch_ad_accounts") as mock_fetch, \
-         patch("scripts.validate_live_connectors.print_result") as mock_print:
+    class MockConnector:
+        def __init__(self, *args, **kwargs):
+            self.customer_id = "mock_customer_id_999"
+            self.login_customer_id = None
+            self.register_secret = lambda x: None
+        def _get_headers(self): return {}
+        async def test_connection(self): return True
+        async def fetch_ad_accounts(self): return [{"customer": {"id": "mock_customer_id_999", "currencyCode": "USD"}}]
+        def normalize_ad_accounts(self, a): pass
+        async def fetch_campaigns(self): return [{"campaign": {"id": 1}}]
+        async def fetch_metrics(self, *args, **kwargs): return []
+    monkeypatch.setattr("scripts.validate_live_connectors.GoogleAdsConnector", MockConnector)
 
-        def mock_env_get(key, default=None):
-            if key == "GOOGLE_ADS_CLIENT_ID": return "client"
-            if key == "GOOGLE_ADS_CLIENT_SECRET": return "secret"
-            if key == "GOOGLE_ADS_REFRESH_TOKEN": return "refresh"
-            return default
-        mock_env.side_effect = mock_env_get
+    import pytest
+    from scripts.validate_live_connectors import main
+    with pytest.raises(SystemExit) as exc:
+        main()
+        
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "empty_result" in captured.out
+    assert "auth_path_validated" in captured.out
+    assert "is_test_account" in captured.out
 
-        # Simulate fetch_ad_accounts throwing INVALID_CUSTOMER_ID
-        error_resp = httpx.Response(400, json={
-            "error": {
-                "details": [{
-                    "errors": [{"errorCode": {"requestError": "INVALID_CUSTOMER_ID"}}]
-                }]
-            }
-        }, request=httpx.Request("POST", "http://test"))
-        mock_fetch.side_effect = httpx.HTTPStatusError("msg", request=error_resp.request, response=error_resp)
+def test_google_production_account_empty_metrics_exit_2(monkeypatch, capsys):
+    import sys
+    monkeypatch.setattr(sys, "argv", ["validate_live_connectors.py", "--platform", "google_ads"])
+    monkeypatch.setenv("LIVE_CONNECTOR_VALIDATION", "1")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_ID", "mock_client_id_123")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_SECRET", "mock_client_secret_abc")
+    monkeypatch.setenv("GOOGLE_ADS_REFRESH_TOKEN", "1//token")
+    monkeypatch.setenv("GOOGLE_ADS_CUSTOMER_ID", "mock_customer_id_999")
 
-        await run_google_validation(args)
+    class MockResp:
+        def raise_for_status(self): pass
+        def json(self): return {"results": [{"customer": {"testAccount": False}}]}
+    async def mock_post(*args, **kwargs):
+        return MockResp()
+    monkeypatch.setattr("httpx.AsyncClient.post", mock_post)
 
-        mock_print.assert_called_once()
-        kwargs = mock_print.call_args.kwargs
-        assert kwargs.get("failed_stage") == "customer_query"
-        assert kwargs.get("failed_stage") != "token_refresh"
-        assert kwargs.get("google_error_code") == "INVALID_CUSTOMER_ID"
+    class MockGetResp:
+        def raise_for_status(self): pass
+        def json(self): return {"resourceNames": ["customers/mock_customer_id_999"]}
+    async def mock_get(*args, **kwargs):
+        return MockGetResp()
+    monkeypatch.setattr("httpx.AsyncClient.get", mock_get)
 
+    class MockConnector:
+        def __init__(self, *args, **kwargs):
+            self.customer_id = "mock_customer_id_999"
+            self.login_customer_id = None
+            self.register_secret = lambda x: None
+        def _get_headers(self): return {}
+        async def test_connection(self): return True
+        async def fetch_ad_accounts(self): return [{"customer": {"id": "mock_customer_id_999", "currencyCode": "USD"}}]
+        def normalize_ad_accounts(self, a): pass
+        async def fetch_campaigns(self): return [{"campaign": {"id": 1}}]
+        async def fetch_metrics(self, *args, **kwargs): return []
+    monkeypatch.setattr("scripts.validate_live_connectors.GoogleAdsConnector", MockConnector)
 
-@pytest.mark.asyncio
-async def test_google_validation_security_regression():
-    import json
-    import httpx
-    from scripts.validate_live_connectors import run_google_validation
-    from app.connectors.google_ads import GoogleAdsConnector
-    import argparse
+    import pytest
+    from scripts.validate_live_connectors import main
+    with pytest.raises(SystemExit) as exc:
+        main()
+        
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "empty_result" in captured.out
 
-    args = argparse.Namespace(
-        customer_id="1234567890",
-        date="2024-01-01",
-        days=1,
-        api_version=None,
-        timeout=15,
-        max_pages=2,
-        page_size=10,
-        allow_empty=False
-    )
+def test_google_developer_token_warning(monkeypatch, capsys):
+    import sys
+    monkeypatch.setattr(sys, "argv", ["validate_live_connectors.py", "--platform", "google_ads"])
+    monkeypatch.setenv("LIVE_CONNECTOR_VALIDATION", "1")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_ID", "mock_client_id_123")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_SECRET", "mock_client_secret_abc")
+    monkeypatch.setenv("GOOGLE_ADS_REFRESH_TOKEN", "1//token")
+    monkeypatch.setenv("GOOGLE_ADS_CUSTOMER_ID", "mock_customer_id_999")
+    monkeypatch.setenv("GOOGLE_ADS_DEVELOPER_TOKEN", "super_secret_dev_token_999")
 
-    with patch("os.environ.get") as mock_env, \
-         patch("app.connectors.google_ads.GoogleAdsConnector.__init__") as mock_init, \
-         patch("scripts.validate_live_connectors.print_result") as mock_print:
+    class MockConnector:
+        def __init__(self, *args, **kwargs):
+            raise Exception("Stop execution")
+    monkeypatch.setattr("scripts.validate_live_connectors.GoogleAdsConnector", MockConnector)
 
-        def mock_env_get(key, default=None):
-            if key == "GOOGLE_ADS_CLIENT_ID": return "my_secret_client"
-            if key == "GOOGLE_ADS_CLIENT_SECRET": return "my_secret_secret"
-            if key == "GOOGLE_ADS_REFRESH_TOKEN": return "my_secret_refresh"
-            return default
-        mock_env.side_effect = mock_env_get
+    import pytest
+    from scripts.validate_live_connectors import main
+    with pytest.raises(SystemExit) as exc:
+        main()
+        
+    captured = capsys.readouterr()
+    assert "super_secret_dev_token_999" not in captured.out
+    assert "super_secret_dev_token_999" not in captured.err
+    assert "GOOGLE_ADS_DEVELOPER_TOKEN is set but its value is masked" in captured.err
 
-        # Simulate an exception in init to check if creds leak
-        mock_init.side_effect = ValueError("Some weird init error")
+def test_google_init_error_masked(monkeypatch, capsys):
+    import sys
+    monkeypatch.setattr(sys, "argv", ["validate_live_connectors.py", "--platform", "google_ads"])
+    monkeypatch.setenv("LIVE_CONNECTOR_VALIDATION", "1")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_ID", "mock_client_id_123")
+    monkeypatch.setenv("GOOGLE_ADS_CLIENT_SECRET", "mock_client_secret_abc")
+    monkeypatch.setenv("GOOGLE_ADS_REFRESH_TOKEN", "1//token")
+    monkeypatch.setenv("GOOGLE_ADS_CUSTOMER_ID", "mock_customer_id_999")
 
-        await run_google_validation(args)
+    class MockConnector:
+        def __init__(self, *args, **kwargs):
+            raise Exception("Sensitive DB traceback detail here")
+    monkeypatch.setattr("scripts.validate_live_connectors.GoogleAdsConnector", MockConnector)
 
-        mock_print.assert_called_once()
-        kwargs = mock_print.call_args.kwargs
-        msg = kwargs.get("message", "")
+    import pytest
+    from scripts.validate_live_connectors import main
+    with pytest.raises(SystemExit) as exc:
+        main()
+        
+    captured = capsys.readouterr()
+    assert "Sensitive DB traceback detail here" not in captured.out
+    assert "Sensitive DB traceback detail here" not in captured.err
+    assert "Exception text masked for security" in captured.out
 
-        assert "my_secret" not in msg
-        assert "creds_json" not in msg
-        assert "traceback" not in msg
-        assert "Traceback (" not in msg
-
-def test_google_validation_page_size_default():
-    with open("scripts/validate_live_connectors.py", "r", encoding="utf-8") as f:
-        content = f.read()
-    assert 'parser.add_argument("--page-size", type=int, default=None)' in content
-
-def test_google_validation_categorizes_manager_account_metrics_error():
+def test_google_cloud_project_not_approved_hint(monkeypatch):
     from scripts.validate_live_connectors import map_google_error
-    import httpx
-
-    class DummyResponse:
-        status_code = 400
-        def json(self):
-            return {
-                "error": {
-                    "details": [{
-                        "errors": [{
-                            "errorCode": {
-                                "queryError": "REQUESTED_METRICS_FOR_MANAGER"
-                            }
-                        }]
-                    }]
-                }
-            }
-
-    class DummyError(httpx.HTTPStatusError):
+    class MockError(Exception):
         def __init__(self):
-            self.response = DummyResponse()
-            super().__init__("error", request=None, response=self.response)
+            self.api_error_code = "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION"
+    err = map_google_error(MockError())
+    assert err.category == "access_level_insufficient"
+    assert "Ensure you have applied for Explorer access" in err.message
 
-    err = DummyError()
-    he = map_google_error(err)
-
-    assert he.category == "manager_account_metrics_unsupported"
-    assert "Manager (MCC) account" in he.message

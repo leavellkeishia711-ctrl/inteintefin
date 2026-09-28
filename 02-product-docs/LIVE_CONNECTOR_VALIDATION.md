@@ -71,4 +71,12 @@ To complete validation for Google Ads on production data, perform the following 
 1. **Apply for Explorer Access**: Navigate to Google Cloud Console → Google Ads API page → apply for Explorer access.
 2. **Production Account**: Obtain access to a production Google Ads account with non-zero spend on the target date.
 3. **Refresh Token**: Generate an OAuth refresh token from a Google account (Gmail) that has access to this production ad account.
-4. **Final Run**: Rerun the live validation harness WITHOUT the --allow-empty flag. The expected outcome is status=pass and schema_validated=true.
+4. **Final Run**: Rerun the live validation harness WITHOUT the `--allow-empty` flag. The expected outcome is `status=pass` and `schema_validated=true`.
+
+### Test Account Features (Google Ads)
+The harness is equipped with specialized behavior for Google Ads Test Accounts:
+- **GAQL Test Account Check:** A read-only query is executed during validation (`SELECT customer.id, customer.test_account, customer.currency_code FROM customer LIMIT 1`) to determine if the customer ID points to a test account. The `is_test_account` flag is injected into the JSON output.
+- **Empty Metrics Bypass:** If `is_test_account` is `true` and the account returns no metrics (because test accounts cannot accrue real ad spend), the harness gracefully handles this by returning `empty_result` with `auth_path_validated=true` and an exit code of `0` even without `--allow-empty`.
+- **Production Safety:** For non-test accounts (production), returning no metrics correctly causes the harness to exit with code `2` unless `--allow-empty` is specified.
+- **Hints for Missing Approvals:** If the Google Ads API rejects the query due to lack of Explorer Access (`CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION` or `ACTION_NOT_PERMITTED`), the script outputs a clear hint to apply for Explorer Access or use a Test Account.
+- **Developer Token Masking:** If a `GOOGLE_ADS_DEVELOPER_TOKEN` is supplied, its presence is logged as a warning, and its value is strictly masked. Init errors will also mask exception text and tracebacks to prevent token leakage.
