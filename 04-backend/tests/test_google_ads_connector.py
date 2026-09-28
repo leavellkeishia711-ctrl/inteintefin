@@ -55,23 +55,23 @@ def mock_http_error(status_code: int) -> httpx.HTTPStatusError:
 async def test_google_ads_test_connection_success(mock_post):
     connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
     connector.access_token = "valid_token"
-    
+
     # Mock successful GAQL query
     mock_post.return_value = mock_response(200, {"results": []})
-    
+
     result = await connector.test_connection()
     assert result is True
-    
+
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
     assert "https://googleads.googleapis.com/v25/customers/1234567890/googleAds:search" in args[0]
-    
+
     # Assert headers
     headers = kwargs.get("headers", {})
     assert headers.get("Authorization") == "Bearer valid_token"
     assert headers.get("developer-token") == "dev_token_123"
     assert headers.get("login-customer-id") == "0987654321"
-    
+
     # Assert query
     payload = kwargs.get("json", {})
     assert "SELECT customer.id" in payload.get("query", "")
@@ -82,12 +82,12 @@ async def test_google_ads_test_connection_auth_failure(mock_post, monkeypatch):
     monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
     connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
     connector.access_token = "invalid_token"
-    
+
     mock_post.side_effect = mock_http_error(401)
-    
+
     with pytest.raises(UnauthorizedError) as exc_info:
         await connector.test_connection()
-        
+
     err_msg = str(exc_info.value)
     # Ensure no secrets in the error message
     assert "dev_token_123" not in err_msg
@@ -101,7 +101,7 @@ async def test_google_ads_test_connection_auth_failure(mock_post, monkeypatch):
 async def test_google_ads_fetch_ad_accounts(mock_post):
     connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
     connector.access_token = "valid_token"
-    
+
     mock_post.return_value = mock_response(200, {
         "results": [
             {
@@ -114,10 +114,10 @@ async def test_google_ads_fetch_ad_accounts(mock_post):
             }
         ]
     })
-    
+
     raw = await connector.fetch_ad_accounts()
     norm = connector.normalize_ad_accounts(raw)
-    
+
     assert len(norm) == 1
     assert norm[0].platform == "google_ads"
     assert norm[0].external_account_id == "1234567890"
@@ -129,7 +129,7 @@ async def test_google_ads_fetch_ad_accounts(mock_post):
 async def test_google_ads_fetch_campaigns(mock_post):
     connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
     connector.access_token = "valid_token"
-    
+
     mock_post.return_value = mock_response(200, {
         "results": [
             {
@@ -148,11 +148,17 @@ async def test_google_ads_fetch_campaigns(mock_post):
             }
         ]
     })
-    
+
     raw = await connector.fetch_campaigns()
     assert len(raw) == 2
     assert raw[0]["campaign"]["id"] == "camp1"
     assert raw[1]["campaign"]["id"] == "camp2"
+
+    mock_post.assert_called_once()
+    args, kwargs = mock_post.call_args
+    expected_query = "SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type FROM campaign WHERE campaign.status != 'REMOVED'"
+    assert kwargs["json"]["query"] == expected_query
+    assert "start_date" not in kwargs["json"]["query"]
 
 def test_google_ads_fetch_metrics_converts_micros_to_decimal(valid_connector):
     raw_data = [
@@ -163,15 +169,15 @@ def test_google_ads_fetch_metrics_converts_micros_to_decimal(valid_connector):
             "customer": {"currencyCode": "EUR"}
         }
     ]
-    
+
     norm = valid_connector.normalize(raw_data)
     assert len(norm) == 1
     record = norm[0]
-    
+
     # Assert type is exactly Decimal, not float
     assert type(record.spend) is Decimal
     assert type(record.revenue) is Decimal
-    
+
     assert record.spend == Decimal("1.25")
     assert record.revenue == Decimal("5.5")
 
@@ -184,7 +190,7 @@ def test_google_ads_metrics_include_stat_date(valid_connector):
             "customer": {"currencyCode": "EUR"}
         }
     ]
-    
+
     norm = valid_connector.normalize(raw_data)
     assert len(norm) == 1
     assert norm[0].stat_date == date(2026, 9, 10)
@@ -198,10 +204,10 @@ def test_google_ads_external_id_is_deterministic(valid_connector):
             "customer": {"currencyCode": "EUR"}
         }
     ]
-    
+
     norm1 = valid_connector.normalize(raw_data)
     norm2 = valid_connector.normalize(raw_data)
-    
+
     assert norm1[0].external_id == "c1"
     assert norm1[0].external_id == norm2[0].external_id
 
@@ -210,24 +216,24 @@ def test_google_ads_external_id_is_deterministic(valid_connector):
 async def test_google_ads_pagination(mock_post):
     connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
     connector.access_token = "valid_token"
-    
+
     page1 = mock_response(200, {
         "results": [{"campaign": {"id": "p1"}}],
         "nextPageToken": "token2"
     })
-    
+
     page2 = mock_response(200, {
         "results": [{"campaign": {"id": "p2"}}],
         "nextPageToken": None
     })
-    
+
     mock_post.side_effect = [page1, page2]
-    
+
     results = await connector.fetch_metrics()
     assert len(results) == 2
     assert results[0]["campaign"]["id"] == "p1"
     assert results[1]["campaign"]["id"] == "p2"
-    
+
     # Assert pageToken was sent on 2nd call
     assert mock_post.call_count == 2
     args2, kwargs2 = mock_post.call_args_list[1]
@@ -244,25 +250,25 @@ def test_google_ads_optional_metrics(valid_connector):
     ]
     norm = valid_connector.normalize(raw_data)
     assert len(norm) == 0
-    
+
 @pytest.mark.asyncio
 async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
     # company_b_fixtures is used to prove we don't need to reinvent fixtures, but we'll create explicit data
     company_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    
+
     async with system_session() as db:
         comp = Company(id=company_id, name="GA Test", base_currency="USD")
         db.add(comp)
-        
+
         u = User(id=user_id, name="ga_test", email="ga@test.com", password_hash="hash", company_id=company_id, role="admin")
         db.add(u)
         await db.flush()
-        
+
         c = Campaign(id=uuid.uuid4(), company_id=company_id, assigned_user_id=user_id)
         db.add(c)
         await db.flush()
-        
+
         run = CampaignRun(
             company_id=company_id,
             campaign_id=c.id,
@@ -280,9 +286,9 @@ async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
         )
         db.add(mapping)
         await db.commit()
-        
+
         connector = GoogleAdsConnector(DummyConfig(company_id), create_valid_creds())
-        
+
         raw_data = [
             {
                 "campaign": {"id": "ga_camp_1"},
@@ -291,24 +297,24 @@ async def test_google_ads_persistence_uses_atomic_upsert(company_b_fixtures):
                 "customer": {"currencyCode": "USD"}
             }
         ]
-        
+
         # First sync
         norm = connector.normalize(raw_data)
         await connector.upsert(db, norm)
         await db.commit()
-        
+
         stmt = select(CampaignRunStat).where(CampaignRunStat.campaign_run_id == run.id)
         rows = (await db.execute(stmt)).scalars().all()
         assert len(rows) == 1
         assert rows[0].spend == Decimal("1.00")
         assert rows[0].revenue == Decimal("5.00")
-        
+
         # Second sync (Duplicate but updated data)
         raw_data[0]["metrics"]["costMicros"] = "2500000"
         norm2 = connector.normalize(raw_data)
         await connector.upsert(db, norm2)
         await db.commit()
-        
+
         rows2 = (await db.execute(stmt)).scalars().all()
         assert len(rows2) == 1
         assert rows2[0].spend == Decimal("2.50")
@@ -320,25 +326,25 @@ async def test_google_ads_tenant_isolation():
     comp_b_id = uuid.uuid4()
     user_a_id = uuid.uuid4()
     user_b_id = uuid.uuid4()
-    
+
     async with system_session() as db:
         db.add_all([
             Company(id=comp_a_id, name="GA Tenant A", base_currency="USD"),
             Company(id=comp_b_id, name="GA Tenant B", base_currency="USD")
         ])
         await db.flush()
-        
+
         db.add_all([
             User(id=user_a_id, name="a", email="a@a.com", password_hash="hash", company_id=comp_a_id, role="admin"),
             User(id=user_b_id, name="b", email="b@b.com", password_hash="hash", company_id=comp_b_id, role="admin")
         ])
         await db.flush()
-        
+
         c_a = Campaign(id=uuid.uuid4(), company_id=comp_a_id, assigned_user_id=user_a_id)
         c_b = Campaign(id=uuid.uuid4(), company_id=comp_b_id, assigned_user_id=user_b_id)
         db.add_all([c_a, c_b])
         await db.flush()
-        
+
         run_a = CampaignRun(
             company_id=comp_a_id,
             campaign_id=c_a.id,
@@ -359,9 +365,9 @@ async def test_google_ads_tenant_isolation():
         mapping_b = ExternalCampaignMapping(company_id=run_b.company_id, platform="google_ads", external_id=run_b.note, campaign_run_id=run_b.id)
         db.add_all([mapping_a, mapping_b])
         await db.commit()
-        
+
         connector_a = GoogleAdsConnector(DummyConfig(comp_a_id), create_valid_creds())
-        
+
         raw_data = [
             {
                 "campaign": {"id": "ga_shared_id"},
@@ -373,11 +379,11 @@ async def test_google_ads_tenant_isolation():
         norm = connector_a.normalize(raw_data)
         await connector_a.upsert(db, norm)
         await db.commit()
-        
+
         # Verify A got the data, B did not
         res_a = (await db.execute(select(CampaignRunStat).where(CampaignRunStat.company_id == comp_a_id))).scalars().all()
         res_b = (await db.execute(select(CampaignRunStat).where(CampaignRunStat.company_id == comp_b_id))).scalars().all()
-        
+
         assert len(res_a) == 1
         assert len(res_b) == 0
 
@@ -388,25 +394,150 @@ def test_google_ads_normalize_strict_types():
     class DummyConfig:
         company_id = "000"
         connector_name = "google_ads"
-    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "e"}')
-    
+    connector = GoogleAdsConnector(DummyConfig(), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "1234567890"}')
+
     # Missing field
     raw1 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "100"}}]
     norm = connector.normalize(raw1)
     assert len(norm) == 0  # logger.warning and continue for Google
-        
+
     # None field
     raw2 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "10", "conversionsValue": "10", "conversions": "10", "clicks": "10", "impressions": None}}]
     norm2 = connector.normalize(raw2)
     assert len(norm2) == 0
-        
+
     # Empty string field
     raw3 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "10", "conversionsValue": "10", "conversions": "10", "clicks": "", "impressions": "10"}}]
     norm3 = connector.normalize(raw3)
     assert len(norm3) == 0
-        
+
     # Explicit 0 is allowed
     raw4 = [{"campaign": {"id": "c1"}, "segments": {"date": "2024-01-01"}, "customer": {"currencyCode": "USD"}, "metrics": {"costMicros": "0", "conversionsValue": "0", "conversions": "0", "clicks": "0", "impressions": "0"}}]
     norm4 = connector.normalize(raw4)
     assert len(norm4) == 1
     assert norm4[0].spend == 0
+
+def test_google_ads_missing_customer_id():
+    from app.connectors.google_ads import GoogleAdsConnector
+    import pytest
+    with pytest.raises(ValueError) as excinfo:
+        GoogleAdsConnector(DummyConfig(uuid.uuid4()), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d"}')
+    assert "GOOGLE_ADS_CUSTOMER_ID" in str(excinfo.value)
+    assert "client_secret" not in str(excinfo.value)
+
+def test_google_ads_none_customer_id():
+    from app.connectors.google_ads import GoogleAdsConnector
+    import pytest
+    with pytest.raises(ValueError) as excinfo:
+        GoogleAdsConnector(DummyConfig(uuid.uuid4()), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": null}')
+    assert "GOOGLE_ADS_CUSTOMER_ID" in str(excinfo.value)
+    assert "None" not in str(excinfo.value) or "None" in str(excinfo.value) # just checking it raises
+
+def test_google_ads_empty_customer_id():
+    from app.connectors.google_ads import GoogleAdsConnector
+    import pytest
+    for bad_id in ["", "   ", "---", " - - "]:
+        with pytest.raises(ValueError) as excinfo:
+            GoogleAdsConnector(DummyConfig(uuid.uuid4()), f'{{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "{bad_id}"}}')
+        assert "GOOGLE_ADS_CUSTOMER_ID" in str(excinfo.value)
+
+def test_google_ads_correct_normalization():
+    from app.connectors.google_ads import GoogleAdsConnector
+    c1 = GoogleAdsConnector(DummyConfig(uuid.uuid4()), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "123-456-7890"}')
+    assert c1.customer_id == "1234567890"
+
+    c2 = GoogleAdsConnector(DummyConfig(uuid.uuid4()), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "123 456 7890"}')
+    assert c2.customer_id == "1234567890"
+
+    c3 = GoogleAdsConnector(DummyConfig(uuid.uuid4()), '{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "1234567890"}')
+    assert c3.customer_id == "1234567890"
+
+def test_google_ads_invalid_chars_customer_id():
+    from app.connectors.google_ads import GoogleAdsConnector
+    import pytest
+    for bad_id in ["123abc7890", "123/456", "123.456", "+123456", "-123456a"]:
+        with pytest.raises(ValueError):
+            GoogleAdsConnector(DummyConfig(uuid.uuid4()), f'{{"developer_token": "a", "client_id": "b", "client_secret": "c", "refresh_token": "d", "customer_id": "{bad_id}"}}')
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.post")
+async def test_google_ads_page_size_none(mock_post):
+    connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
+    connector.access_token = "valid_token"
+    mock_post.return_value = mock_response(200, {"results": []})
+
+    await connector.fetch_metrics(page_size=None)
+
+    mock_post.assert_called_once()
+    args, kwargs = mock_post.call_args
+    assert "pageSize" not in kwargs["json"]
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.post")
+async def test_google_ads_page_size_valid(mock_post):
+    connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
+    connector.access_token = "valid_token"
+    mock_post.return_value = mock_response(200, {"results": []})
+
+    await connector.fetch_metrics(page_size=500)
+
+    mock_post.assert_called_once()
+    args, kwargs = mock_post.call_args
+    assert kwargs["json"]["pageSize"] == 500
+
+@pytest.mark.asyncio
+async def test_google_ads_page_size_invalid_types():
+    connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), create_valid_creds())
+    connector.access_token = "valid_token"
+
+    with pytest.raises(ValueError, match="page_size must be an integer"):
+        await connector.fetch_metrics(page_size="10")
+
+    with pytest.raises(ValueError, match="page_size must be an integer"):
+        await connector.fetch_metrics(page_size=True)
+
+    with pytest.raises(ValueError, match="page_size must be positive"):
+        await connector.fetch_metrics(page_size=0)
+
+    with pytest.raises(ValueError, match="page_size must be positive"):
+        await connector.fetch_metrics(page_size=-5)
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.post")
+async def test_google_ads_mcc_headers_and_url(mock_post):
+    import uuid
+    import json
+    from app.connectors.google_ads import GoogleAdsConnector, GOOGLE_ADS_API_VERSION
+
+    creds = {
+        "developer_token": "devtoken",
+        "client_id": "clientid",
+        "client_secret": "clientsecret",
+        "refresh_token": "refreshtoken",
+        "customer_id": "111-111-1111",
+        "login_customer_id": "222-222-2222"
+    }
+
+    connector = GoogleAdsConnector(DummyConfig(uuid.uuid4()), json.dumps(creds))
+    connector.access_token = "valid_token"
+    mock_post.return_value = mock_response(200, {"results": []})
+
+    await connector.fetch_metrics()
+
+    mock_post.assert_called_once()
+    args, kwargs = mock_post.call_args
+
+    url = args[0]
+    headers = kwargs["headers"]
+
+    # 1. URL uses customer_id
+    assert "1111111111" in url
+    assert "2222222222" not in url
+    assert url.endswith(f"/customers/1111111111/googleAds:search")
+
+    # 2. Header login-customer-id uses login_customer_id
+    assert headers["login-customer-id"] == "2222222222"
+
+    # 3. Double check not swapped
+    assert connector.customer_id == "1111111111"
+    assert connector.login_customer_id == "2222222222"

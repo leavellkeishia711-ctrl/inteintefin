@@ -170,6 +170,8 @@ def map_google_error(e: Exception) -> HarnessError:
                         return HarnessError("insufficient_permission", f"Google authz error: {code}")
                     if "quotaError" in err_code:
                         return HarnessError("rate_limited", f"Google quota error: {err_code['quotaError']}")
+                    if "queryError" in err_code and err_code["queryError"] == "REQUESTED_METRICS_FOR_MANAGER":
+                        return HarnessError("manager_account_metrics_unsupported", "Metrics cannot be requested for a Manager (MCC) account. Please provide a client serving customer ID. If an MCC is needed for access, it must be provided as login_customer_id.")
                     if "requestError" in err_code and err_code["requestError"] == "UNSUPPORTED_VERSION":
                         return HarnessError("unsupported_api_version", "Unsupported API version")
                     if "customerError" in err_code and err_code["customerError"] == "CUSTOMER_NOT_ENABLED":
@@ -266,9 +268,10 @@ async def run_google_validation(args):
         connector = GoogleAdsConnector(config, creds_json, timeout=args.timeout)
         connector.register_secret = registry.register
     except Exception as e:
+        import logging
         import traceback
-        tb = traceback.format_exc()
-        print_result("fail", error_category="invalid_credentials", message=f"Failed to init connector: {e} | {creds_json} | {tb}")
+        logging.getLogger(__name__).debug(f"Init error: {traceback.format_exc()}")
+        print_result("fail", error_category="invalid_credentials", message=f"Failed to init connector: {e}")
         return
 
     stage = "init"
@@ -276,6 +279,7 @@ async def run_google_validation(args):
         stage = "token_refresh"
         is_ok = await connector.test_connection()
         if not is_ok:
+            stage = "customer_query"
             await connector.fetch_ad_accounts()
             raise HarnessError("invalid_credentials", "test_connection returned False but no specific exception was raised")
 
@@ -679,7 +683,7 @@ def main():
     parser.add_argument("--api-version", help="Override Google Ads API version")
     parser.add_argument("--timeout", type=int, default=15)
     parser.add_argument("--max-pages", type=int, default=2)
-    parser.add_argument("--page-size", type=int, default=10)
+    parser.add_argument("--page-size", type=int, default=None)
     parser.add_argument("--allow-empty", action="store_true", help="Treat empty results as pass instead of inconclusive")
 
     args = parser.parse_args()
