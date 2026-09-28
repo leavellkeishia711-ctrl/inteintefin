@@ -45,7 +45,11 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Stale-source Data Quality (DQ) alerts - **OPEN**
 - ECB FX rate auto-fetch
 - Expanded observability (structured logging, metrics)
-- Production validation with real external API credentials
+- Production validation with real external API credentials (Harness updated, execution pending)
+  - **Live validation harness now fully supports Google, TikTok, Meta, and Binom.**
+  - **Google:** Added `cloud_managed` mode (without developer token) and precise error mappings.
+  - **Meta:** Upgraded to Graph API v26.0 and implemented proper `time_range` filtering natively.
+  - **Binom:** Upgraded to API v2 endpoints and normalized `base_url` handling.
 - Keitaro: full implementation (`test_connection`, `fetch_campaigns`, `fetch_metrics`)
 - Ad accounts mapping for Binom, Voluum, Affise (currently only Meta)
 

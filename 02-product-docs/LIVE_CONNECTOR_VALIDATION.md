@@ -21,6 +21,14 @@ GOOGLE_ADS_LOGIN_CUSTOMER_ID=optional-mcc-id
 TIKTOK_ACCESS_TOKEN=your-token
 TIKTOK_ADVERTISER_ID=your-adv-id
 
+META_ACCESS_TOKEN=your-token
+META_AD_ACCOUNT_ID=your-adv-id
+META_API_VERSION=v26.0
+
+BINOM_BASE_URL=https://your-tracker.com
+BINOM_API_KEY=your-api-key
+BINOM_CURRENCY=USD
+
 LIVE_CONNECTOR_VALIDATION=1
 ```
 *(Google Ads API version is automatically read from `settings.GOOGLE_ADS_API_VERSION`, but you can override via `--api-version` if testing.)*
@@ -29,6 +37,8 @@ LIVE_CONNECTOR_VALIDATION=1
 ```bash
 python scripts/validate_live_connectors.py --platform google_ads
 python scripts/validate_live_connectors.py --platform tiktok_ads
+python scripts/validate_live_connectors.py --platform meta_ads
+python scripts/validate_live_connectors.py --platform binom
 ```
 
 ## Production Harness Value

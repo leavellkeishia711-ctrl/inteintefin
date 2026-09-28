@@ -249,7 +249,7 @@ def test_meta_normalize_with_date_works():
     """Meta Ads must normalize records WITH 'date_start' field correctly."""
     config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
-    raw = [{"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.00"}]
+    raw = [{"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.00", "clicks": "1", "impressions": "1", "_currency": "USD"}]
     normalized = connector.normalize(raw)
     assert len(normalized) == 1
     assert normalized[0].stat_date == date(2026, 9, 1)

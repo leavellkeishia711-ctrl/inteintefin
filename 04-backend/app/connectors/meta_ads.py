@@ -18,7 +18,7 @@ class MetaAdsConnector(Connector):
         super().__init__(config)
         self.api_key = decrypted_api_key
         settings = getattr(config, 'settings', {}) or {}
-        self.base_url = settings.get("base_url", "https://graph.facebook.com/v19.0").rstrip("/")
+        self.base_url = settings.get("base_url", "https://graph.facebook.com/v26.0").rstrip("/")
 
     def _get_headers(self) -> Dict[str, str]:
         """Meta Graph API strictly uses Bearer token in Authorization header."""
@@ -164,9 +164,11 @@ class MetaAdsConnector(Connector):
         return flat_campaigns
 
     async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
-        if start_date or end_date:
-            raise NotImplementedError(f"{self.__class__.__name__} does not support date range in fetch_metrics yet")
-        url = f"{self.base_url}/me/adaccounts?fields=insights.level(campaign){{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
+        time_range_str = ""
+        if start_date and end_date:
+            time_range_str = f".time_range({{'since':'{start_date.strftime('%Y-%m-%d')}','until':'{end_date.strftime('%Y-%m-%d')}'}}).time_increment(1)"
+        
+        url = f"{self.base_url}/me/adaccounts?fields=account_id,currency,insights.level(campaign){time_range_str}{{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
         accounts = await self._fetch_all_pages(url)
         
         metrics = []
@@ -175,8 +177,13 @@ class MetaAdsConnector(Connector):
             for account in accounts:
                 if not isinstance(account, dict):
                     continue
+                currency = account.get("currency")
                 insights = account.get("insights", {})
                 insights_data = insights.get("data", [])
+                
+                for row in insights_data:
+                    row["_currency"] = currency
+                    
                 metrics.extend(insights_data)
                 
                 paging = insights.get("paging", {})
@@ -193,6 +200,8 @@ class MetaAdsConnector(Connector):
                     data = response.json()
                     
                     if isinstance(data, dict) and "data" in data:
+                        for row in data["data"]:
+                            row["_currency"] = currency
                         metrics.extend(data["data"])
                     
                     new_paging = data.get("paging", {}) if isinstance(data, dict) else {}
@@ -212,10 +221,6 @@ class MetaAdsConnector(Connector):
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
         normalized = []
-        settings = getattr(self.config, 'settings', {}) or {}
-        currency = str(settings.get("currency", "USD"))
-        if len(currency) != 3:
-            currency = "USD"
             
         for row in raw_data:
             if not isinstance(row, dict):
@@ -233,8 +238,16 @@ class MetaAdsConnector(Connector):
             except ValueError:
                 continue
                 
+            currency = row.get("_currency")
+            if not currency or len(str(currency)) != 3:
+                logger.warning(f"MetaAds missing currency for campaign {external_id}")
+                continue
+                
             try:
-                spend = Decimal(str(row.get("spend", "0")))
+                if "spend" not in row:
+                    logger.warning(f"MetaAds missing spend for campaign {external_id}")
+                    raise ValueError("Missing spend")
+                spend = Decimal(str(row["spend"]))
                 if spend < 0:
                     raise InvalidOperation
             except (InvalidOperation, TypeError, ValueError):
@@ -253,16 +266,24 @@ class MetaAdsConnector(Connector):
                             pass
 
             try:
-                clicks = int(str(row.get("clicks", "0") or "0"))
-                if clicks < 0: clicks = 0
+                if "clicks" not in row:
+                    logger.warning(f"MetaAds missing clicks for campaign {external_id}")
+                    raise ValueError("Missing clicks")
+                clicks = int(str(row["clicks"]))
+                if clicks < 0:
+                    raise ValueError
             except ValueError:
-                clicks = 0
+                continue
 
             try:
-                impressions = int(str(row.get("impressions", "0") or "0"))
-                if impressions < 0: impressions = 0
+                if "impressions" not in row:
+                    logger.warning(f"MetaAds missing impressions for campaign {external_id}")
+                    raise ValueError("Missing impressions")
+                impressions = int(str(row["impressions"]))
+                if impressions < 0:
+                    raise ValueError
             except ValueError:
-                impressions = 0
+                continue
 
             conversions = Decimal("0")
             actions = row.get("actions")
