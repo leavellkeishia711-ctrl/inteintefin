@@ -30,7 +30,7 @@
 
 ## Open (Full Stage 2)
 
-- [ ] `ad_accounts` mapping and synchronization.
+- [x] `ad_accounts` mapping and synchronization (Meta/Google/TikTok done; Binom/Voluum/Affise N/A for current ad_accounts model. They are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
 - [ ] Shared rate-limit/retry/backoff policy for connectors.
 - [ ] Credential rotation (safe update, re-encryption).
 - [ ] Stale-source DQ alert.

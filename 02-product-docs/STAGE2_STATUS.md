@@ -23,7 +23,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Meta Ads integration (hardened) | **Merged & Post-Merge Verified** | `04-backend/app/connectors/meta_ads.py` |
 | TikTok Ads integration | **Implemented, mock/CI verified, real credential validation pending. (Harness uses production classes, manual run pending)** | `04-backend/app/connectors/tiktok_ads.py` |
 | Google Ads integration | **Implemented, mock/CI verified. Live auth path validated on Google Ads test account (2026-09-28, empty_result, cloud_managed, no developer token). Schema validation on production data PENDING (requires Cloud project Explorer access + production account with spend).** | `04-backend/app/connectors/google_ads.py` |
-| Ad accounts mapping (Meta only) | Done | `MetaAdsConnector.fetch_ad_accounts()` / `normalize_ad_accounts()` |
+| Ad accounts mapping (Meta, Google, TikTok) | Done | `fetch_ad_accounts()`/`normalize_ad_accounts()` in connectors; mapped in `test_*_fetch_ad_accounts` / `test_meta_ad_accounts_status_mapping`; persistence via `upsert_ad_accounts()` covered by `test_ad_accounts_upsert_idempotency.py` |
 | Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
 | Idempotency tests | Done | `test_meta_upsert_idempotency`, `test_binom_upsert_idempotency` |
@@ -55,7 +55,7 @@ The following requirements remain OPEN and must be implemented before full Stage
   - **Meta Details:** scheduled sync always requests daily stats for an explicit date range (default lookback 7 days, configurable via settings.lookback_days, 1..90); aggregated rows (date_start != date_stop) are dropped.
   - **Binom Details:** Upgraded to API v2 endpoints and normalized `base_url` handling.
 - Keitaro: full implementation (`test_connection`, `fetch_campaigns`, `fetch_metrics`)
-- Ad accounts mapping for Binom, Voluum, Affise (currently only Meta)
+- Ad accounts mapping for Binom, Voluum, Affise: N/A for current ad_accounts model. (These are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
 
 ### Source Data Storage Design
 - **Idempotency**: All CampaignRunStat records upserted using ON CONFLICT DO UPDATE.
