@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 from decimal import Decimal, InvalidOperation
 import httpx
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 import logging
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from .base import Connector, NormalizedRecord, NormalizedAdAccount, with_retry
@@ -12,6 +12,11 @@ from app.services.fx import resolve_fx_rate
 from sqlalchemy import select, and_
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_LOOKBACK_DAYS = 7
+MIN_LOOKBACK_DAYS = 1
+MAX_LOOKBACK_DAYS = 90
+
 
 class MetaAdsConnector(Connector):
     def __init__(self, config: Any, decrypted_api_key: str):
@@ -163,12 +168,30 @@ class MetaAdsConnector(Connector):
                     
         return flat_campaigns
 
+    def _resolve_date_range(self, start_date=None, end_date=None) -> tuple[date, date]:
+        if start_date is not None and end_date is not None:
+            if start_date > end_date:
+                raise ValueError("start_date must be <= end_date")
+            return start_date, end_date
+        if start_date is not None or end_date is not None:
+            raise ValueError("Both start_date and end_date must be provided, or neither")
+            
+        settings = getattr(self.config, 'settings', {}) or {}
+        lookback = settings.get("lookback_days", DEFAULT_LOOKBACK_DAYS)
+        if type(lookback) is not int:
+            raise ValueError("lookback_days must be an integer")
+        if lookback < MIN_LOOKBACK_DAYS or lookback > MAX_LOOKBACK_DAYS:
+            raise ValueError(f"lookback_days must be between {MIN_LOOKBACK_DAYS} and {MAX_LOOKBACK_DAYS}")
+            
+        end = datetime.now(timezone.utc).date()
+        start = end - timedelta(days=lookback - 1)
+        return start, end
+
     async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
-        time_range_str = ""
-        if start_date and end_date:
-            time_range_str = f".time_range({{'since':'{start_date.strftime('%Y-%m-%d')}','until':'{end_date.strftime('%Y-%m-%d')}'}}).time_increment(1)"
+        start, end = self._resolve_date_range(start_date, end_date)
+        time_range_str = f".time_range({{'since':'{start.strftime('%Y-%m-%d')}','until':'{end.strftime('%Y-%m-%d')}'}}).time_increment(1)"
         
-        url = f"{self.base_url}/me/adaccounts?fields=account_id,currency,insights.level(campaign){time_range_str}{{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
+        url = f"{self.base_url}/me/adaccounts?fields=account_id,currency,insights.level(campaign){time_range_str}{{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start,date_stop}}"
         accounts = await self._fetch_all_pages(url)
         
         metrics = []
@@ -232,6 +255,10 @@ class MetaAdsConnector(Connector):
                 
             date_str = row.get("date_start")
             if not date_str:
+                continue
+            date_stop = row.get("date_stop")
+            if date_stop and date_stop != date_str:
+                logger.warning(f"MetaAds dropping aggregated row for campaign {external_id}: date_start={date_str} date_stop={date_stop}")
                 continue
             try:
                 stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
