@@ -55,7 +55,7 @@ The following requirements remain OPEN and must be implemented before full Stage
   - **Meta Details:** scheduled sync always requests daily stats for an explicit date range (default lookback 7 days, configurable via settings.lookback_days, 1..90); aggregated rows (date_start != date_stop) are dropped.
   - **Binom Details:** Upgraded to API v2 endpoints and normalized `base_url` handling.
 - Keitaro: full implementation (`test_connection`, `fetch_campaigns`, `fetch_metrics`)
-- Ad accounts mapping for Binom, Voluum, Affise (currently only Meta)
+- Ad accounts mapping for Binom, Voluum, Affise: N/A for current ad_accounts model. (These are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
 
 ### Source Data Storage Design
 - **Idempotency**: All CampaignRunStat records upserted using ON CONFLICT DO UPDATE.

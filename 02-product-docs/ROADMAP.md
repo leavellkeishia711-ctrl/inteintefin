@@ -36,7 +36,7 @@ This document outlines the phased delivery plan for FinanceIntel.
 - [x] Voluum integration.
 - [x] Affise integration.
 - [x] Meta Ads integration (hardened: pagination, secret stripping, ad accounts).
-- [x] `ad_accounts` mapping (Meta only - Binom/Voluum/Affise pending).
+- [x] `ad_accounts` mapping (Meta/Google/TikTok implemented; Binom/Voluum/Affise N/A for current ad_accounts model. They are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
 - [x] `CampaignRunStat` soft delete.
 
 **Open (Pending Implementation):**
