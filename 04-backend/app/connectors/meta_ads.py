@@ -25,9 +25,12 @@ class MetaAdsConnector(Connector):
         settings = getattr(config, 'settings', {}) or {}
         self.base_url = settings.get("base_url", "https://graph.facebook.com/v26.0").rstrip("/")
         
-        try:
-            self.lookback_days = int(settings.get("lookback_days", DEFAULT_LOOKBACK_DAYS))
-        except (ValueError, TypeError):
+        if "lookback_days" in settings:
+            val = settings["lookback_days"]
+            if val is None or not str(val).isdigit():
+                raise ValueError("lookback_days must be an integer")
+            self.lookback_days = int(val)
+        else:
             self.lookback_days = DEFAULT_LOOKBACK_DAYS
             
         if not (MIN_LOOKBACK <= self.lookback_days <= MAX_LOOKBACK):

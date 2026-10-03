@@ -9,7 +9,7 @@ import uuid
 
 from app.db.session import system_session, tenant_session
 from app.db.models.connectors import ConnectorConfig
-from app.connectors.registry import CONNECTOR_NAMES, get_connector_class
+from app.connectors.registry import CONNECTOR_NAMES, get_connector_class, NON_PRODUCTION_CONNECTORS
 from app.connectors.base import UnauthorizedError
 from app.connectors.credentials import decrypt_secret
 
@@ -65,30 +65,33 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             if not config:
                 return
 
-            if config.connector_name in CONNECTOR_NAMES:
-                # We need to import NON_PRODUCTION_CONNECTORS
-                from app.connectors.registry import NON_PRODUCTION_CONNECTORS
-                if config.connector_name in NON_PRODUCTION_CONNECTORS:
-                    logger.warning(f"Connector {config.connector_name} is not production-ready. Pausing.")
-                    await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(status='paused', next_sync_at=None))
-                    await db.commit()
-                    return
+            config_id = config.id
+            connector_name = config.connector_name
+            sync_interval_minutes = config.sync_interval_minutes
+            prev_status = config.status
+            prev_retry_count = config.retry_count
+            encrypted_secret = config.encrypted_secret
 
-            current_retry_count = config.retry_count
+            if connector_name in NON_PRODUCTION_CONNECTORS:
+                logger.warning(f"Connector {connector_name} is not production-ready. Pausing.")
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(status='paused', next_sync_at=None))
+                await db.commit()
+                return
+
             try:
-                decrypted = decrypt_secret(config.encrypted_secret)
+                decrypted = decrypt_secret(encrypted_secret)
 
-                connector_cls = get_connector_class(config.connector_name)
+                connector_cls = get_connector_class(connector_name)
                 if not connector_cls:
-                    raise ValueError(f"Unknown connector type: {config.connector_name}")
+                    raise ValueError(f"Unknown connector type: {connector_name}")
                 connector = connector_cls(config, decrypted)
 
                 await connector.sync(db)
 
                 # Success
                 now_utc = datetime.now(timezone.utc)
-                next_sync = now_utc + timedelta(minutes=config.sync_interval_minutes)
-                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
+                next_sync = now_utc + timedelta(minutes=sync_interval_minutes)
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
                     last_successful_sync=now_utc,
                     status='active',
                     retry_count=0,
@@ -99,7 +102,7 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             except UnauthorizedError as e:
                 await db.rollback()
                 logger.error(f"Connector sync unauthorized: {type(e).__name__}")
-                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
                     status='unauthorized',
                     next_sync_at=None
                 ))
@@ -107,18 +110,18 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
             except Exception as e:
                 await db.rollback()
                 logger.error(f"Connector sync failed: {type(e).__name__}")
-                new_retry_count = current_retry_count + 1
-                new_status = 'failing' if new_retry_count > 3 else config.status
+                new_retry_count = prev_retry_count + 1
+                new_status = 'failing' if new_retry_count > 3 else prev_status
                 now_utc = datetime.now(timezone.utc)
-                retry_interval = max(config.sync_interval_minutes, 5)
+                retry_interval = max(sync_interval_minutes, 5)
                 next_sync = now_utc + timedelta(minutes=retry_interval)
-                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config.id).values(
+                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
                     retry_count=new_retry_count,
                     status=new_status,
                     next_sync_at=next_sync
                 ))
                 await db.commit()
-                
+
     finally:
         await release_lock(lock_key, token)
 
@@ -133,7 +136,6 @@ async def run_scheduled_syncs():
     """Finds all connectors that need to be synced and launches them."""
     async with system_session() as db:
         now_utc = datetime.now(timezone.utc)
-        from app.connectors.registry import NON_PRODUCTION_CONNECTORS
         stmt = select(ConnectorConfig).where(
             ConnectorConfig.status.in_(['active', 'failing']),
             ConnectorConfig.deleted_at.is_(None),
