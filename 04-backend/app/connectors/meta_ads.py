@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import List, Dict, Any
 from decimal import Decimal, InvalidOperation
 import httpx
@@ -13,12 +14,24 @@ from sqlalchemy import select, and_
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_LOOKBACK_DAYS = 7
+MIN_LOOKBACK = 1
+MAX_LOOKBACK = 90
+
 class MetaAdsConnector(Connector):
     def __init__(self, config: Any, decrypted_api_key: str):
         super().__init__(config)
         self.api_key = decrypted_api_key
         settings = getattr(config, 'settings', {}) or {}
         self.base_url = settings.get("base_url", "https://graph.facebook.com/v26.0").rstrip("/")
+        
+        try:
+            self.lookback_days = int(settings.get("lookback_days", DEFAULT_LOOKBACK_DAYS))
+        except (ValueError, TypeError):
+            self.lookback_days = DEFAULT_LOOKBACK_DAYS
+            
+        if not (MIN_LOOKBACK <= self.lookback_days <= MAX_LOOKBACK):
+            raise ValueError(f"lookback_days must be between {MIN_LOOKBACK} and {MAX_LOOKBACK}")
 
     def _get_headers(self) -> Dict[str, str]:
         """Meta Graph API strictly uses Bearer token in Authorization header."""
@@ -164,11 +177,11 @@ class MetaAdsConnector(Connector):
         return flat_campaigns
 
     async def fetch_metrics(self, start_date=None, end_date=None) -> List[Dict[str, Any]]:
-        time_range_str = ""
-        if start_date and end_date:
-            time_range_str = f".time_range({{'since':'{start_date.strftime('%Y-%m-%d')}','until':'{end_date.strftime('%Y-%m-%d')}'}}).time_increment(1)"
-        
-        url = f"{self.base_url}/me/adaccounts?fields=account_id,currency,insights.level(campaign){time_range_str}{{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start}}"
+        if start_date is None or end_date is None:
+            raise ValueError("start_date and end_date are required for fetch_metrics")
+
+        time_range_str = f".time_range({{'since':'{start_date.strftime('%Y-%m-%d')}','until':'{end_date.strftime('%Y-%m-%d')}'}}).time_increment(1)"
+        url = f"{self.base_url}/me/adaccounts?fields=account_id,currency,insights.level(campaign){time_range_str}{{campaign_id,spend,action_values,clicks,impressions,reach,actions,date_start,date_stop}}"
         accounts = await self._fetch_all_pages(url)
         
         metrics = []
@@ -217,10 +230,13 @@ class MetaAdsConnector(Connector):
         return metrics
 
     async def fetch(self) -> List[Dict[str, Any]]:
-        return await self.fetch_metrics()
+        end_date = datetime.now(timezone.utc).date()
+        start_date = end_date - timedelta(days=self.lookback_days - 1)
+        return await self.fetch_metrics(start_date, end_date)
 
     def normalize(self, raw_data: List[Dict[str, Any]]) -> List[NormalizedRecord]:
         normalized = []
+        dropped_aggregates = 0
             
         for row in raw_data:
             if not isinstance(row, dict):
@@ -230,11 +246,15 @@ class MetaAdsConnector(Connector):
             if external_id is None:
                 continue
                 
-            date_str = row.get("date_start")
-            if not date_str:
+            date_start = row.get("date_start")
+            date_stop = row.get("date_stop")
+            
+            if not date_start or not date_stop or date_start != date_stop:
+                dropped_aggregates += 1
                 continue
+                
             try:
-                stat_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
+                stat_date = datetime.strptime(date_start, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
             except ValueError:
                 continue
                 
@@ -313,6 +333,9 @@ class MetaAdsConnector(Connector):
         for rec in normalized:
             key = (rec.external_id, rec.stat_date)
             unique_records[key] = rec
+            
+        if dropped_aggregates > 0:
+            logger.warning(f"MetaAds normalize dropped {dropped_aggregates} rows with invalid date_stop != date_start")
             
         return list(unique_records.values())
 

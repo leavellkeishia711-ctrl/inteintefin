@@ -241,7 +241,7 @@ async def test_tiktok_ads_persistence_uses_atomic_upsert(company_b_fixtures):
         await db_session.commit()
         
         # Mock resolve_fx_rate to avoid external calls
-        with patch("app.connectors.tiktok_ads.resolve_fx_rate", new_callable=AsyncMock) as mock_fx:
+        with patch("app.connectors.tiktok_ads.resolve_fx_rate", autospec=True) as mock_fx:
             mock_fx.return_value = Decimal("1.0")
             
             # Run 1
@@ -301,7 +301,7 @@ async def test_tiktok_ads_tenant_isolation(company_b_fixtures):
         config = DummyConfig(c1_id, connector_name="tiktok_ads")
         connector = TikTokAdsConnector(config, get_creds())
         
-        with patch("app.connectors.tiktok_ads.resolve_fx_rate", new_callable=AsyncMock) as mock_fx:
+        with patch("app.connectors.tiktok_ads.resolve_fx_rate", autospec=True) as mock_fx:
             mock_fx.return_value = Decimal("1.0")
             
             raw = [{
