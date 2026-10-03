@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 CONNECTOR_NAMES = frozenset(['meta', 'google_ads', 'tiktok_ads', 'keitaro'])
+NON_PRODUCTION_CONNECTORS = frozenset(['keitaro'])
 
 _REGISTRY_MAP = {
     'meta': ('app.connectors.meta_ads', 'MetaAdsConnector'),

@@ -288,12 +288,11 @@ class TikTokAdsConnector(Connector):
                 logger.debug(f"TikTok Ads: No CampaignRun found for external_id={record.external_id}")
                 continue
 
-            fx_rate = await resolve_fx_rate(
-                session=session,
-                from_currency=record.currency,
-                to_currency=base_currency,
-                date_val=record.stat_date
-            )
+            try:
+                fx_rate = await resolve_fx_rate(session, record.currency, base_currency, record.stat_date)
+            except ValueError as e:
+                logger.error(f"TikTokAds upsert FX rate error for source={record.source} external_id={record.external_id} date={record.stat_date}")
+                raise
 
             await CampaignRunStat.upsert_campaign_run_stat_atomic(
                 session=session,

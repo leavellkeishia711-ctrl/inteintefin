@@ -24,7 +24,7 @@ def test_credentials_encryption():
 @pytest.mark.asyncio
 async def test_api_create_connector(client_a: AsyncClient):
     res = await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro",
+        "connector_name": "meta",
         "secret": "my_secret",
         "sync_interval_minutes": 60
     })
@@ -32,13 +32,13 @@ async def test_api_create_connector(client_a: AsyncClient):
     data = res.json()
     assert "secret" not in data
     assert "encrypted_secret" not in data
-    assert data["connector_name"] == "keitaro"
+    assert data["connector_name"] == "meta"
     assert data["status"] == "active"
 
 @pytest.mark.asyncio
 async def test_api_tenant_isolation(client_a: AsyncClient, client_b: AsyncClient):
     await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro",
+        "connector_name": "meta",
         "secret": "my_secret2",
         "sync_interval_minutes": 60
     })
