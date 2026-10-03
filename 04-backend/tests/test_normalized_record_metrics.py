@@ -91,6 +91,7 @@ def test_meta_normalize_metrics():
     raw = [{
         "campaign_id": "123",
         "date_start": "2026-01-01",
+        "date_stop": "2026-01-01",
         "spend": "10.5",
         "clicks": "50",
         "impressions": "1000",

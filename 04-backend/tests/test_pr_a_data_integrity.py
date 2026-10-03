@@ -72,8 +72,9 @@ async def test_tiktok_upsert_fx_signature(company_b_fixtures):
             await connector.upsert(db, [record])
             await db.commit()
         
-        async with system_session() as db_session:
-            mock_fx.assert_awaited_once_with(db_session, "EUR", "USD", date(2023, 1, 1))
+        mock_fx.assert_awaited_once()
+        args = mock_fx.call_args.args
+        assert args[1:] == ("EUR", "USD", date(2023, 1, 1))
 
     async with system_session() as db_session:
         stats = (await db_session.execute(select(CampaignRunStat).where(CampaignRunStat.external_id == "tk123"))).scalars().all()
