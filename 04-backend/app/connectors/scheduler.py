@@ -78,6 +78,8 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
                 await db.commit()
                 return
 
+            sync_error_type = None
+
             try:
                 decrypted = decrypt_secret(encrypted_secret)
 
@@ -101,26 +103,33 @@ async def sync_connector_instance(company_id: str, connector_id: str) -> None:
 
             except UnauthorizedError as e:
                 await db.rollback()
+                sync_error_type = 'unauthorized'
                 logger.error(f"Connector sync unauthorized: {type(e).__name__}")
-                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
-                    status='unauthorized',
-                    next_sync_at=None
-                ))
-                await db.commit()
             except Exception as e:
                 await db.rollback()
+                sync_error_type = 'failed'
                 logger.error(f"Connector sync failed: {type(e).__name__}")
-                new_retry_count = prev_retry_count + 1
-                new_status = 'failing' if new_retry_count > 3 else prev_status
-                now_utc = datetime.now(timezone.utc)
-                retry_interval = max(sync_interval_minutes, 5)
-                next_sync = now_utc + timedelta(minutes=retry_interval)
-                await db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
-                    retry_count=new_retry_count,
-                    status=new_status,
-                    next_sync_at=next_sync
-                ))
-                await db.commit()
+
+        if sync_error_type:
+            async with tenant_session(company_id) as err_db:
+                if sync_error_type == 'unauthorized':
+                    await err_db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
+                        status='unauthorized',
+                        next_sync_at=None
+                    ))
+                    await err_db.commit()
+                else:
+                    new_retry_count = prev_retry_count + 1
+                    new_status = 'failing' if new_retry_count > 3 else prev_status
+                    now_utc = datetime.now(timezone.utc)
+                    retry_interval = max(sync_interval_minutes, 5)
+                    next_sync = now_utc + timedelta(minutes=retry_interval)
+                    await err_db.execute(update(ConnectorConfig).where(ConnectorConfig.id == config_id).values(
+                        retry_count=new_retry_count,
+                        status=new_status,
+                        next_sync_at=next_sync
+                    ))
+                    await err_db.commit()
 
     finally:
         await release_lock(lock_key, token)
