@@ -75,7 +75,7 @@ The following requirements remain OPEN and must be implemented before full Stage
 
 ### Known gaps after PR-A
 - `settings` column is missing in `ConnectorConfig`, so Binom/Google settings (`base_url`, `customer_id`) and Meta `lookback_days` are not accessible to the scheduler.
-- **SECURITY:** Meta (and others) reads `settings.get("base_url")`. `settings` via API cannot be open without an allowlist, otherwise there is an SSRF risk / token leak via redirecting Bearer tokens to an arbitrary host.
+- **SECURITY / SSRF Risk:** Currently, users cannot set a custom `base_url` because `settings` is missing from `ConnectorConfig` and the API schema. However, `MetaAdsConnector` code already calls `settings.get("base_url")`. Once `settings` is exposed via the API, allowing arbitrary `base_url` without an allowlist/strict validation will introduce an SSRF and token leak vulnerability (sending the Bearer token to a malicious host). Note: configuring `lookback_days` via `settings` does not pose an SSRF risk.
 - Unmapped rows (without `ExternalCampaignMapping`) are silently skipped in upsert.
 - ECB FX auto-fetch not implemented (`fetch_ecb_rates` is a stub); multi-currency sync raises ValueError when `fx_rates` has no rate within 7 days.
 
