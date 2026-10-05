@@ -31,8 +31,11 @@ async def test_create_connector_invalid_settings(client_a):
     )
     assert res.status_code == 422, res.text
     
+from tests.test_connectors_api import db_session
+from app.db.models.connectors import ConnectorConfig
+
 @pytest.mark.asyncio
-async def test_patch_connector_settings_semantics(client_a, db):
+async def test_patch_connector_settings_semantics(client_a, db_session):
     # Create first
     res = await client_a.post(
         f"{settings.API_V1_STR}/connectors/",
@@ -45,12 +48,20 @@ async def test_patch_connector_settings_semantics(client_a, db):
     assert res.status_code == 201, res.text
     c_id = res.json()["id"]
 
+    import uuid
+    # Verify initial settings
+    stmt = select(ConnectorConfig).where(ConnectorConfig.id == uuid.UUID(c_id))
+    config = (await db_session.execute(stmt)).scalars().first()
+    assert config.settings == {"access_mode": "cloud_managed"}
+
     # Patch with valid - replaces
     res_patch = await client_a.patch(
         f"{settings.API_V1_STR}/connectors/{c_id}",
         json={"settings": {"access_mode": "legacy"}}
     )
     assert res_patch.status_code == 200, res_patch.text
+    await db_session.refresh(config)
+    assert config.settings == {"access_mode": "legacy"}
     
     # Patch with {} clears settings
     res_patch_clear = await client_a.patch(
@@ -58,6 +69,8 @@ async def test_patch_connector_settings_semantics(client_a, db):
         json={"settings": {}}
     )
     assert res_patch_clear.status_code == 200, res_patch_clear.text
+    await db_session.refresh(config)
+    assert config.settings == {}
     
     # Patch with null (missing) -> no-op
     res_patch_null = await client_a.patch(
@@ -65,6 +78,16 @@ async def test_patch_connector_settings_semantics(client_a, db):
         json={"sync_interval_minutes": 120} # settings omitted
     )
     assert res_patch_null.status_code == 200, res_patch_null.text
+    await db_session.refresh(config)
+    assert config.settings == {}
+    
+    res_patch_explicit_null = await client_a.patch(
+        f"{settings.API_V1_STR}/connectors/{c_id}",
+        json={"settings": None}
+    )
+    assert res_patch_explicit_null.status_code == 200, res_patch_explicit_null.text
+    await db_session.refresh(config)
+    assert config.settings == {}
 
     # Patch with invalid
     res_patch_invalid = await client_a.patch(
@@ -95,15 +118,30 @@ async def test_connector_settings_tenant_isolation(client_a, client_b):
     )
     assert res_b.status_code == 404, res_b.text
 
+    # Client B tries to read it
+    res_get_b = await client_b.get(
+        f"{settings.API_V1_STR}/connectors/{c_id}"
+    )
+    assert res_get_b.status_code == 404
+
+    # Client B lists connectors, should not see A's
+    res_list_b = await client_b.get(
+        f"{settings.API_V1_STR}/connectors/"
+    )
+    assert res_list_b.status_code == 200
+    assert not any(c["id"] == c_id for c in res_list_b.json())
+
 
 @pytest.mark.asyncio
 async def test_connector_settings_patch_validate_true(client_a, monkeypatch):
     # Mock connector class
     class MockGoogleAdsConnector:
+        call_count = 0
         def __init__(self, config, secret):
             self.config = config
             self.secret = secret
         async def test_connection(self):
+            MockGoogleAdsConnector.call_count += 1
             # Verify the dummy config received the *new* settings correctly
             assert self.config.settings == {"access_mode": "legacy"}
             return True
@@ -127,13 +165,16 @@ async def test_connector_settings_patch_validate_true(client_a, monkeypatch):
         json={"secret": "new_secret", "settings": {"access_mode": "legacy"}}
     )
     assert res_patch.status_code == 200, res_patch.text
+    assert MockGoogleAdsConnector.call_count == 1
 
     # Mock connector class for second call to expect access_mode = legacy
     class MockGoogleAdsConnectorPreserved:
+        call_count = 0
         def __init__(self, config, secret):
             self.config = config
             self.secret = secret
         async def test_connection(self):
+            MockGoogleAdsConnectorPreserved.call_count += 1
             assert self.config.settings == {"access_mode": "legacy"}
             return True
 
@@ -145,10 +186,11 @@ async def test_connector_settings_patch_validate_true(client_a, monkeypatch):
         json={"secret": "newer_secret"}
     )
     assert res_patch_secret_only.status_code == 200, res_patch_secret_only.text
+    assert MockGoogleAdsConnectorPreserved.call_count == 1
 
 
 @pytest.mark.asyncio
-async def test_connector_settings_audit(client_a, db):
+async def test_connector_settings_audit(client_a, db_session):
     # Create connector
     res = await client_a.post(
         f"{settings.API_V1_STR}/connectors/",
@@ -173,10 +215,16 @@ async def test_connector_settings_audit(client_a, db):
         AuditLog.entity_id == uuid.UUID(c_id),
         AuditLog.action == "connector.settings_updated"
     ).order_by(AuditLog.created_at.desc())
-    audit_res = await db.execute(stmt)
+    audit_res = await db_session.execute(stmt)
     log = audit_res.scalars().first()
 
     assert log is not None
     assert "changed_settings_keys" in log.diff
     assert log.diff["changed_settings_keys"]["new"] == ["lookback_days"]
     assert "settings" not in log.diff
+    
+    diff_str = str(log.diff)
+    assert "secret" not in diff_str
+    assert "encrypted_secret" not in diff_str
+    assert "7" not in diff_str
+    assert "14" not in diff_str
