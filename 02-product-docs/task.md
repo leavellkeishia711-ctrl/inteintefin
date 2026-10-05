@@ -31,15 +31,16 @@
 
 - [x] `ad_accounts` mapping and synchronization (Meta/Google/TikTok done; Binom/Voluum/Affise N/A for current ad_accounts model. They are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
 - [x] Shared rate-limit/retry/backoff policy for connectors.
-- [x] Binom integration.
-- [x] Voluum integration.
-- [x] Affise integration.
-- [x] Meta Ads integration.
-- [x] Google Ads integration.
-- [x] TikTok Ads integration.
-- [ ] Credential rotation (safe update, re-encryption).
-- [ ] Stale-source DQ alert.
-- [ ] Keitaro integration (full).
+- [x] Stale-source DQ alert.
+- [ ] Binom integration (Implemented, not wired).
+- [ ] Voluum integration (Implemented, not wired).
+- [ ] Affise integration (Implemented, not wired).
+- [ ] Meta Ads integration (Mock-verified).
+- [ ] Google Ads integration (Mock-verified).
+- [ ] TikTok Ads integration (Mock-verified).
+- [ ] Credential rotation (partial).
+- [ ] Keitaro integration (stub/blocked).
+- [ ] Cross-source conflict resolution / reconciliation (Implemented, not wired).
 
 ## Open (Other)
 
@@ -53,7 +54,7 @@
 1. PR-B: ConnectorConfig.settings (JSONB, per-connector Pydantic allowlist, API create/patch, PATCH validate, tests).
 2. PR-C: Registration of binom/voluum/affise + `base_url` validation (https-only, block private/loopback IP).
 3. ECB FX auto-fetch.
-4. Stale-source DQ alert.
+4. Reconciliation trigger (beat or post-sync).
 5. Observability (structured logging, metrics).
 6. Live validation with real credentials (Google schema, TikTok, Meta, Binom).
 7. Keitaro full implementation.
