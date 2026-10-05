@@ -18,36 +18,37 @@ This document outlines the phased delivery plan for FinanceIntel.
 
 ---
 
-## 📍 МЫ ЗДЕСЬ: Stage 2 - Data Connectors
+## Stage 2 - Data Connectors
 **Status:** IN PROGRESS (Foundational Slice + Tracker/Meta Connectors Merged)
 
 **Goal:** Automated ingestion of costs, revenues, and campaigns.
+**Note:** See STAGE2_STATUS.md for the detailed source of truth for Stage 2.
 
-**Completed (Merged & Post-Merge Verified on main `99763f95f17918fda46e0b6fd098293e0373749b`):**
+**Completed:**
 - [x] `connectors/base.py` abstract class.
 - [x] Encrypted credentials storage.
-- [x] Keitaro implementation (STUB / NOT PRODUCTION-READY).
 - [x] Sync scheduling (Celery beat).
 - [x] Connector API endpoints & DB models.
 - [x] Tenant isolation and persistence testing.
 - [x] Production Smoke Test.
 - [x] Shared rate-limit/retry/backoff policy (`with_retry`).
-- [x] Binom integration.
-- [x] Voluum integration.
-- [x] Affise integration.
-- [x] Meta Ads integration (hardened: pagination, secret stripping, ad accounts).
-- [x] `ad_accounts` mapping (Meta/Google/TikTok implemented; Binom/Voluum/Affise N/A for current ad_accounts model. They are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
+- [x] Binom integration (implementation).
+- [x] Voluum integration (implementation).
+- [x] Affise integration (implementation).
+- [x] Meta Ads integration (implementation).
+- [x] Google Ads integration (implementation).
+- [x] TikTok Ads integration (implementation).
+- [x] `ad_accounts` mapping (Meta/Google/TikTok).
 - [x] `CampaignRunStat` soft delete.
+- [x] Cross-source conflict resolution / reconciliation.
 
 **Open (Pending Implementation):**
-- [ ] Cross-source conflict resolution / reconciliation.
-- [ ] Credential rotation endpoint.
+- [ ] Credential rotation endpoint (partial).
 - [ ] Stale-source DQ alert.
 - [ ] ECB FX rate auto-fetch.
 - [ ] Expanded observability (structured logging, metrics).
-- [ ] Google Ads integration (NOT IMPLEMENTED).
-- [ ] TikTok Ads integration (NOT IMPLEMENTED).
 - [ ] Production validation with real API credentials.
+- [ ] Keitaro implementation.
 
 ---
 

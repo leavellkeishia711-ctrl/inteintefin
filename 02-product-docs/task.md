@@ -22,7 +22,6 @@
 - [x] Data Connectors: `connectors/base.py` abstract class.
 - [x] Data Connectors: encrypted credentials storage.
 - [x] Data Connectors: Celery beat sync scheduler.
-- [x] Data Connectors: Keitaro implementation.
 - [x] Data Connectors: API endpoints (CRUD & sync).
 - [x] Data Connectors: DB models & Alembic migration.
 - [x] Data Connectors: Tenant isolation and persistence tests.
@@ -31,15 +30,16 @@
 ## Open (Full Stage 2)
 
 - [x] `ad_accounts` mapping and synchronization (Meta/Google/TikTok done; Binom/Voluum/Affise N/A for current ad_accounts model. They are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
-- [ ] Shared rate-limit/retry/backoff policy for connectors.
+- [x] Shared rate-limit/retry/backoff policy for connectors.
+- [x] Binom integration.
+- [x] Voluum integration.
+- [x] Affise integration.
+- [x] Meta Ads integration.
+- [x] Google Ads integration.
+- [x] TikTok Ads integration.
 - [ ] Credential rotation (safe update, re-encryption).
 - [ ] Stale-source DQ alert.
-- [ ] Binom integration.
-- [ ] Voluum integration.
-- [ ] Affise integration.
-- [ ] Meta Ads integration.
-- [ ] Google Ads integration.
-- [ ] TikTok Ads integration.
+- [ ] Keitaro integration (full).
 
 ## Open (Other)
 
@@ -48,16 +48,12 @@
 - [ ] Frontend: Data Layer refactoring (TanStack Query, API client).
 - [ ] Frontend: i18n label migration.
 
-## Next Implementation Order
+## Next Implementation Order (Proposed, Requires Owner Confirmation)
 
-1. `connectors/base.py` standardization.
-2. `ad_accounts` syncing.
-3. Shared rate-limit/retry/backoff.
-4. Credential rotation.
-5. Stale-source DQ alert.
-6. Binom integration.
-7. Voluum integration.
-8. Affise integration.
-9. Meta Ads integration.
-10. Google Ads integration.
-11. TikTok Ads integration.
+1. PR-B: ConnectorConfig.settings (JSONB, per-connector Pydantic allowlist, API create/patch, PATCH validate, tests).
+2. PR-C: Registration of binom/voluum/affise + `base_url` validation (https-only, block private/loopback IP).
+3. ECB FX auto-fetch.
+4. Stale-source DQ alert.
+5. Observability (structured logging, metrics).
+6. Live validation with real credentials (Google schema, TikTok, Meta, Binom).
+7. Keitaro full implementation.
