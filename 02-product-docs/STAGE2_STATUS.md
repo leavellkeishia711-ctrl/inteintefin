@@ -14,7 +14,7 @@ Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
 ### CI/CD Baseline
-- Current main SHA: `d56e80e8a3f548b9b5e8d20b25b0010e31c2a766`
+- Current main SHA: `d56e80e8a3f548b9b5e8d20b25b0010e31c2a766` (last code change on main)
 - PR #32 squash merge
 - Backend CI: 37280619697, Frontend CI: 37280619642, Production Gate: 37280619568
 
@@ -28,11 +28,11 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Encrypted credentials (Fernet) | Done | `04-backend/app/connectors/credentials.py` |
 | Sync scheduling | Done | `04-backend/app/connectors/scheduler.py` |
 | Shared retry/backoff (`with_retry`) | Done | `04-backend/app/connectors/base.py` |
-| Keitaro integration | **Stub, blocked** | Blocked in `registry.NON_PRODUCTION_CONNECTORS`; `test_connection` returns True; `fetch_campaigns` and `fetch_metrics` return empty lists |
+| Keitaro integration | **Stub, blocked** | `app/api/v1/connectors.py:53` (HTTP 422 on create); `app/connectors/scheduler.py:44` (paused if in NON_PRODUCTION_CONNECTORS) |
 | Binom integration | **Implemented, not wired** | `04-backend/app/connectors/binom.py` exists but missing from `CONNECTOR_NAMES` |
 | Voluum integration | **Implemented, not wired** | `04-backend/app/connectors/voluum.py` exists but missing from `CONNECTOR_NAMES` |
 | Affise integration | **Implemented, not wired** | `04-backend/app/connectors/affise.py` exists but missing from `CONNECTOR_NAMES` |
-| Meta Ads integration (hardened) | **Done** | `04-backend/app/connectors/meta_ads.py` |
+| Meta Ads integration (hardened) | **Mock-verified** | `04-backend/app/connectors/meta_ads.py:24` (settings config missing for base_url and lookback_days, live-validation pending) |
 | TikTok Ads integration | **Mock-verified** | `04-backend/app/connectors/tiktok_ads.py` (live credential validation pending) |
 | Google Ads integration | **Mock-verified** | `04-backend/app/connectors/google_ads.py` (live auth validated on test account, schema validation on prod data pending) |
 | Ad accounts mapping (Meta, Google, TikTok) | Done | `fetch_ad_accounts()`/`normalize_ad_accounts()` in connectors; mapped in `test_*_fetch_ad_accounts`; persistence via `upsert_ad_accounts()` covered by `test_ad_accounts_upsert_idempotency.py` |
@@ -41,9 +41,10 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Idempotency tests | Done | `test_meta_upsert_idempotency`, `test_binom_upsert_idempotency` |
 | Production smoke | Done | `.github/workflows/prod-gate.yml` |
 | `CampaignRunStat` soft delete (`deleted_at`) | Done | `SoftDeleteMixin`, API read query filters |
-| `CampaignRunStat` uniqueness | Done | Partial unique index `uix_company_connector`, checking `deleted_at IS NULL` |
+| `CampaignRunStat` uniqueness | Done | Partial unique indexes `uq_campaign_run_stats_not_null_ext` and `uq_campaign_run_stats_null_ext`, checking `deleted_at IS NULL` (`app/db/models/campaigns.py`) |
 | Atomic upsert (ON CONFLICT) | Done | `campaigns.py:upsert_campaign_run_stat_atomic` |
-| Cross-source conflict resolution / reconciliation | Done | `CampaignRunReconciliation` model and `reconcile_company_data_task` |
+| Cross-source conflict resolution / reconciliation | **Implemented, not wired** | `CampaignRunReconciliation` model and `reconcile_company_data_task` exist (`app/workers/tasks.py:75`), but no trigger: not in beat, no API caller |
+| Stale-source Data Quality (DQ) alerts | Done | Runs daily via beat (`app/workers/tasks.py:60`), calls `monitor_stalled_data`, tested in `test_stale_source_dq.py`; alert latency up to 24h |
 
 ## Source Data Storage Design
 
@@ -57,9 +58,8 @@ Data from different sources (e.g., Meta spend + Binom tracker revenue) for the s
 
 The following requirements remain OPEN and must be implemented before full Stage 2 completion:
 
-- Credential rotation (safe update, re-encryption endpoint) - **Partial** (`PATCH` endpoint exists with validation and audit, but re-encryption of existing keys is missing)
-- Stale-source Data Quality (DQ) alerts - **Implemented, not wired** (logic in `app/services/data_quality.py` but no Celery beat task)
-- ECB FX rate auto-fetch - **Implemented, not wired** (logic in `app/services/fx.py:fetch_ecb_rates` but no Celery beat task)
+- Credential rotation (safe update, re-encryption endpoint) - **Partial** (`PATCH` endpoint exists with validation and audit, but re-encryption of existing keys is missing in `app/connectors/credentials.py`)
+- ECB FX rate auto-fetch - **Open (stub only)** (`app/services/fx.py:61-63` is just `pass`, no Celery beat task)
 - Expanded observability (structured logging, metrics) - **Open** (currently uses standard Python logging)
 - Production validation with real external API credentials:
   - **Google**: auth validated / schema pending.
@@ -75,9 +75,9 @@ The following requirements remain OPEN and must be implemented before full Stage
 
 ### Known gaps after PR-A
 - `settings` column is missing in `ConnectorConfig`, so Binom/Google settings (`base_url`, `customer_id`) and Meta `lookback_days` are not accessible to the scheduler.
-- **SECURITY:** Meta reads `settings["lookback_days"]` (and others like Binom read `settings["base_url"]`), so `settings` via API cannot be open without an allowlist (risk of SSRF / token leak).
+- **SECURITY:** Meta (and others) reads `settings.get("base_url")`. `settings` via API cannot be open without an allowlist, otherwise there is an SSRF risk / token leak via redirecting Bearer tokens to an arbitrary host.
 - Unmapped rows (without `ExternalCampaignMapping`) are silently skipped in upsert.
-- ECB FX rate auto-fetch is not wired (multi-currency sync without cached rate raises error).
+- ECB FX auto-fetch not implemented (`fetch_ecb_rates` is a stub); multi-currency sync raises ValueError when `fx_rates` has no rate within 7 days.
 
 ## Performance Metrics Updates (PR #25)
 - **clicks, impressions, conversions added** to `NormalizedRecord` and `CampaignRunStat`.
@@ -86,8 +86,8 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Stage 3 Analytics (ROI, CPM, forecasting) is **NOT** implemented yet (explicitly out of scope).
 
 ## Reconciliation Status (PR #26)
-- **Implemented**: `CampaignRunReconciliation` tracks `status` (reconciled, partial, conflict, no_data).
+- **Implemented, not wired**: `CampaignRunReconciliation` tracks `status` (reconciled, partial, conflict, no_data).
 - **Thresholds**: 1% relative difference threshold (`abs(a-b)/max(abs(a),abs(b)) > 0.01`) strictly using `Decimal` for spend, revenue, conversions, clicks, and impressions.
 - **Duplicates**: Multiple stats for the same source are deterministically reduced (`priority` -> `external_id asc` -> `stat id asc`).
 - **Currency**: Different currencies instantly flag a conflict.
-- **Trigger**: No automatic DB trigger; manually executed via `reconcile_company_data_task` background task.
+- **Trigger**: No API caller or beat schedule invokes `reconcile_company_data_task`.

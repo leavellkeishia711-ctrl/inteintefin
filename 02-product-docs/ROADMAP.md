@@ -32,23 +32,25 @@ This document outlines the phased delivery plan for FinanceIntel.
 - [x] Tenant isolation and persistence testing.
 - [x] Production Smoke Test.
 - [x] Shared rate-limit/retry/backoff policy (`with_retry`).
-- [x] Binom integration (implementation).
-- [x] Voluum integration (implementation).
-- [x] Affise integration (implementation).
-- [x] Meta Ads integration (implementation).
-- [x] Google Ads integration (implementation).
-- [x] TikTok Ads integration (implementation).
 - [x] `ad_accounts` mapping (Meta/Google/TikTok).
 - [x] `CampaignRunStat` soft delete.
-- [x] Cross-source conflict resolution / reconciliation.
+- [x] Stale-source DQ alert.
+
+**Implemented, pending wiring/validation:**
+- [ ] Binom integration (Implemented, not wired).
+- [ ] Voluum integration (Implemented, not wired).
+- [ ] Affise integration (Implemented, not wired).
+- [ ] Meta Ads integration (Mock-verified).
+- [ ] Google Ads integration (Mock-verified).
+- [ ] TikTok Ads integration (Mock-verified).
+- [ ] Cross-source conflict resolution / reconciliation (Implemented, not wired).
 
 **Open (Pending Implementation):**
 - [ ] Credential rotation endpoint (partial).
-- [ ] Stale-source DQ alert.
-- [ ] ECB FX rate auto-fetch.
+- [ ] ECB FX rate auto-fetch (stub only).
 - [ ] Expanded observability (structured logging, metrics).
 - [ ] Production validation with real API credentials.
-- [ ] Keitaro implementation.
+- [ ] Keitaro implementation (blocked/stub).
 
 ---
 
