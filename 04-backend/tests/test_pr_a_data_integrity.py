@@ -8,6 +8,7 @@ from unittest.mock import patch, AsyncMock
 from app.db.session import system_session, tenant_session
 from app.db.models.connectors import ConnectorConfig
 from app.db.models.campaigns import CampaignRunStat, CampaignRun, ExternalCampaignMapping
+from app.db.models.companies import Company
 from app.connectors.scheduler import sync_connector_instance
 from app.connectors.meta_ads import MetaAdsConnector
 from app.connectors.tiktok_ads import TikTokAdsConnector
@@ -69,16 +70,27 @@ async def test_tiktok_upsert_fx_signature(company_b_fixtures):
     with patch("app.connectors.tiktok_ads.resolve_fx_rate", autospec=True) as mock_fx:
         mock_fx.return_value = Decimal("1.10000000")
         async with tenant_session(comp_id) as db:
+            company = await db.scalar(select(Company).where(Company.id == uuid.UUID(comp_id)))
+            assert company is not None
+            assert company.base_currency
+            expected_base = company.base_currency
             await connector.upsert(db, [record])
             await db.commit()
-        
-        mock_fx.assert_awaited_once()
-        args = mock_fx.call_args.args
-        assert args[1:] == ("EUR", "USD", date(2023, 1, 1))
+            
+            mock_fx.assert_awaited_once()
+            args = mock_fx.call_args.args
+            assert args[0] is db
+            assert args[1:] == ("EUR", expected_base, date(2023, 1, 1))
 
     async with system_session() as db_session:
-        stats = (await db_session.execute(select(CampaignRunStat).where(CampaignRunStat.external_id == "tk123"))).scalars().all()
+        stats = (await db_session.execute(
+            select(CampaignRunStat).where(
+                CampaignRunStat.external_id == "tk123",
+                CampaignRunStat.company_id == uuid.UUID(comp_id)
+            )
+        )).scalars().all()
         assert len(stats) == 1
+        assert stats[0].fx_rate_to_base == Decimal("1.10000000")
 
 # 2. test_connectors_resolve_fx_rate_contract
 @pytest.mark.parametrize("platform, cls, curr, settings, secret", [
