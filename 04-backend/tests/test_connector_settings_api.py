@@ -168,16 +168,15 @@ async def test_connector_settings_audit(client_a, db):
     )
     assert res_patch.status_code == 200, res_patch.text
 
-    # Read AuditLog directly
+    import uuid
     stmt = select(AuditLog).where(
-        AuditLog.entity_id == c_id,
+        AuditLog.entity_id == uuid.UUID(c_id),
         AuditLog.action == "connector.settings_updated"
     ).order_by(AuditLog.created_at.desc())
     audit_res = await db.execute(stmt)
     log = audit_res.scalars().first()
 
     assert log is not None
-    assert "changed_settings_keys" in log.diff["new"]
-    assert log.diff["new"]["changed_settings_keys"] == ["lookback_days"]
-    assert "settings" not in log.diff["new"]
-    assert "settings" not in log.diff["old"] if log.diff.get("old") else True
+    assert "changed_settings_keys" in log.diff
+    assert log.diff["changed_settings_keys"]["new"] == ["lookback_days"]
+    assert "settings" not in log.diff
