@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field, StrictInt, ValidationError
+from typing import List, Literal, Optional
 from datetime import datetime, timezone
 import uuid
 import redis.asyncio as redis
@@ -21,15 +21,46 @@ router = APIRouter()
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
+class MetaSettings(BaseModel):
+    lookback_days: StrictInt = Field(default=7, ge=1, le=90)
+    class Config:
+        extra = "forbid"
+
+class GoogleAdsSettings(BaseModel):
+    access_mode: Literal["cloud_managed", "legacy"] = "cloud_managed"
+    class Config:
+        extra = "forbid"
+
+class TikTokSettings(BaseModel):
+    class Config:
+        extra = "forbid"
+
+def validate_connector_settings(connector_name: str, settings: dict) -> dict:
+    if settings == {}:
+        return {}
+    try:
+        if connector_name == "meta":
+            return MetaSettings(**settings).model_dump()
+        elif connector_name == "google_ads":
+            return GoogleAdsSettings(**settings).model_dump()
+        elif connector_name == "tiktok_ads":
+            return TikTokSettings(**settings).model_dump()
+        else:
+            raise HTTPException(status_code=422, detail="Settings not supported for this connector")
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
 class ConnectorCreate(BaseModel):
     connector_name: str
     secret: str
     sync_interval_minutes: int = 60
+    settings: Optional[dict] = Field(None)
 
 class ConnectorUpdate(BaseModel):
     secret: str | None = None
     sync_interval_minutes: int | None = None
     status: str | None = None
+    settings: Optional[dict] = Field(None)
 
 class ConnectorResponse(BaseModel):
     id: uuid.UUID
@@ -38,6 +69,7 @@ class ConnectorResponse(BaseModel):
     sync_interval_minutes: int
     last_attempted_sync: datetime | None
     last_successful_sync: datetime | None
+    # settings explicitly NOT included in response
 
     class Config:
         from_attributes = True
@@ -62,13 +94,18 @@ async def create_connector(
     res = await db.execute(stmt)
     if res.scalars().first():
         raise HTTPException(status_code=400, detail="Connector already exists")
+        
+    validated_settings = {}
+    if config_in.settings is not None:
+        validated_settings = validate_connector_settings(config_in.connector_name, config_in.settings)
 
     encrypted = encrypt_secret(config_in.secret)
     new_config = ConnectorConfig(
         company_id=user.company_id,
         connector_name=config_in.connector_name,
         encrypted_secret=encrypted,
-        sync_interval_minutes=config_in.sync_interval_minutes
+        sync_interval_minutes=config_in.sync_interval_minutes,
+        settings=validated_settings
     )
     db.add(new_config)
     await db.flush()
@@ -103,6 +140,17 @@ async def update_connector(
     if not config:
         raise HTTPException(status_code=404, detail="Connector not found")
         
+    validated_settings = config.settings
+    settings_changed = False
+    
+    if config_in.settings is not None:
+        if config_in.settings == {}:
+            validated_settings = {}
+            settings_changed = True
+        else:
+            validated_settings = validate_connector_settings(config.connector_name, config_in.settings)
+            settings_changed = True
+        
     if config_in.secret is not None:
         if validate:
             if config.connector_name not in CONNECTOR_NAMES:
@@ -113,7 +161,8 @@ async def update_connector(
             dummy_config = ConnectorConfig(
                 company_id=config.company_id,
                 connector_name=config.connector_name,
-                sync_interval_minutes=config.sync_interval_minutes
+                sync_interval_minutes=config.sync_interval_minutes,
+                settings=validated_settings
             )
             connector = connector_cls(dummy_config, config_in.secret)
             try:
@@ -141,6 +190,23 @@ async def update_connector(
             action="connector.credentials_rotated",
             old_state={},
             new_state={"connector_id": str(config.id), "connector_name": config.connector_name}
+        )
+
+    if settings_changed:
+        old_keys = set(config.settings.keys()) if config.settings else set()
+        new_keys = set(validated_settings.keys())
+        changed_keys = list(old_keys.symmetric_difference(new_keys) | {k for k in new_keys.intersection(old_keys) if config.settings[k] != validated_settings[k]})
+        
+        config.settings = validated_settings
+        
+        await record_user_audit(
+            session=db,
+            user=user,
+            entity_type="connector",
+            entity_id=config.id,
+            action="connector.settings_updated",
+            old_state={},
+            new_state={"connector_id": str(config.id), "connector_name": config.connector_name, "changed_settings_keys": changed_keys}
         )
 
     if config_in.sync_interval_minutes is not None:
