@@ -56,7 +56,7 @@ async def test_unauthorized_exception_no_response_body(mock_get, monkeypatch):
     connector = MetaAdsConnector(config, "secret")
 
     with pytest.raises(UnauthorizedError) as exc_info:
-        await connector.fetch_metrics()
+        await connector.fetch_metrics(date(2026, 9, 1), date(2026, 9, 1))
 
     msg = str(exc_info.value)
     assert "SUPER_SECRET" not in msg
@@ -81,7 +81,7 @@ async def test_connector_error_no_response_body(mock_get, monkeypatch):
     connector = MetaAdsConnector(config, "secret")
 
     with pytest.raises(ConnectorError) as exc_info:
-        await connector.fetch_metrics()
+        await connector.fetch_metrics(date(2026, 9, 1), date(2026, 9, 1))
 
     msg = str(exc_info.value)
     assert "LEAKED_CREDENTIAL" not in msg
@@ -249,7 +249,7 @@ def test_meta_normalize_with_date_works():
     """Meta Ads must normalize records WITH 'date_start' field correctly."""
     config = DummyConfig(uuid.uuid4(), connector_name="meta")
     connector = MetaAdsConnector(config, "secret")
-    raw = [{"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.00", "clicks": "1", "impressions": "1", "_currency": "USD"}]
+    raw = [{"campaign_id": "100", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "10.00", "clicks": "1", "impressions": "1", "_currency": "USD"}]
     normalized = connector.normalize(raw)
     assert len(normalized) == 1
     assert normalized[0].stat_date == date(2026, 9, 1)

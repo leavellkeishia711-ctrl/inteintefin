@@ -124,7 +124,7 @@ async def test_meta_nested_insights_paging(mock_get):
         
     mock_get.side_effect = get_side_effect
     
-    metrics = await connector.fetch_metrics()
+    metrics = await connector.fetch_metrics(datetime(2026, 9, 1, tzinfo=timezone.utc).date(), datetime(2026, 9, 1, tzinfo=timezone.utc).date())
     
     assert len(metrics) == 4
     ids = [m["campaign_id"] for m in metrics]
@@ -145,9 +145,9 @@ async def test_meta_normalization_with_action_values():
     connector = MetaAdsConnector(config, "secret_token")
     
     raw_data = [
-        {"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.50", "action_values": [{"action_type": "purchase", "value": "15.25"}], "_currency": "USD", "clicks": 1, "impressions": 10},
-        {"campaign_id": "101", "date_start": "2026-09-02", "spend": "5.0", "_currency": "USD", "clicks": 1, "impressions": 10},
-        {"campaign_id": "102", "date_start": "2026-09-03", "spend": "1.0", "action_values": [{"action_type": "omni_purchase", "value": "100.00"}, {"action_type": "link_click", "value": "0.50"}], "_currency": "USD", "clicks": 1, "impressions": 10},
+        {"campaign_id": "100", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "10.50", "action_values": [{"action_type": "purchase", "value": "15.25"}], "_currency": "USD", "clicks": 1, "impressions": 10},
+        {"campaign_id": "101", "date_start": "2026-09-02", "date_stop": "2026-09-02", "spend": "5.0", "_currency": "USD", "clicks": 1, "impressions": 10},
+        {"campaign_id": "102", "date_start": "2026-09-03", "date_stop": "2026-09-03", "spend": "1.0", "action_values": [{"action_type": "omni_purchase", "value": "100.00"}, {"action_type": "link_click", "value": "0.50"}], "_currency": "USD", "clicks": 1, "impressions": 10},
     ]
     
     normalized = connector.normalize(raw_data)
@@ -284,7 +284,7 @@ async def test_meta_tenant_isolation(company_b_fixtures):
         connector = MetaAdsConnector(config, "secret_token")
         
         raw_data = [
-            {"campaign_id": "500", "date_start": "2026-09-01", "spend": "99.00", "_currency": "USD", "clicks": 10, "impressions": 100}
+            {"campaign_id": "500", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "99.00", "_currency": "USD", "clicks": 10, "impressions": 100}
         ]
         normalized = connector.normalize(raw_data)
         
@@ -327,7 +327,7 @@ async def test_meta_upsert_idempotency(company_b_fixtures):
         await db_session.commit()
         
         raw_data = [
-            {"campaign_id": "200", "date_start": "2026-09-01", "spend": "50.00", "_currency": "USD", "clicks": 10, "impressions": 100}
+            {"campaign_id": "200", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "50.00", "_currency": "USD", "clicks": 10, "impressions": 100}
         ]
         
         normalized = connector.normalize(raw_data)
@@ -341,7 +341,7 @@ async def test_meta_upsert_idempotency(company_b_fixtures):
         assert stats[0].spend == Decimal("50.00")
         
         raw_data_update = [
-            {"campaign_id": "200", "date_start": "2026-09-01", "spend": "60.00", "_currency": "USD", "clicks": 10, "impressions": 100}
+            {"campaign_id": "200", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "60.00", "_currency": "USD", "clicks": 10, "impressions": 100}
         ]
         normalized_update = connector.normalize(raw_data_update)
         await connector.upsert(db_session, normalized_update)
@@ -371,7 +371,7 @@ async def test_meta_retry_429(mock_get, monkeypatch):
     monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
     
     with pytest.raises(RateLimitError):
-        await connector.fetch_metrics()
+        await connector.fetch_metrics(datetime(2026, 9, 1, tzinfo=timezone.utc).date(), datetime(2026, 9, 1, tzinfo=timezone.utc).date())
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.get")
@@ -384,7 +384,7 @@ async def test_meta_retry_5xx_success(mock_get, monkeypatch):
     
     resp_200 = MagicMock()
     resp_200.status_code = 200
-    resp_200.json.return_value = {"data": [{"insights": {"data": [{"campaign_id": "300", "date_start": "2026-09-01", "spend": "5.0", "_currency": "USD", "clicks": 10, "impressions": 100}]}}]}
+    resp_200.json.return_value = {"data": [{"insights": {"data": [{"campaign_id": "300", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "5.0", "_currency": "USD", "clicks": 10, "impressions": 100}]}}]}
     
     mock_get.side_effect = [
         httpx.HTTPStatusError("500", request=MagicMock(), response=resp_500),
@@ -393,7 +393,7 @@ async def test_meta_retry_5xx_success(mock_get, monkeypatch):
     
     monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
     
-    data = await connector.fetch_metrics()
+    data = await connector.fetch_metrics(datetime(2026, 9, 1, tzinfo=timezone.utc).date(), datetime(2026, 9, 1, tzinfo=timezone.utc).date())
     assert len(data) == 1
     assert data[0]["campaign_id"] == "300"
 
@@ -410,7 +410,7 @@ async def test_meta_unauthorized(mock_get, monkeypatch):
     monkeypatch.setattr("app.connectors.base.asyncio.sleep", AsyncMock())
     
     with pytest.raises(UnauthorizedError):
-        await connector.fetch_metrics()
+        await connector.fetch_metrics(datetime(2026, 9, 1, tzinfo=timezone.utc).date(), datetime(2026, 9, 1, tzinfo=timezone.utc).date())
 
 
 @pytest.mark.asyncio
@@ -542,7 +542,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         await db_session.commit()
         
         raw_data = [
-            {"campaign_id": "fx_camp_1", "date_start": "2026-09-01", "spend": "100.00", "_currency": "USD", "clicks": 10, "impressions": 100}
+            {"campaign_id": "fx_camp_1", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "100.00", "_currency": "USD", "clicks": 10, "impressions": 100}
         ]
         norm = connector.normalize(raw_data)
         await connector.upsert(db_session, norm)
@@ -555,7 +555,7 @@ async def test_meta_upsert_fx_rate_success_and_failure(company_b_fixtures):
         
         # 2. Failure FX rate test
         raw_data_2 = [
-            {"campaign_id": "fx_camp_2", "date_start": "2026-09-10", "spend": "50.00", "_currency": "USD", "clicks": 10, "impressions": 100}
+            {"campaign_id": "fx_camp_2", "date_start": "2026-09-10", "date_stop": "2026-09-10", "spend": "50.00", "_currency": "USD", "clicks": 10, "impressions": 100}
         ]
         norm_2 = connector.normalize(raw_data_2)
         with pytest.raises(ValueError):
@@ -631,7 +631,7 @@ async def test_meta_normalization_missing_currency_warning(caplog):
     connector = MetaAdsConnector(config, "secret_token")
     
     raw_data = [
-        {"campaign_id": "100", "date_start": "2026-09-01", "spend": "10.50", "clicks": 10, "impressions": 100}
+        {"campaign_id": "100", "date_start": "2026-09-01", "date_stop": "2026-09-01", "spend": "10.50", "clicks": 10, "impressions": 100}
     ]
     
     with caplog.at_level(logging.WARNING):
@@ -696,7 +696,7 @@ async def test_meta_fetch_metrics_nested_currency(mock_get):
         
     mock_get.side_effect = get_side_effect
     
-    metrics = await connector.fetch_metrics()
+    metrics = await connector.fetch_metrics(datetime(2026, 9, 1, tzinfo=timezone.utc).date(), datetime(2026, 9, 1, tzinfo=timezone.utc).date())
     
     assert len(metrics) == 2
     assert metrics[0]["campaign_id"] == "c1"

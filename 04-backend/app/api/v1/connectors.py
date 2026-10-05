@@ -12,7 +12,7 @@ import redis.asyncio as redis
 from app.core.deps import get_db, require_roles
 from app.db.models.connectors import ConnectorConfig
 from app.connectors.credentials import encrypt_secret
-from app.connectors.registry import CONNECTOR_NAMES, get_connector_class
+from app.connectors.registry import CONNECTOR_NAMES, NON_PRODUCTION_CONNECTORS, get_connector_class
 from app.connectors.base import UnauthorizedError
 from app.services.audit import record_user_audit
 from app.workers.tasks import manual_sync_connector_task
@@ -50,6 +50,9 @@ async def create_connector(
 ):
     if config_in.connector_name not in CONNECTOR_NAMES:
         raise HTTPException(status_code=422, detail=f"Unknown connector type. Allowed: {list(CONNECTOR_NAMES)}")
+
+    if config_in.connector_name in NON_PRODUCTION_CONNECTORS:
+        raise HTTPException(status_code=422, detail="Connector is not available yet")
 
     stmt = select(ConnectorConfig).where(
         ConnectorConfig.connector_name == config_in.connector_name,

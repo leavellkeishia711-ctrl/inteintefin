@@ -6,7 +6,7 @@ from sqlalchemy import select
 @pytest.mark.asyncio
 async def test_api_persistence_create(client_a):
     resp = await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro",
+        "connector_name": "meta",
         "secret": "my-secret-key-123",
         "sync_interval_minutes": 60
     })
@@ -28,13 +28,13 @@ async def test_api_persistence_create(client_a):
         res = await db.execute(stmt)
         config = res.scalars().first()
         assert config is not None
-        assert config.connector_name == "keitaro"
+        assert config.connector_name == "meta"
         assert config.sync_interval_minutes == 60
 
 @pytest.mark.asyncio
 async def test_api_persistence_patch_status(client_a):
     resp = await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro",
+        "connector_name": "meta",
         "secret": "my-secret",
         "sync_interval_minutes": 60
     })
@@ -64,7 +64,7 @@ async def test_api_persistence_patch_status(client_a):
 @pytest.mark.asyncio
 async def test_api_persistence_soft_delete(client_a):
     resp = await client_a.post("/api/v1/connectors/", json={
-        "connector_name": "keitaro",
+        "connector_name": "meta",
         "secret": "my-secret",
         "sync_interval_minutes": 60
     })
