@@ -24,7 +24,7 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
     
     # Check latest transaction
     result = await db.execute(
-        select(func.max(Transaction.created_at)).where(Transaction.company_id == company_id)
+        select(func.max(Transaction.created_at)).where(Transaction.company_id == company_id, Transaction.deleted_at.is_(None))
     )
     last_tx_date = result.scalar()
     

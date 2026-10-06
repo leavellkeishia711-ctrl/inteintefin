@@ -36,7 +36,10 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
         line_items_result = await db.execute(
             select(PayrollLineItem, User)
             .join(User, PayrollLineItem.user_id == User.id)
-            .where(PayrollLineItem.payroll_run_id == latest_run.id)
+            .where(
+                PayrollLineItem.payroll_run_id == latest_run.id,
+                PayrollLineItem.deleted_at.is_(None)
+            )
         )
         for item, user in line_items_result:
             employees.append(EmployeePayroll(
@@ -97,9 +100,12 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
     if run:
         if run.status != 'draft':
             return run
-        # Delete old line items
+        # Soft-delete old line items
+        from datetime import datetime, timezone
         await db.execute(
-            sa.delete(PayrollLineItem).where(PayrollLineItem.payroll_run_id == run.id)
+            sa.update(PayrollLineItem)
+            .where(PayrollLineItem.payroll_run_id == run.id)
+            .values(deleted_at=datetime.now(timezone.utc))
         )
     else:
         run = PayrollRun(

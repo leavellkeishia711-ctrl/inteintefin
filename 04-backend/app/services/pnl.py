@@ -48,7 +48,7 @@ async def calculate_pnl(
     query = sa.select(
         Transaction.category, 
         sa.func.sum(Transaction.amount * Transaction.fx_rate_to_base).label('total')
-    ).where(Transaction.company_id == company_id)
+    ).where(Transaction.company_id == company_id, Transaction.deleted_at.is_(None))
 
     if start_date:
         query = query.where(Transaction.occurred_on >= start_date)

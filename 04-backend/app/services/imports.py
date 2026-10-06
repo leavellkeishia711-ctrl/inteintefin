@@ -96,8 +96,10 @@ async def rollback_batch(session: AsyncSession, batch_id: UUID, user: UserCtx):
     result = await session.execute(stmt)
     txs = result.scalars().all()
     
+    from datetime import datetime, timezone
     for tx in txs:
-        await session.delete(tx)
+        if tx.deleted_at is None:
+            tx.deleted_at = datetime.now(timezone.utc)
         
     batch.status = "rolled_back"
     
