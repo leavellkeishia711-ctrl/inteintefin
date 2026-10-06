@@ -40,7 +40,7 @@ def upgrade() -> None:
     # Ensure RLS is active on the table (since it's CompanyScoped)
     op.execute("ALTER TABLE import_rows ENABLE ROW LEVEL SECURITY")
     op.execute("ALTER TABLE import_rows FORCE ROW LEVEL SECURITY")
-    op.execute("CREATE POLICY tenant_isolation_policy ON import_rows USING (company_id = current_setting('app.current_tenant', true)::uuid)")
+    op.execute("CREATE POLICY tenant_isolation ON import_rows FOR ALL TO app_user USING (company_id = nullif(current_setting('app.company_id', true), '')::uuid) WITH CHECK (company_id = nullif(current_setting('app.company_id', true), '')::uuid);")
 
 def downgrade() -> None:
     """Downgrade schema."""
