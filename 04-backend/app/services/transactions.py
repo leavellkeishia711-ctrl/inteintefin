@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Transaction, Company
@@ -58,8 +58,23 @@ class TransactionUpdate(BaseModel):
     description: str | None = None
     team_id: uuid.UUID | None = None
 
-async def update_transaction(db: AsyncSession, user: UserCtx, tx_id: str, data: TransactionUpdate, request_id: str | None = None, ip_address: str | None = None) -> Transaction:
-    tx = await db.get(Transaction, uuid.UUID(tx_id))
+async def get_active_transaction(db: AsyncSession, user: UserCtx, tx_id: str | uuid.UUID) -> Transaction | None:
+    """Return a non-deleted transaction of the current tenant, or None.
+
+    Soft-deleted rows (deleted_at IS NOT NULL) are treated as absent.
+    company_id comes from the JWT-derived UserCtx, in addition to RLS.
+    """
+    import sqlalchemy as sa
+    stmt = sa.select(Transaction).where(
+        Transaction.id == uuid.UUID(str(tx_id)),
+        Transaction.company_id == uuid.UUID(user.company_id),
+        Transaction.deleted_at.is_(None),
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first()
+
+async def update_transaction(db: AsyncSession, user: UserCtx, tx_id: str | uuid.UUID, data: TransactionUpdate, request_id: str | None = None, ip_address: str | None = None) -> Transaction:
+    tx = await get_active_transaction(db, user, tx_id)
     if not tx:
         raise ValueError("Transaction not found")
         
@@ -81,12 +96,14 @@ async def update_transaction(db: AsyncSession, user: UserCtx, tx_id: str, data: 
     )
     return tx
 
-async def delete_transaction(db: AsyncSession, user: UserCtx, tx_id: str, request_id: str | None = None, ip_address: str | None = None):
-    tx = await db.get(Transaction, uuid.UUID(tx_id))
+async def delete_transaction(db: AsyncSession, user: UserCtx, tx_id: str | uuid.UUID, request_id: str | None = None, ip_address: str | None = None):
+    from datetime import datetime, timezone
+    tx = await get_active_transaction(db, user, tx_id)
     if not tx:
         raise ValueError("Transaction not found")
-        
-    await db.delete(tx)
+
+    # SOFT DELETE invariant: financial rows are never physically removed.
+    tx.deleted_at = datetime.now(timezone.utc)
     await db.flush()
     await record_user_audit(
         session=db, user=user, entity_type="transaction", entity_id=tx.id, action="delete", 

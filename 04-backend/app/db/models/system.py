@@ -130,7 +130,7 @@ class PayrollRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         CheckConstraint("period_start <= period_end", name="check_payroll_run_dates"),
     )
 
-class PayrollLineItem(Base, TimestampMixin, CompanyScoped):
+class PayrollLineItem(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "payroll_line_items"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
