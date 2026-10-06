@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, ForeignKey, Integer, DateTime, UniqueConstraint, CheckConstraint, Index, text
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from app.db.session import Base
 from .base import TimestampMixin, CompanyScoped, SoftDeleteMixin
@@ -12,6 +13,7 @@ class ConnectorConfig(Base, TimestampMixin, CompanyScoped, SoftDeleteMixin):
     connector_name: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, default='active', nullable=False)
     encrypted_secret: Mapped[str] = mapped_column(String, nullable=False)
+    settings: Mapped[dict] = mapped_column(JSONB, server_default='{}', default=dict, nullable=False)
     sync_interval_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
     last_attempted_sync: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_successful_sync: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
