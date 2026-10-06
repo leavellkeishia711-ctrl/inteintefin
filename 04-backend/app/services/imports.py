@@ -32,8 +32,18 @@ async def commit_batch(session: AsyncSession, batch_id: UUID, user: UserCtx, col
     if not batch or str(batch.company_id) != user.company_id:
         raise ValueError("Batch not found")
         
+    if batch.status in ["completed", "completed_with_errors", "failed"]:
+        stmt = select(sa.func.count(Transaction.id)).where(Transaction.import_batch_id == batch_id)
+        imported = (await session.execute(stmt)).scalar() or 0
+        errors = batch.error_count or 0
+        duplicates = batch.row_count - imported - errors
+        return CommitResult(imported=imported, duplicates=duplicates, errors=errors)
+        
+    if batch.status == "rolled_back":
+        raise Conflict("Batch already rolled back")
+        
     if batch.status not in ["pending", "processing"]:
-        raise Conflict("Batch already committed or failed")
+        raise Conflict(f"Batch in invalid state: {batch.status}")
 
     batch.status = "processing"
     

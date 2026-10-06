@@ -3,6 +3,7 @@ import uuid
 import io
 from httpx import AsyncClient
 from sqlalchemy import select
+import sqlalchemy as sa
 from app.db.models.finance import ImportBatch, ImportRow, Transaction
 from app.db.session import system_session
 
@@ -61,12 +62,22 @@ async def test_csv_import_e2e(client_a: AsyncClient):
         assert len(txs) == 2
         
     # Check idempotent commit (re-commit)
-    # The API throws error if status is not pending or processing
+    # The API should return the exact same result summary without duplicating transactions
     commit_res_2 = await client_a.post(f"/api/v1/imports/{batch_id}/commit", json={
         "batch_id": batch_id,
         "column_mapping": mapping
     })
-    assert commit_res_2.status_code == 409
+    assert commit_res_2.status_code == 200, commit_res_2.text
+    c_data_2 = commit_res_2.json()
+    assert c_data_2["imported"] == c_data["imported"]
+    assert c_data_2["duplicates"] == c_data["duplicates"]
+    assert c_data_2["errors"] == c_data["errors"]
+    
+    async with system_session() as db_session:
+        stmt3 = select(sa.func.count(Transaction.id)).where(Transaction.import_batch_id == uuid.UUID(batch_id))
+        tx_count = (await db_session.execute(stmt3)).scalar()
+        assert tx_count == 2
+
     
     # 5. Rollback
     del_res = await client_a.delete(f"/api/v1/imports/{batch_id}")
@@ -82,3 +93,10 @@ async def test_csv_import_e2e(client_a: AsyncClient):
         txs2 = result2.scalars().all()
         for tx in txs2:
             assert tx.deleted_at is not None
+
+    # Check commit on rolled_back batch
+    commit_res_3 = await client_a.post(f"/api/v1/imports/{batch_id}/commit", json={
+        "batch_id": batch_id,
+        "column_mapping": mapping
+    })
+    assert commit_res_3.status_code == 409

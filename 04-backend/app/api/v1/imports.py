@@ -85,7 +85,7 @@ async def upload_csv(
         "preview": rows[:20]
     }
 
-from app.services.imports import commit_batch, CommitResult
+from app.services.imports import commit_batch, rollback_batch, CommitResult, Conflict
 
 @router.post("/{batch_id}/commit", response_model=CommitResult)
 async def commit_import_batch(
@@ -101,16 +101,18 @@ async def commit_import_batch(
     if req.batch_id != batch_id:
         raise HTTPException(status_code=400, detail="Batch ID mismatch")
 
-    from app.services.imports import commit_batch
-    
-    result = await commit_batch(
-        session=db,
-        batch_id=batch_id,
-        user=current_user,
-        column_mapping=req.column_mapping
-    )
-    
-    return result
+    try:
+        result = await commit_batch(
+            session=db,
+            batch_id=batch_id,
+            user=current_user,
+            column_mapping=req.column_mapping
+        )
+        return result
+    except Conflict as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{batch_id}", response_model=dict)
 async def delete_import_batch(
@@ -118,16 +120,14 @@ async def delete_import_batch(
     db: AsyncSession = Depends(get_tenant_session),
     current_user: UserCtx = Depends(get_current_user)
 ):
-    from app.services.imports import rollback_batch
-    
     try:
         return await rollback_batch(
             session=db,
             batch_id=batch_id,
             user=current_user
         )
+    except Conflict as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
