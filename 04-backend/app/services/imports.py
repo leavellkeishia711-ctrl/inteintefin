@@ -67,7 +67,7 @@ async def commit_batch(session: AsyncSession, batch_id: UUID, user: UserCtx) -> 
             created_by=user.user_id,
         ).on_conflict_do_nothing(
             index_elements=["company_id", "source", "external_id"],
-            index_where=sa.text("external_id IS NOT NULL")
+            index_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL")
         ).returning(Transaction.id)
 
         tx_result = await session.execute(stmt_insert)
