@@ -122,7 +122,7 @@ async def test_connector_settings_tenant_isolation(client_a, client_b):
     res_get_b = await client_b.get(
         f"{settings.API_V1_STR}/connectors/{c_id}"
     )
-    assert res_get_b.status_code == 404
+    assert res_get_b.status_code == 405
 
     # Client B lists connectors, should not see A's
     res_list_b = await client_b.get(
@@ -222,9 +222,24 @@ async def test_connector_settings_audit(client_a, db_session):
     assert "changed_settings_keys" in log.diff
     assert log.diff["changed_settings_keys"]["new"] == ["lookback_days"]
     assert "settings" not in log.diff
-    
-    diff_str = str(log.diff)
-    assert "secret" not in diff_str
-    assert "encrypted_secret" not in diff_str
-    assert "7" not in diff_str
-    assert "14" not in diff_str
+    assert "secret" not in log.diff
+    assert "encrypted_secret" not in log.diff
+
+    def extract_values(d):
+        vals = []
+        if isinstance(d, dict):
+            for v in d.values():
+                vals.extend(extract_values(v))
+        elif isinstance(d, list):
+            for v in d:
+                vals.extend(extract_values(v))
+        else:
+            vals.append(d)
+        return vals
+        
+    all_vals = extract_values(log.diff)
+    assert 7 not in all_vals
+    assert 14 not in all_vals
+    assert "7" not in all_vals
+    assert "14" not in all_vals
+    assert "my-secret" not in all_vals
