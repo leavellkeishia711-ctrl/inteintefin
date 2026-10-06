@@ -39,6 +39,7 @@ def upgrade() -> None:
     op.create_index('ix_import_rows_batch_id', 'import_rows', ['batch_id'], unique=False)
     # Ensure RLS is active on the table (since it's CompanyScoped)
     op.execute("ALTER TABLE import_rows ENABLE ROW LEVEL SECURITY")
+    op.execute("ALTER TABLE import_rows FORCE ROW LEVEL SECURITY")
     op.execute("CREATE POLICY tenant_isolation_policy ON import_rows USING (company_id = current_setting('app.current_tenant', true)::uuid)")
 
 def downgrade() -> None:

@@ -4,9 +4,10 @@ import io
 from httpx import AsyncClient
 from sqlalchemy import select
 from app.db.models.finance import ImportBatch, ImportRow, Transaction
+from app.db.session import system_session
 
 @pytest.mark.asyncio
-async def test_csv_import_e2e(client_a: AsyncClient, db_session):
+async def test_csv_import_e2e(client_a: AsyncClient):
     # 1. Upload CSV
     csv_content = """Date,Amount,Currency,Category,Type,Description,Ref
 2026-01-01,100.50,USD,ad_spend,expense,FB Ads,REF-001
@@ -22,10 +23,11 @@ async def test_csv_import_e2e(client_a: AsyncClient, db_session):
     assert data["row_count"] == 3
     assert "Date" in data["columns"]
     
-    # 2. Check DB state
-    batch = await db_session.get(ImportBatch, uuid.UUID(batch_id))
-    assert batch.status == "pending"
-    
+    async with system_session() as db_session:
+        # 2. Check DB state
+        batch = await db_session.get(ImportBatch, uuid.UUID(batch_id))
+        assert batch.status == "pending"
+        
     # 3. Commit batch
     mapping = {
         "occurred_on": "Date",
@@ -47,18 +49,19 @@ async def test_csv_import_e2e(client_a: AsyncClient, db_session):
     assert c_data["duplicates"] == 0
     assert c_data["errors"] == 1
     
-    # 4. Check DB again
-    await db_session.refresh(batch)
-    assert batch.status == "completed_with_errors"
-    assert batch.error_count == 1
-    
-    stmt = select(Transaction).where(Transaction.import_batch_id == batch.id)
-    result = await db_session.execute(stmt)
-    txs = result.scalars().all()
-    assert len(txs) == 2
-    
+    async with system_session() as db_session:
+        # 4. Check DB again
+        batch = await db_session.get(ImportBatch, uuid.UUID(batch_id))
+        assert batch.status == "completed_with_errors"
+        assert batch.error_count == 1
+        
+        stmt = select(Transaction).where(Transaction.import_batch_id == batch.id)
+        result = await db_session.execute(stmt)
+        txs = result.scalars().all()
+        assert len(txs) == 2
+        
     # Check idempotent commit (re-commit)
-    # Wait, the API throws error if status is not pending or processing
+    # The API throws error if status is not pending or processing
     commit_res_2 = await client_a.post(f"/api/v1/imports/{batch_id}/commit", json={
         "batch_id": batch_id,
         "column_mapping": mapping
@@ -69,12 +72,13 @@ async def test_csv_import_e2e(client_a: AsyncClient, db_session):
     del_res = await client_a.delete(f"/api/v1/imports/{batch_id}")
     assert del_res.status_code == 200
     
-    await db_session.refresh(batch)
-    assert batch.status == "rolled_back"
-    
-    # Ensure they are soft deleted
-    stmt2 = select(Transaction).where(Transaction.import_batch_id == batch.id)
-    result2 = await db_session.execute(stmt2)
-    txs2 = result2.scalars().all()
-    for tx in txs2:
-        assert tx.deleted_at is not None
+    async with system_session() as db_session:
+        batch = await db_session.get(ImportBatch, uuid.UUID(batch_id))
+        assert batch.status == "rolled_back"
+        
+        # Ensure they are soft deleted
+        stmt2 = select(Transaction).where(Transaction.import_batch_id == batch.id)
+        result2 = await db_session.execute(stmt2)
+        txs2 = result2.scalars().all()
+        for tx in txs2:
+            assert tx.deleted_at is not None
