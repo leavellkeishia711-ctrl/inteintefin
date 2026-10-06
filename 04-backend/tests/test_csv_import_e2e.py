@@ -11,7 +11,7 @@ async def test_csv_import_e2e(client_a: AsyncClient):
     # 1. Upload CSV
     csv_content = """Date,Amount,Currency,Category,Type,Description,Ref
 2026-01-01,100.50,USD,ad_spend,expense,FB Ads,REF-001
-2026-01-02,200.00,EUR,salary,expense,Dev,REF-002
+2026-01-02,200.00,USD,salary,expense,Dev,REF-002
 2026-01-03,invalid,USD,ad_spend,expense,Bad row,REF-003
 """
     files = {'file': ('test.csv', io.BytesIO(csv_content.encode('utf-8')), 'text/csv')}
