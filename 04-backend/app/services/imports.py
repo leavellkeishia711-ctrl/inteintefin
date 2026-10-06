@@ -67,7 +67,7 @@ async def commit_batch(session: AsyncSession, batch_id: UUID, user: UserCtx) -> 
             created_by=user.user_id,
         ).on_conflict_do_nothing(
             index_elements=["company_id", "source", "external_id"],
-            index_where=sa.text("external_id IS NOT NULL")
+            index_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL")
         ).returning(Transaction.id)
 
         tx_result = await session.execute(stmt_insert)
@@ -96,8 +96,10 @@ async def rollback_batch(session: AsyncSession, batch_id: UUID, user: UserCtx):
     result = await session.execute(stmt)
     txs = result.scalars().all()
     
+    from datetime import datetime, timezone
     for tx in txs:
-        await session.delete(tx)
+        if tx.deleted_at is None:
+            tx.deleted_at = datetime.now(timezone.utc)
         
     batch.status = "rolled_back"
     

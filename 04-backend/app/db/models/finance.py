@@ -65,7 +65,7 @@ class Transaction(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
             "uix_company_source_external", 
             "company_id", "source", "external_id", 
             unique=True, 
-            postgresql_where=sa.text("external_id IS NOT NULL")
+            postgresql_where=sa.text("external_id IS NOT NULL AND deleted_at IS NULL")
         ),
         Index("ix_transactions_company_occurred_on", "company_id", "occurred_on"),
         Index("ix_transactions_company_type_category", "company_id", "type", "category"),
