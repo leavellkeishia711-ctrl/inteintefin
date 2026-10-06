@@ -2,7 +2,7 @@ from app.db.session import Base
 from .base import TimestampMixin, SoftDeleteMixin, CompanyScoped
 from .companies import Company
 from .users import User, Team, TelegramLinkToken, Invite
-from .finance import FxRate, ImportBatch, Transaction
+from .finance import FxRate, ImportBatch, ImportRow, Transaction
 from .campaigns import AdAccount, Campaign, CampaignRun, CampaignRunStat, Consumable
 from .system import (
     AffiliateNetwork, PartnerPayout, Alert, AuditLog, CompensationPlan,
@@ -23,6 +23,7 @@ __all__ = [
     "Invite",
     "FxRate",
     "ImportBatch",
+    "ImportRow",
     "Transaction",
     "AdAccount",
     "Campaign",

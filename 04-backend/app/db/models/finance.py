@@ -43,6 +43,24 @@ class ImportBatch(Base, TimestampMixin, CompanyScoped):
         Index("ix_import_batches_company_created", "company_id", "created_at"),
     )
 
+class ImportRow(Base, TimestampMixin, CompanyScoped):
+    __tablename__ = "import_rows"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)
+    batch_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_batches.id"), nullable=False)
+    row_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    row_data: Mapped[dict] = mapped_column(sa.JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
+    error_message: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'valid', 'imported', 'error')",
+            name="check_import_row_status"
+        ),
+        Index("ix_import_rows_batch_id", "batch_id"),
+    )
+
 class Transaction(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "transactions"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

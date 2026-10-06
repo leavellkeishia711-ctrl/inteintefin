@@ -3,13 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 from app.core.deps import get_tenant_session
 from app.core.deps import get_current_user
-from app.db.models import User, ImportBatch
+from app.db.models import User, ImportBatch, ImportRow
 import csv
 import io
 import uuid
 from pydantic import BaseModel
 
 router = APIRouter()
+
+MAX_CSV_ROWS = 5000
 
 class CommitImportRequest(BaseModel):
     batch_id: uuid.UUID
@@ -34,13 +36,23 @@ async def upload_csv(
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
         
     content = await file.read()
-    text = content.decode('utf-8')
+    # Limit max size before parsing (e.g., 5MB)
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Max 5MB allowed.")
+        
+    try:
+        text = content.decode('utf-8')
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded")
+        
     reader = csv.DictReader(io.StringIO(text))
     
     if not reader.fieldnames:
         raise HTTPException(status_code=400, detail="CSV is empty or missing headers")
         
     rows = list(reader)
+    if len(rows) > MAX_CSV_ROWS:
+        raise HTTPException(status_code=400, detail=f"Exceeded max rows limit of {MAX_CSV_ROWS}")
     
     batch = ImportBatch(
         company_id=current_user.company_id,
@@ -50,10 +62,22 @@ async def upload_csv(
         created_by=current_user.id
     )
     db.add(batch)
-    await db.commit()
+    await db.flush()  # to get batch.id
     
-    # Store rows in S3/MinIO later, as per design
-
+    # Store rows in ImportRow
+    import_rows = []
+    for idx, row in enumerate(rows):
+        import_rows.append(
+            ImportRow(
+                company_id=current_user.company_id,
+                batch_id=batch.id,
+                row_index=idx,
+                row_data=row,
+                status="pending"
+            )
+        )
+    db.add_all(import_rows)
+    await db.commit()
     
     return {
         "batch_id": str(batch.id),
@@ -83,7 +107,8 @@ async def commit_import_batch(
     result = await commit_batch(
         session=db,
         batch_id=batch_id,
-        user=current_user
+        user=current_user,
+        column_mapping=req.column_mapping
     )
     
     return result
