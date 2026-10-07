@@ -19,9 +19,17 @@ async def create_consumable(
     db: AsyncSession = Depends(get_tenant_session),
     user: UserCtx = Depends(get_current_user)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.finance import Transaction
+
+    company_uuid = uuid.UUID(user.company_id)
+    await validate_fk(db, AdAccount, consumable_in.ad_account_id, company_uuid, "ad_account_id")
+    await validate_fk(db, Transaction, consumable_in.transaction_id, company_uuid, "transaction_id")
+
     consumable = Consumable(
         **consumable_in.model_dump(),
-        company_id=uuid.UUID(user.company_id)
+        company_id=company_uuid
     )
     db.add(consumable)
     await db.flush()
@@ -59,6 +67,16 @@ async def update_consumable(
     db: AsyncSession = Depends(get_tenant_session),
     user: UserCtx = Depends(get_current_user)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.finance import Transaction
+
+    company_uuid = uuid.UUID(user.company_id)
+    if consumable_in.ad_account_id is not None:
+        await validate_fk(db, AdAccount, consumable_in.ad_account_id, company_uuid, "ad_account_id")
+    if consumable_in.transaction_id is not None:
+        await validate_fk(db, Transaction, consumable_in.transaction_id, company_uuid, "transaction_id")
+
     consumable = await db.get(Consumable, consumable_id)
     if not consumable:
         raise HTTPException(status_code=404, detail="Consumable not found")

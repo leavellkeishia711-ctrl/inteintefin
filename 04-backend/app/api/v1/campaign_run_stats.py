@@ -17,6 +17,12 @@ async def upsert_campaign_run_stat(
     db: AsyncSession = Depends(get_tenant_session),
     company_id: str = Depends(get_current_user_company_id)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.campaigns import CampaignRun
+    
+    company_uuid = uuid.UUID(company_id)
+    await validate_fk(db, CampaignRun, stat_in.campaign_run_id, company_uuid, "campaign_run_id")
+
     from app.services.campaigns import upsert_campaign_run_stat as svc_upsert
     
     try:

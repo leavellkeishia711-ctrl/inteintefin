@@ -118,7 +118,7 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
             period_end=period_end,
             status='draft',
             total_amount=Decimal('0'),
-            currency='USD' # Assuming base currency
+            currency=base_currency
         )
         db.add(run)
         await db.flush()
@@ -133,6 +133,7 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
     users = users_result.scalars().all()
     
     total_run_amount = Decimal('0')
+    from app.core.money import quantize_money
     
     for user in users:
         # Get active comp plan for the period (simplified: getting most recent one valid in this period)
@@ -140,7 +141,8 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
             select(CompensationPlan).where(
                 CompensationPlan.user_id == user.id,
                 CompensationPlan.effective_from <= period_end,
-                sa.or_(CompensationPlan.effective_to.is_(None), CompensationPlan.effective_to >= period_start)
+                sa.or_(CompensationPlan.effective_to.is_(None), CompensationPlan.effective_to >= period_start),
+                CompensationPlan.deleted_at.is_(None)
             ).order_by(CompensationPlan.effective_from.desc()).limit(1)
         )
         comp = comp_result.scalars().first()
@@ -190,22 +192,24 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
                 bonus_amount = revenue * (comp.bonus_percent / Decimal('100'))
         
         # Round correctly
-        base_salary = base_salary.quantize(Decimal("0.0001"))
-        bonus_amount = bonus_amount.quantize(Decimal("0.0001"))
-        total_amount = base_salary + bonus_amount
+        base_salary = quantize_money(base_salary)
+        bonus_amount = quantize_money(bonus_amount)
+        total_amount = quantize_money(base_salary + bonus_amount)
         total_run_amount += total_amount
         
         item = PayrollLineItem(
+            company_id=company_id,
             payroll_run_id=run.id,
             user_id=user.id,
             base_amount=base_salary,
             bonus_amount=bonus_amount,
             total_amount=total_amount,
-            currency='USD',
+            currency=base_currency,
+            fx_rate_to_base=Decimal('1.00000000'),
             status='draft'
         )
         db.add(item)
         
-    run.total_amount = total_run_amount
+    run.total_amount = quantize_money(total_run_amount)
     await db.flush()
     return run

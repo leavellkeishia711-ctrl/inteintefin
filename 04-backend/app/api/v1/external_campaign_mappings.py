@@ -33,6 +33,12 @@ async def create_mapping(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_roles("owner"))
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.campaigns import CampaignRun
+    
+    company_uuid = uuid.UUID(user.company_id) if isinstance(user.company_id, str) else user.company_id
+    await validate_fk(db, CampaignRun, mapping_in.campaign_run_id, company_uuid, "campaign_run_id")
+
     new_mapping = ExternalCampaignMapping(
         company_id=user.company_id,
         platform=mapping_in.platform,
