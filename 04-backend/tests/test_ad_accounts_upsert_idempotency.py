@@ -42,7 +42,7 @@ async def test_upsert_idempotency(company_b_fixtures):
         conn = DummyConnector(config)
         
         acc = NormalizedAdAccount(
-            platform="tiktok",
+            platform="tiktok_ads",
             external_account_id="12345",
             name="TT Acc",
             status="active"
@@ -52,7 +52,7 @@ async def test_upsert_idempotency(company_b_fixtures):
         await conn.upsert_ad_accounts(db_session, [acc])
         await db_session.commit()
         
-        res = await db_session.execute(select(AdAccount).where(AdAccount.platform == "tiktok"))
+        res = await db_session.execute(select(AdAccount).where(AdAccount.platform == "tiktok_ads"))
         accounts = res.scalars().all()
         assert len(accounts) == 1
         
@@ -61,7 +61,7 @@ async def test_upsert_idempotency(company_b_fixtures):
         await conn.upsert_ad_accounts(db_session, [acc])
         await db_session.commit()
         
-        res = await db_session.execute(select(AdAccount).where(AdAccount.platform == "tiktok"))
+        res = await db_session.execute(select(AdAccount).where(AdAccount.platform == "tiktok_ads"))
         accounts = res.scalars().all()
         assert len(accounts) == 1
         assert accounts[0].status == "suspended"
