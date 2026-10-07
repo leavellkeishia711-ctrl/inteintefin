@@ -174,6 +174,12 @@ async def test_sync_ecb_empty_valid_rates(mock_stream):
 @patch("app.services.fx_ecb.httpx.AsyncClient.stream")
 async def test_sync_ecb_rates_idempotent_and_conflict(mock_stream):
     import contextlib
+    
+    # Cleanup before test
+    async with system_session() as session:
+        async with session.begin():
+            await session.execute(delete(FxRate).where(FxRate.rate_date.in_([date(2026, 10, 6), date(2026, 10, 5)])))
+            
     @contextlib.asynccontextmanager
     async def mock_stream_response(*args, **kwargs):
         class MockRes:
@@ -201,7 +207,7 @@ async def test_sync_ecb_rates_idempotent_and_conflict(mock_stream):
     # Add conflicting row manually
     async with system_session() as session:
         async with session.begin():
-            await session.execute(delete(FxRate))
+            await session.execute(delete(FxRate).where(FxRate.rate_date.in_([date(2026, 10, 6), date(2026, 10, 5)])))
             session.add(FxRate(
                 rate_date=date(2026, 10, 6),
                 from_currency="EUR",
