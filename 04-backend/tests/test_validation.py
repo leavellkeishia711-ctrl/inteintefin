@@ -31,7 +31,7 @@ async def test_validate_fk_logic():
         run_c1 = CampaignRun(id=uuid.uuid4(), company_id=company_id_1, campaign_id=campaign_c1.id, buyer_id=user_c1.id, started_at=datetime.utcnow(), status='active')
         db_session.add(run_c1)
         
-        tx_c1 = Transaction(id=uuid.uuid4(), company_id=company_id_1, type='expense', category='ad_spend', amount=Decimal('100'), currency='USD', fx_rate_to_base=Decimal('1'), occurred_on=date.today(), created_by=user_c1.id)
+        tx_c1 = Transaction(id=uuid.uuid4(), company_id=company_id_1, type='expense', category='ad_spend', amount=Decimal('100'), currency='USD', fx_rate_to_base=Decimal('1'), occurred_on=date.today(), created_by=user_c1.id, source='manual')
         db_session.add(tx_c1)
 
         team_c2 = Team(id=uuid.uuid4(), company_id=company_id_2, name='T2')

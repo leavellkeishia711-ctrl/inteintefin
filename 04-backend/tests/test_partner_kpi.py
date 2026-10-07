@@ -14,7 +14,7 @@ async def test_partner_kpi_fx_conversion():
         c1 = Company(id=company_id, name='Test Company KPI', base_currency='USD')
         db_session.add(c1)
         
-        net1 = AffiliateNetwork(id=uuid.uuid4(), company_id=company_id, name='Net1')
+        net1 = AffiliateNetwork(id=uuid.uuid4(), company_id=company_id, name='Net1', payment_terms='net30', payout_model='cpa')
         db_session.add(net1)
         await db_session.flush()
         
@@ -25,6 +25,7 @@ async def test_partner_kpi_fx_conversion():
             network_id=net1.id,
             campaign_id=uuid.uuid4(),
             buyer_id=uuid.uuid4(),
+            amount=Decimal('100'),
             expected_amount=Decimal('100'),
             actual_amount=Decimal('100'),
             scrubbed_amount=Decimal('0'),
@@ -40,6 +41,7 @@ async def test_partner_kpi_fx_conversion():
             network_id=net1.id,
             campaign_id=uuid.uuid4(),
             buyer_id=uuid.uuid4(),
+            amount=Decimal('100'),
             expected_amount=Decimal('100'),
             actual_amount=Decimal('100'),
             scrubbed_amount=Decimal('0'),
