@@ -100,6 +100,19 @@ def reconcile_company_data_task(company_id: str):
 
     asyncio.run(_reconcile_impl())
 
+@celery_app.task(name='fetch_ecb_rates_task')
+def fetch_ecb_rates_task():
+    async def _run():
+        from app.services.fx_ecb import sync_ecb_rates
+        async with system_session() as session:
+            async with session.begin():
+                try:
+                    await sync_ecb_rates(session)
+                except Exception as e:
+                    logger.error(f"ECB FX Sync DB Error: {type(e).__name__} - {e}")
+                    
+    asyncio.run(_run())
+
 # Setup Celery Beat
 celery_app.conf.beat_schedule = {
     "check-alerts-every-hour": {
@@ -113,5 +126,9 @@ celery_app.conf.beat_schedule = {
     'sync-connectors-every-hour': {
         'task': 'sync_connectors_task',
         'schedule': 3600.0,
+    },
+    'fetch-ecb-rates-daily': {
+        'task': 'fetch_ecb_rates_task',
+        'schedule': crontab(hour=16, minute=30),
     }
 }

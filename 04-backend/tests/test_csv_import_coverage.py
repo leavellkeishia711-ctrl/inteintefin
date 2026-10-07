@@ -103,3 +103,50 @@ async def test_csv_import_tenant_isolation(client_a: AsyncClient, client_b: Asyn
     del_res = await client_b.delete(f"/api/v1/imports/{batch_id}")
     assert del_res.status_code == 400, del_res.text
     assert "not found" in del_res.text.lower()
+
+@pytest.mark.asyncio
+async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
+    import io
+    async with system_session() as db_session:
+        db_session.add(FxRate(
+            rate_date=date(2026, 1, 1),
+            from_currency="EUR",
+            to_currency="USD",
+            rate=Decimal("1.1000"),
+            source="ecb"
+        ))
+        db_session.add(FxRate(
+            rate_date=date(2026, 1, 1),
+            from_currency="EUR",
+            to_currency="GBP",
+            rate=Decimal("0.8500"),
+            source="ecb"
+        ))
+        await db_session.commit()
+        
+    csv_content = """Date,Amount,Currency,Category,Type,Description,Ref\n2026-01-01,100.00,GBP,ad_spend,expense,FB Ads,REF-TRIA-01\n"""
+    files = {'file': ('test.csv', io.BytesIO(csv_content.encode('utf-8')), 'text/csv')}
+    res_upload = await client_a.post("/api/v1/imports/upload", files=files)
+    assert res_upload.status_code == 200, res_upload.text
+    batch_id = res_upload.json()["id"]
+
+    mapping = {
+        "Date": "transaction_date",
+        "Amount": "amount",
+        "Currency": "currency",
+        "Category": "category",
+        "Type": "transaction_type",
+        "Description": "description",
+        "Ref": "external_id"
+    }
+
+    res_commit = await client_a.post(f"/api/v1/imports/{batch_id}/commit", json={"batch_id": batch_id, "column_mapping": mapping})
+    assert res_commit.status_code == 200, res_commit.text
+
+    async with system_session() as db_session:
+        stmt = select(Transaction).where(Transaction.external_id == "REF-TRIA-01")
+        txn = (await db_session.execute(stmt)).scalars().first()
+        assert txn is not None
+        assert txn.currency == "GBP"
+        assert txn.amount == Decimal("100.0000")
+        assert txn.amount_base == Decimal("129.4118")
