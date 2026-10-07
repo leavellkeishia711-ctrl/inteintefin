@@ -192,14 +192,16 @@ async def test_sync_ecb_rates_idempotent_and_conflict(mock_stream):
     mock_stream.side_effect = mock_stream_response
     
     async with system_session() as session:
-        out1 = await sync_ecb_rates(session)
+        async with session.begin():
+            out1 = await sync_ecb_rates(session)
         assert out1["inserted"] == 5
         assert out1["conflicts"] == 0
         assert out1["unchanged"] == 0
             
     # Second run: Idempotent (all unchanged)
     async with system_session() as session:
-        out2 = await sync_ecb_rates(session)
+        async with session.begin():
+            out2 = await sync_ecb_rates(session)
         assert out2["inserted"] == 0
         assert out2["conflicts"] == 0
         assert out2["unchanged"] == 5
@@ -218,7 +220,8 @@ async def test_sync_ecb_rates_idempotent_and_conflict(mock_stream):
             
     # Run sync again, now 1 conflict, 4 inserted
     async with system_session() as session:
-        out3 = await sync_ecb_rates(session)
+        async with session.begin():
+            out3 = await sync_ecb_rates(session)
         assert out3["inserted"] == 4
         assert out3["conflicts"] == 1
         assert out3["unchanged"] == 0
