@@ -34,7 +34,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Affise integration | **Implemented, not wired** | `04-backend/app/connectors/affise.py` exists but missing from `CONNECTOR_NAMES` |
 | Meta Ads integration (hardened) | **Mock-verified** | `04-backend/app/connectors/meta_ads.py:24` (settings config missing for base_url and lookback_days, live-validation pending) |
 | TikTok Ads integration | **Mock-verified** | `04-backend/app/connectors/tiktok_ads.py` (live credential validation pending) |
-| Google Ads integration | **Mock-verified** | `04-backend/app/connectors/google_ads.py` (live auth validated on test account, schema validation on prod data pending) |
+| Google Ads integration | **Done** | `04-backend/app/connectors/google_ads.py` (live auth and schema validated on prod data) |
 | Ad accounts mapping (Meta, Google, TikTok) | Done | `fetch_ad_accounts()`/`normalize_ad_accounts()` in connectors; mapped in `test_*_fetch_ad_accounts`; persistence via `upsert_ad_accounts()` covered by `test_ad_accounts_upsert_idempotency.py` |
 | Persistence tests | Done | `pytest tests/test_connectors_persistence.py` |
 | Tenant isolation tests | Done | `test_meta_tenant_isolation`, `test_binom_tenant_isolation` |
@@ -62,7 +62,7 @@ The following requirements remain OPEN and must be implemented before full Stage
 - ECB FX rate auto-fetch - **Open (stub only)** (`app/services/fx.py:61-63` is just `pass`, no Celery beat task)
 - Expanded observability (structured logging, metrics) - **Open** (currently uses standard Python logging)
 - Production validation with real external API credentials:
-  - **Google**: auth validated / schema pending.
+  - **Google**: **Done** (auth and schema validated on prod data).
   - **TikTok**: pending.
   - **Meta**: pending.
   - **Binom**: pending.
