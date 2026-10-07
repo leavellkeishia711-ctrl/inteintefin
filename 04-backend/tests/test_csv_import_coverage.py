@@ -109,7 +109,7 @@ async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
     import io
     async with system_session() as db_session:
         async with db_session.begin():
-            await db_session.execute(delete(FxRate).where(FxRate.source == "ecb"))
+            await db_session.execute(delete(FxRate).where(FxRate.source == "ecb", FxRate.rate_date == date(2026, 1, 1)))
             db_session.add(FxRate(
                 rate_date=date(2026, 1, 1),
             from_currency="EUR",
@@ -152,3 +152,7 @@ async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
         assert txn.currency == "GBP"
         assert txn.amount == Decimal("100.0000")
         assert txn.amount_base == Decimal("129.4118")
+
+    async with system_session() as db_session:
+        async with db_session.begin():
+            await db_session.execute(delete(FxRate).where(FxRate.source == "ecb", FxRate.rate_date == date(2026, 1, 1)))
