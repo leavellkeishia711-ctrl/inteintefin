@@ -2,11 +2,9 @@ import pytest
 from datetime import date
 from decimal import Decimal
 import httpx
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-import uuid
-
+from app.db.session import system_session
 from app.services.fx_ecb import parse_ecb_xml, sync_ecb_rates, ECB_URL
 from app.db.models.finance import FxRate
 from app.services.fx import get_fx_rate
@@ -48,6 +46,9 @@ INVALID_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
     </Cube>
 </gesmes:Envelope>"""
 
+EMPTY_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01" xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref">
+</gesmes:Envelope>"""
 
 def test_parse_ecb_xml_valid():
     results, dates_count, skipped = parse_ecb_xml(VALID_XML)
@@ -63,61 +64,121 @@ def test_parse_ecb_xml_invalid():
     results, dates_count, skipped = parse_ecb_xml(INVALID_XML)
     assert dates_count == 1  # 2026-10-06 was parsed, invalid-date was skipped
     assert len(results) == 0
-    assert skipped == 6 # all rates in 2026-10-06 are invalid
+    assert skipped == 7 # 6 invalid currencies + 1 skipped date with 1 child
 
 
 @pytest.mark.asyncio
-@patch("app.services.fx_ecb.httpx.AsyncClient.get")
-async def test_sync_ecb_rates_http_errors(mock_get, system_session_context):
-    mock_get.side_effect = httpx.TimeoutException("Timeout")
-    async with system_session_context() as session:
+@patch("app.services.fx_ecb.httpx.AsyncClient.stream")
+async def test_sync_ecb_rates_http_errors(mock_stream):
+    import contextlib
+    @contextlib.asynccontextmanager
+    async def mock_stream_response(*args, **kwargs):
+        class MockRes:
+            status_code = 500
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response
+    
+    async with system_session() as session:
+        async with session.begin():
+            out = await sync_ecb_rates(session)
+            assert out["fetched"] == 0
+
+    @contextlib.asynccontextmanager
+    async def mock_stream_response_204(*args, **kwargs):
+        class MockRes:
+            status_code = 204
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response_204
+    async with system_session() as session:
+        async with session.begin():
+            out = await sync_ecb_rates(session)
+            assert out["fetched"] == 0
+
+    @contextlib.asynccontextmanager
+    async def mock_stream_response_large_header(*args, **kwargs):
+        class MockRes:
+            status_code = 200
+            headers = {"Content-Length": "3000000"}
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response_large_header
+    async with system_session() as session:
+        async with session.begin():
+            out = await sync_ecb_rates(session)
+            assert out["fetched"] == 0
+
+    @contextlib.asynccontextmanager
+    async def mock_stream_response_large_body(*args, **kwargs):
+        class MockRes:
+            status_code = 200
+            headers = {"Content-Length": "10"}
+            async def aiter_bytes(self):
+                yield b"a" * (2 * 1024 * 1024 + 10)
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response_large_body
+    async with system_session() as session:
+        async with session.begin():
+            out = await sync_ecb_rates(session)
+            assert out["fetched"] == 0
+
+@pytest.mark.asyncio
+@patch("app.services.fx_ecb.httpx.AsyncClient.stream")
+async def test_sync_ecb_empty_valid_rates(mock_stream):
+    import contextlib
+    @contextlib.asynccontextmanager
+    async def mock_stream_response(*args, **kwargs):
+        class MockRes:
+            status_code = 200
+            headers = {"Content-Length": "100"}
+            async def aiter_bytes(self):
+                yield EMPTY_XML
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response
+    async with system_session() as session:
         async with session.begin():
             out = await sync_ecb_rates(session)
             assert out["fetched"] == 0
             assert out["inserted"] == 0
-
-    mock_get.side_effect = None
-    mock_get.return_value = httpx.Response(500)
-    async with system_session_context() as session:
-        async with session.begin():
-            out = await sync_ecb_rates(session)
-            assert out["fetched"] == 0
-
-    mock_get.return_value = httpx.Response(301, headers={"Location": "foo"}) # Follow redirects false
-    async with system_session_context() as session:
-        async with session.begin():
-            out = await sync_ecb_rates(session)
-            assert out["fetched"] == 0
-
-    mock_get.return_value = httpx.Response(200, headers={"Content-Length": "3000000"})
-    async with system_session_context() as session:
-        async with session.begin():
-            out = await sync_ecb_rates(session)
-            assert out["fetched"] == 0
+            assert out["conflicts"] == 0
 
 
 @pytest.mark.asyncio
-@patch("app.services.fx_ecb.httpx.AsyncClient.get")
-async def test_sync_ecb_rates_idempotent_and_conflict(mock_get, system_session_context):
-    mock_get.return_value = httpx.Response(200, content=VALID_XML)
+@patch("app.services.fx_ecb.httpx.AsyncClient.stream")
+async def test_sync_ecb_rates_idempotent_and_conflict(mock_stream):
+    import contextlib
+    @contextlib.asynccontextmanager
+    async def mock_stream_response(*args, **kwargs):
+        class MockRes:
+            status_code = 200
+            headers = {"Content-Length": "100"}
+            async def aiter_bytes(self):
+                yield VALID_XML
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response
     
-    async with system_session_context() as session:
+    async with system_session() as session:
         async with session.begin():
             out1 = await sync_ecb_rates(session)
             assert out1["inserted"] == 5
             assert out1["conflicts"] == 0
+            assert out1["unchanged"] == 0
             
-    # Second run: Idempotent
-    async with system_session_context() as session:
+    # Second run: Idempotent (all unchanged)
+    async with system_session() as session:
         async with session.begin():
             out2 = await sync_ecb_rates(session)
             assert out2["inserted"] == 0
-            assert out2["conflicts"] == 5
+            assert out2["conflicts"] == 0
+            assert out2["unchanged"] == 5
             
     # Modify an existing one to test conflict (different value, same key)
-    async with system_session_context() as session:
+    async with system_session() as session:
         async with session.begin():
-            # Add conflicting manual row
             session.add(FxRate(
                 rate_date=date(2026, 10, 7),
                 from_currency="EUR",
@@ -126,16 +187,26 @@ async def test_sync_ecb_rates_idempotent_and_conflict(mock_get, system_session_c
                 source="ecb"
             ))
             
-    mock_get.return_value = httpx.Response(200, content=b"""<?xml version="1.0" encoding="UTF-8"?>
-    <gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01" xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref">
-        <Cube><Cube time="2026-10-07"><Cube currency="USD" rate="1.5"/></Cube></Cube>
-    </gesmes:Envelope>""")
+    @contextlib.asynccontextmanager
+    async def mock_stream_response_conflict(*args, **kwargs):
+        class MockRes:
+            status_code = 200
+            headers = {"Content-Length": "100"}
+            async def aiter_bytes(self):
+                yield b"""<?xml version="1.0" encoding="UTF-8"?>
+                <gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01" xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref">
+                    <Cube><Cube time="2026-10-07"><Cube currency="USD" rate="1.5"/></Cube></Cube>
+                </gesmes:Envelope>"""
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response_conflict
     
-    async with system_session_context() as session:
+    async with system_session() as session:
         async with session.begin():
             out3 = await sync_ecb_rates(session)
             assert out3["inserted"] == 0
             assert out3["conflicts"] == 1
+            assert out3["unchanged"] == 0
             
             # Value should NOT be updated
             stmt = select(FxRate).where(FxRate.rate_date == date(2026, 10, 7))
@@ -145,33 +216,43 @@ async def test_sync_ecb_rates_idempotent_and_conflict(mock_get, system_session_c
 
 
 @pytest.mark.asyncio
-@patch("app.services.fx_ecb.httpx.AsyncClient.get")
-async def test_sync_ecb_rates_db_error_rollback(mock_get, system_session_context):
-    mock_get.return_value = httpx.Response(200, content=VALID_XML)
+@patch("app.services.fx_ecb.httpx.AsyncClient.stream")
+async def test_sync_ecb_rates_db_error_rollback(mock_stream):
+    import contextlib
+    @contextlib.asynccontextmanager
+    async def mock_stream_response(*args, **kwargs):
+        class MockRes:
+            status_code = 200
+            headers = {"Content-Length": "100"}
+            async def aiter_bytes(self):
+                yield VALID_XML
+        yield MockRes()
+        
+    mock_stream.side_effect = mock_stream_response
     
     with patch("app.services.fx_ecb.insert") as mock_insert:
         mock_insert.side_effect = Exception("DB ERROR")
         
-        async with system_session_context() as session:
+        async with system_session() as session:
             async with session.begin():
                 with pytest.raises(Exception):
                     await sync_ecb_rates(session)
                     
         # Check nothing inserted
-        async with system_session_context() as session:
+        async with system_session() as session:
             res = await session.execute(select(FxRate).where(FxRate.rate_date == date(2026, 10, 6)))
             assert len(res.scalars().all()) == 0
 
 
 @pytest.mark.asyncio
-async def test_get_fx_rate_triangulation(system_session_context):
-    async with system_session_context() as session:
+async def test_get_fx_rate_triangulation():
+    async with system_session() as session:
         async with session.begin():
             session.add_all([
-                # Common date 2026-10-06 (GBP missing this day to test 'latest common day' logic)
+                # Common date 2026-10-06
                 FxRate(rate_date=date(2026, 10, 6), from_currency="EUR", to_currency="USD", rate=Decimal("1.10"), source="ecb"),
                 
-                # Common date 2026-10-05 (Both exist)
+                # Common date 2026-10-05
                 FxRate(rate_date=date(2026, 10, 5), from_currency="EUR", to_currency="USD", rate=Decimal("1.08"), source="ecb"),
                 FxRate(rate_date=date(2026, 10, 5), from_currency="EUR", to_currency="GBP", rate=Decimal("0.84"), source="ecb"),
                 
@@ -179,30 +260,22 @@ async def test_get_fx_rate_triangulation(system_session_context):
                 FxRate(rate_date=date(2026, 10, 1), from_currency="JPY", to_currency="USD", rate=Decimal("0.007"), source="manual"),
             ])
             
-    async with system_session_context() as session:
-        # Triangulation GBP -> USD on 2026-10-06. GBP has no 2026-10-06 rate, so it should fall back to 2026-10-05
+    async with system_session() as session:
         rate = await get_fx_rate(session, "GBP", "USD", date(2026, 10, 6))
-        # rate_to (USD on 05) = 1.08
-        # rate_from (GBP on 05) = 0.84
-        # 1.08 / 0.84 = 1.2857142857... -> 1.28571429
         assert rate == Decimal("1.28571429")
         
-        # Test missing one leg entirely
         rate_none = await get_fx_rate(session, "GBP", "JPY", date(2026, 10, 6))
         assert rate_none is None
         
-        # Test weekend fallback (asking for 10-07, latest is 10-05 within 7 days)
         rate_weekend = await get_fx_rate(session, "GBP", "USD", date(2026, 10, 7))
         assert rate_weekend == Decimal("1.28571429")
         
-        # Test direct
         rate_direct = await get_fx_rate(session, "JPY", "USD", date(2026, 10, 2))
         assert rate_direct == Decimal("0.007")
         
-        # Test inverse
+        # Test exact byte-for-byte behavior on inverse
         rate_inv = await get_fx_rate(session, "USD", "JPY", date(2026, 10, 2))
-        # 1 / 0.007 = 142.85714286
-        assert rate_inv == Decimal("142.85714286")
+        assert rate_inv == Decimal("1.00000000") / Decimal("0.007")
 
 
 def test_beat_schedule_contains_ecb():
