@@ -60,7 +60,7 @@ async def test_pnl_returns_string(auth_client: AsyncClient):
         tx = Transaction(
             company_id=auth_client.company_id,
             type="income",
-            category="sales",
+            category="payout_incoming",
             amount=Decimal("1234.56"),
             currency="USD",
             fx_rate_to_base=Decimal("1.0"),
