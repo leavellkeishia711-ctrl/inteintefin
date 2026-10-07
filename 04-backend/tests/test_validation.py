@@ -23,7 +23,7 @@ async def test_validate_fk_logic():
         
         team_c1 = Team(id=uuid.uuid4(), company_id=company_id_1, name='T1')
         ad_acc_c1 = AdAccount(id=uuid.uuid4(), company_id=company_id_1, platform='fb', external_account_id='FB1', status='active')
-        campaign_c1 = Campaign(id=uuid.uuid4(), company_id=company_id_1, name='Camp1')
+        campaign_c1 = Campaign(id=uuid.uuid4(), company_id=company_id_1)
         user_c1 = User(id=uuid.uuid4(), company_id=company_id_1, email=f'{uuid.uuid4()}@a.com', password_hash='hash', name='U1', role='owner')
         db_session.add_all([team_c1, ad_acc_c1, campaign_c1, user_c1])
         await db_session.flush()
