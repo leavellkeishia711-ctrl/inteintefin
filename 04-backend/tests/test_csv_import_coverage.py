@@ -17,7 +17,8 @@ async def test_csv_import_fx_rate(client_a: AsyncClient):
             rate_date=date(2026, 1, 2),
             from_currency="EUR",
             to_currency="USD",
-            rate=Decimal("1.1000")
+            rate=Decimal("1.1000"),
+            source="manual"
         )
         db_session.add(fx)
         await db_session.commit()
