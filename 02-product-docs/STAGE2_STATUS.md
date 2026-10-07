@@ -59,7 +59,7 @@ Data from different sources (e.g., Meta spend + Binom tracker revenue) for the s
 The following requirements remain OPEN and must be implemented before full Stage 2 completion:
 
 - Credential rotation (safe update, re-encryption endpoint) - **Partial** (`PATCH` endpoint exists with validation and audit, but re-encryption of existing keys is missing in `app/connectors/credentials.py`)
-- ECB FX rate auto-fetch - **Open (stub only)** (`app/services/fx.py:61-63` is just `pass`, no Celery beat task)
+- ECB FX rate auto-fetch - **Implemented, not wired to Prod** (Celery beat automated, triangulation via EUR implemented, policy without overwrites. Awaiting live prod check).
 - Expanded observability (structured logging, metrics) - **Open** (currently uses standard Python logging)
 - Production validation with real external API credentials:
   - **Google**: **Done** (auth and schema validated on prod data).
@@ -77,7 +77,6 @@ The following requirements remain OPEN and must be implemented before full Stage
 - `settings` column is missing in `ConnectorConfig`, so Binom/Google settings (`base_url`, `customer_id`) and Meta `lookback_days` are not accessible to the scheduler.
 - **SECURITY / SSRF Risk:** Currently, users cannot set a custom `base_url` because `settings` is missing from `ConnectorConfig` and the API schema. However, `MetaAdsConnector` code already calls `settings.get("base_url")`. Once `settings` is exposed via the API, allowing arbitrary `base_url` without an allowlist/strict validation will introduce an SSRF and token leak vulnerability (sending the Bearer token to a malicious host). Note: configuring `lookback_days` via `settings` does not pose an SSRF risk.
 - Unmapped rows (without `ExternalCampaignMapping`) are silently skipped in upsert.
-- ECB FX auto-fetch not implemented (`fetch_ecb_rates` is a stub); multi-currency sync raises ValueError when `fx_rates` has no rate within 7 days.
 
 ## Performance Metrics Updates (PR #25)
 - **clicks, impressions, conversions added** to `NormalizedRecord` and `CampaignRunStat`.
