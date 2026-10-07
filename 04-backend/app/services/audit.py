@@ -63,6 +63,13 @@ async def record_user_audit(
     company_id_val = uuid.UUID(user.company_id) if isinstance(user.company_id, str) else user.company_id
     user_id_val = uuid.UUID(user.user_id) if isinstance(user.user_id, str) else user.user_id
 
+    req_uuid = None
+    if request_id:
+        try:
+            req_uuid = uuid.UUID(request_id)
+        except ValueError:
+            pass
+
     log = AuditLog(
         company_id=company_id_val,
         actor_type='user',
@@ -72,7 +79,7 @@ async def record_user_audit(
         entity_id=entity_id,
         action=action,
         diff=diff,
-        request_id=uuid.UUID(request_id) if request_id else None,
+        request_id=req_uuid,
         ip_address=ip_address
     )
     session.add(log)

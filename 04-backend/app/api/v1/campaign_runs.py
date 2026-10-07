@@ -18,9 +18,19 @@ async def create_campaign_run(
     db: AsyncSession = Depends(get_tenant_session),
     user: UserCtx = Depends(get_current_user)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.campaigns import Campaign
+    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.system import User as UserModel
+
+    company_uuid = uuid.UUID(user.company_id)
+    await validate_fk(db, Campaign, run_in.campaign_id, company_uuid, "campaign_id")
+    await validate_fk(db, AdAccount, run_in.ad_account_id, company_uuid, "ad_account_id")
+    await validate_fk(db, UserModel, run_in.buyer_id, company_uuid, "buyer_id")
+
     run = CampaignRun(
         **run_in.model_dump(),
-        company_id=uuid.UUID(user.company_id)
+        company_id=company_uuid
     )
     db.add(run)
     await db.flush()
@@ -37,7 +47,7 @@ async def list_campaign_runs(
     db: AsyncSession = Depends(get_tenant_session),
     company_id: str = Depends(get_current_user_company_id)
 ):
-    result = await db.execute(select(CampaignRun))
+    result = await db.execute(select(CampaignRun).where(CampaignRun.deleted_at.is_(None)))
     return result.scalars().all()
 
 @router.get("/{run_id}", response_model=CampaignRunOut)
@@ -59,6 +69,19 @@ async def update_campaign_run(
     db: AsyncSession = Depends(get_tenant_session),
     user: UserCtx = Depends(get_current_user)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.campaigns import Campaign
+    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.system import User as UserModel
+
+    company_uuid = uuid.UUID(user.company_id)
+    if run_in.campaign_id is not None:
+        await validate_fk(db, Campaign, run_in.campaign_id, company_uuid, "campaign_id")
+    if run_in.ad_account_id is not None:
+        await validate_fk(db, AdAccount, run_in.ad_account_id, company_uuid, "ad_account_id")
+    if run_in.buyer_id is not None:
+        await validate_fk(db, UserModel, run_in.buyer_id, company_uuid, "buyer_id")
+
     run = await db.get(CampaignRun, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="CampaignRun not found")
@@ -108,4 +131,6 @@ async def upsert_campaign_run_stat(
         return upserted_stat
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to upsert CampaignRunStat: {str(e)}")
+        import logging
+        logging.error(f"Failed to upsert CampaignRunStat: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -36,7 +36,9 @@ async def upsert_campaign_run_stat(
         return upserted_stat
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to upsert CampaignRunStat: {str(e)}")
+        import logging
+        logging.error(f"Failed to upsert CampaignRunStat: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/", response_model=List[CampaignRunStatOut])
 async def list_campaign_run_stats(

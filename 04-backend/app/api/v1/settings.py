@@ -1,7 +1,7 @@
-﻿from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.api.deps import get_tenant_db
+from app.core.deps import get_tenant_session, get_current_user_company_id
 from app.db.models import Company
 from pydantic import BaseModel
 import uuid
@@ -15,8 +15,11 @@ class SettingsResponse(BaseModel):
     integrations: list[dict]
 
 @router.get("/", response_model=SettingsResponse)
-async def get_settings(db: AsyncSession = Depends(get_tenant_db)):
-    company_id = uuid.UUID(db.info.get("company_id"))
+async def get_settings(
+    db: AsyncSession = Depends(get_tenant_session),
+    company_id_str: str = Depends(get_current_user_company_id)
+):
+    company_id = uuid.UUID(company_id_str)
     
     company = await db.get(Company, company_id)
     if not company:

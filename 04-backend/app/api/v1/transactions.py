@@ -18,6 +18,11 @@ async def create_tx(
     db: AsyncSession = Depends(get_tenant_session),
     user: UserCtx = Depends(get_current_user)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.system import Team
+    company_uuid = uuid.UUID(user.company_id)
+    await validate_fk(db, Team, data.team_id, company_uuid, "team_id")
+
     tx = await create_transaction(
         db, user, data,
         request_id=request.headers.get("x-request-id"),
@@ -90,6 +95,12 @@ async def update_tx(
     db: AsyncSession = Depends(get_tenant_session),
     user: UserCtx = Depends(get_current_user)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.system import Team
+    company_uuid = uuid.UUID(user.company_id)
+    if data.team_id is not None:
+        await validate_fk(db, Team, data.team_id, company_uuid, "team_id")
+
     try:
         tx = await update_transaction(
             db, user, id, data,

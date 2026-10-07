@@ -130,6 +130,13 @@ class PayrollRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
         CheckConstraint("period_start <= period_end", name="check_payroll_run_dates"),
     )
 
+    items = sa.orm.relationship(
+        "PayrollLineItem", 
+        back_populates="run", 
+        cascade="all, delete-orphan",
+        primaryjoin="and_(PayrollRun.id==PayrollLineItem.payroll_run_id, PayrollLineItem.deleted_at.is_(None))"
+    )
+
 class PayrollLineItem(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     __tablename__ = "payroll_line_items"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -142,6 +149,8 @@ class PayrollLineItem(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     fx_rate_to_base: Mapped[Decimal] = mapped_column(Numeric(20, 8, asdecimal=True), nullable=False)
     status: Mapped[str] = mapped_column(String, default='draft', nullable=False)
+
+    run = sa.orm.relationship("PayrollRun", back_populates="items")
 
     __table_args__ = (
         CheckConstraint("status IN ('draft', 'approved', 'paid', 'held')", name="check_payroll_line_item_status"),

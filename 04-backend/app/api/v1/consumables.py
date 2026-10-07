@@ -37,7 +37,7 @@ async def list_consumables(
     db: AsyncSession = Depends(get_tenant_session),
     company_id: str = Depends(get_current_user_company_id)
 ):
-    result = await db.execute(select(Consumable))
+    result = await db.execute(select(Consumable).where(Consumable.deleted_at.is_(None)))
     return result.scalars().all()
 
 @router.get("/{consumable_id}", response_model=ConsumableOut)

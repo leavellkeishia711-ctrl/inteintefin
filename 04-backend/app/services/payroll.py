@@ -8,7 +8,7 @@ from app.schemas.payroll import PayrollResponse, EmployeePayroll
 async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> PayrollResponse:
     # Get active employees
     users_result = await db.execute(
-        select(User).where(User.company_id == company_id)
+        select(User).where(User.company_id == company_id, User.deleted_at.is_(None))
     )
     users = users_result.scalars().all()
     active_employees = len(users)
@@ -21,7 +21,7 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
     # Get latest payroll run
     latest_run_result = await db.execute(
         select(PayrollRun)
-        .where(PayrollRun.company_id == company_id)
+        .where(PayrollRun.company_id == company_id, PayrollRun.deleted_at.is_(None))
         .order_by(PayrollRun.period_end.desc())
         .limit(1)
     )
@@ -38,7 +38,8 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
             .join(User, PayrollLineItem.user_id == User.id)
             .where(
                 PayrollLineItem.payroll_run_id == latest_run.id,
-                PayrollLineItem.deleted_at.is_(None)
+                PayrollLineItem.deleted_at.is_(None),
+                User.deleted_at.is_(None)
             )
         )
         for item, user in line_items_result:
@@ -57,7 +58,7 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
         from app.db.models.system import CompensationPlan
         for user in users:
             comp_result = await db.execute(
-                select(CompensationPlan).where(CompensationPlan.user_id == user.id)
+                select(CompensationPlan).where(CompensationPlan.user_id == user.id, CompensationPlan.deleted_at.is_(None))
                 .order_by(CompensationPlan.effective_from.desc()).limit(1)
             )
             comp = comp_result.scalars().first()
@@ -87,6 +88,9 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
     from app.db.models.system import CompensationPlan
     from app.db.models.campaigns import CampaignRunStat, CampaignRun
     
+    company = (await db.execute(select(Company).where(Company.id == company_id))).scalars().first()
+    base_currency = company.base_currency if company else 'USD'
+
     # 1. Check if run exists
     existing = await db.execute(
         select(PayrollRun).where(
