@@ -2,7 +2,7 @@ import pytest
 import uuid
 import io
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, delete
 import sqlalchemy as sa
 from app.db.models.finance import ImportBatch, ImportRow, Transaction, FxRate
 from app.db.session import system_session
@@ -108,8 +108,10 @@ async def test_csv_import_tenant_isolation(client_a: AsyncClient, client_b: Asyn
 async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
     import io
     async with system_session() as db_session:
-        db_session.add(FxRate(
-            rate_date=date(2026, 1, 1),
+        async with db_session.begin():
+            await db_session.execute(delete(FxRate).where(FxRate.source == "ecb"))
+            db_session.add(FxRate(
+                rate_date=date(2026, 1, 1),
             from_currency="EUR",
             to_currency="USD",
             rate=Decimal("1.1000"),
@@ -128,7 +130,7 @@ async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
     files = {'file': ('test.csv', io.BytesIO(csv_content.encode('utf-8')), 'text/csv')}
     res_upload = await client_a.post("/api/v1/imports/upload", files=files)
     assert res_upload.status_code == 200, res_upload.text
-    batch_id = res_upload.json()["id"]
+    batch_id = res_upload.json()["batch_id"]
 
     mapping = {
         "Date": "transaction_date",
