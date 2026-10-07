@@ -46,7 +46,7 @@ async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: st
     rate_inv = result_inv.scalars().first()
     
     if rate_inv and rate_inv.rate != Decimal("0"):
-        return (Decimal("1") / rate_inv.rate).quantize(Decimal("1.00000000"), rounding=ROUND_HALF_UP)
+        return Decimal("1.00000000") / rate_inv.rate
         
     if from_currency != "EUR" and to_currency != "EUR":
         stmt_tri = (
