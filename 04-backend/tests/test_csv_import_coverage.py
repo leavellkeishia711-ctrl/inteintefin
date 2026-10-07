@@ -13,15 +13,16 @@ from decimal import Decimal
 async def test_csv_import_fx_rate(client_a: AsyncClient):
     # Setup FX rate
     async with system_session() as db_session:
-        fx = FxRate(
-            rate_date=date(2026, 1, 2),
-            from_currency="EUR",
-            to_currency="USD",
-            rate=Decimal("1.1000"),
-            source="manual"
-        )
-        db_session.add(fx)
-        await db_session.commit()
+        async with db_session.begin():
+            await db_session.execute(delete(FxRate).where(FxRate.source == "manual", FxRate.rate_date == date(2026, 1, 2)))
+            fx = FxRate(
+                rate_date=date(2026, 1, 2),
+                from_currency="EUR",
+                to_currency="USD",
+                rate=Decimal("1.1000"),
+                source="manual"
+            )
+            db_session.add(fx)
         
     csv_content = """Date,Amount,Currency,Category,Type,Description,Ref
 2026-01-02,200.00,EUR,salary,expense,Dev,REF-EUR
@@ -55,6 +56,10 @@ async def test_csv_import_fx_rate(client_a: AsyncClient):
         tx = (await db_session.execute(stmt)).scalar_one()
         assert tx.currency == "EUR"
         assert tx.fx_rate_to_base == Decimal("1.1000")
+
+    async with system_session() as db_session:
+        async with db_session.begin():
+            await db_session.execute(delete(FxRate).where(FxRate.source == "manual", FxRate.rate_date == date(2026, 1, 2)))
 
 @pytest.mark.asyncio
 async def test_csv_import_limits(client_a: AsyncClient):
@@ -112,19 +117,18 @@ async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
             await db_session.execute(delete(FxRate).where(FxRate.source == "ecb", FxRate.rate_date == date(2026, 1, 1)))
             db_session.add(FxRate(
                 rate_date=date(2026, 1, 1),
-            from_currency="EUR",
-            to_currency="USD",
-            rate=Decimal("1.1000"),
-            source="ecb"
-        ))
-        db_session.add(FxRate(
-            rate_date=date(2026, 1, 1),
-            from_currency="EUR",
-            to_currency="GBP",
-            rate=Decimal("0.8500"),
-            source="ecb"
-        ))
-        await db_session.commit()
+                from_currency="EUR",
+                to_currency="USD",
+                rate=Decimal("1.1000"),
+                source="ecb"
+            ))
+            db_session.add(FxRate(
+                rate_date=date(2026, 1, 1),
+                from_currency="EUR",
+                to_currency="GBP",
+                rate=Decimal("0.8500"),
+                source="ecb"
+            ))
         
     csv_content = """Date,Amount,Currency,Category,Type,Description,Ref\n2026-01-01,100.00,GBP,ad_spend,expense,FB Ads,REF-TRIA-01\n"""
     files = {'file': ('test.csv', io.BytesIO(csv_content.encode('utf-8')), 'text/csv')}
