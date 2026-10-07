@@ -64,7 +64,7 @@ async def test_fk_insert_commits_cleanly(seed_companies):
     async with AsyncSession(tenant_engine) as db:
         async with db.begin():
             await db.execute(text("SELECT set_config('app.company_id', :ca, true)"), {"ca": company_a})
-            await db.execute(text("INSERT INTO ad_accounts (id, company_id, platform, status) VALUES (:acc, :ca, 'facebook', 'active')"), {"acc": new_acc_id, "ca": company_a})
+            await db.execute(text("INSERT INTO ad_accounts (id, company_id, platform, status) VALUES (:acc, :ca, 'meta', 'active')"), {"acc": new_acc_id, "ca": company_a})
             
     async with AsyncSession(tenant_engine) as db:
         async with db.begin():
