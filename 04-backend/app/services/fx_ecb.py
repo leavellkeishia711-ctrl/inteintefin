@@ -67,7 +67,7 @@ def parse_ecb_xml(xml_content: bytes) -> tuple[List[Dict[str, Any]], int, int]:
 async def fetch_ecb_xml() -> bytes:
     async def _do_fetch():
         async with httpx.AsyncClient() as client:
-            async with client.stream("GET", ECB_URL, timeout=10.0, follow_redirects=False) as res:
+            async with client.stream("GET", ECB_URL, timeout=10, follow_redirects=False) as res:
                 if res.status_code != 200:
                     raise ValueError(f"HTTP error: expected 200, got {res.status_code}")
                 
