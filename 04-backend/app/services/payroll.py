@@ -118,7 +118,8 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
             period_end=period_end,
             status='draft',
             total_amount=Decimal('0'),
-            currency=base_currency
+            currency=base_currency,
+            fx_rate_to_base=Decimal('1.00000000')
         )
         db.add(run)
         await db.flush()
