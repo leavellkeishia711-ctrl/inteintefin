@@ -157,7 +157,7 @@ async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
         assert txn is not None
         assert txn.currency == "GBP"
         assert txn.amount == Decimal("100.0000")
-        assert txn.amount_base == Decimal("129.4118")
+        assert txn.fx_rate_to_base == Decimal("1.29411765") # from 1.1000 / 0.8500
 
     async with system_session() as db_session:
         async with db_session.begin():
