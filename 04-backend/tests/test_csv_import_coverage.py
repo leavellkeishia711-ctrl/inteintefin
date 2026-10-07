@@ -137,17 +137,19 @@ async def test_csv_import_fx_rate_triangulation(client_a: AsyncClient):
     batch_id = res_upload.json()["batch_id"]
 
     mapping = {
-        "Date": "transaction_date",
-        "Amount": "amount",
-        "Currency": "currency",
-        "Category": "category",
-        "Type": "transaction_type",
-        "Description": "description",
-        "Ref": "external_id"
+        "occurred_on": "Date",
+        "amount": "Amount",
+        "currency": "Currency",
+        "category": "Category",
+        "type": "Type",
+        "description": "Description",
+        "external_id": "Ref"
     }
 
     res_commit = await client_a.post(f"/api/v1/imports/{batch_id}/commit", json={"batch_id": batch_id, "column_mapping": mapping})
     assert res_commit.status_code == 200, res_commit.text
+    assert res_commit.json()["imported"] == 1
+    assert res_commit.json()["errors"] == 0
 
     async with system_session() as db_session:
         stmt = select(Transaction).where(Transaction.external_id == "REF-TRIA-01")
