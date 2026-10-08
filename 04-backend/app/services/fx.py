@@ -1,9 +1,8 @@
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.models import FxRate
-from app.core.money import q
 
 async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: str, target_date: date) -> Decimal | None:
     """
@@ -21,7 +20,7 @@ async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: st
             FxRate.rate_date <= target_date,
             FxRate.rate_date >= target_date - timedelta(days=7)
         )
-        .order_by(FxRate.rate_date.desc())
+        .order_by(FxRate.rate_date.desc(), FxRate.id.desc())
         .limit(1)
     )
     result = await session.execute(stmt)
@@ -39,14 +38,14 @@ async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: st
             FxRate.rate_date <= target_date,
             FxRate.rate_date >= target_date - timedelta(days=7)
         )
-        .order_by(FxRate.rate_date.desc())
+        .order_by(FxRate.rate_date.desc(), FxRate.id.desc())
         .limit(1)
     )
     result_inv = await session.execute(stmt_inverse)
     rate_inv = result_inv.scalars().first()
     
     if rate_inv and rate_inv.rate != Decimal("0"):
-        return Decimal("1.00000000") / rate_inv.rate
+        return (Decimal("1.00000000") / rate_inv.rate).quantize(Decimal("0.00000001"), rounding=ROUND_HALF_UP)
         
     return None
 
