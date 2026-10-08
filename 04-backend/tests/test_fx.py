@@ -81,7 +81,7 @@ async def test_fx_rate_deterministic_selection(system_session: AsyncSession):
 
     # We add two rates on the same day. The query uses order_by(rate_date.desc(), id.desc()).
     # So the one with the higher (lexicographically/numerically larger) UUID will be picked if both are flushed.
-    # To test determinism, we just verify it doesn't crash and returns one of them consistently.
+    # To test determinism, we explicitly check that the record with the higher UUID is picked.
     id1 = uuid.UUID('00000000-0000-0000-0000-000000000001')
     id2 = uuid.UUID('00000000-0000-0000-0000-000000000002')
 
@@ -108,6 +108,23 @@ async def test_fx_rate_deterministic_selection(system_session: AsyncSession):
     rate = await get_fx_rate(system_session, "USD", "JPY", test_date)
     # Since id2 > id1, id.desc() should pick id2 (151.0)
     assert rate == Decimal("151.00000000")
+
+@pytest.mark.asyncio
+async def test_fx_rate_exactly_7_days_ago(system_session: AsyncSession):
+    """Сценарий 5b: курс ровно 7 дней назад включается в результат."""
+    test_date = date(2026, 5, 10)
+    rate_row = FxRate(
+        rate_date=test_date - timedelta(days=7),
+        from_currency="USD",
+        to_currency="AUD",
+        rate=Decimal("1.40000000"),
+        source="test"
+    )
+    system_session.add(rate_row)
+    await system_session.flush()
+
+    rate = await get_fx_rate(system_session, "USD", "AUD", test_date)
+    assert rate == Decimal("1.40000000")
 
 @pytest.mark.asyncio
 async def test_fx_rate_older_than_7_days(system_session: AsyncSession):

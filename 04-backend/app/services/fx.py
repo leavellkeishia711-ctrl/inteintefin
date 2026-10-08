@@ -1,4 +1,4 @@
-﻿from datetime import date, timedelta
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -51,7 +51,7 @@ async def get_fx_rate(session: AsyncSession, from_currency: str, to_currency: st
 
 async def resolve_fx_rate(session: AsyncSession, from_currency: str, to_currency: str, target_date: date) -> Decimal:
     """
-    Как get_fx_rate, но бросает ошибку, если курс не найден.
+    Как get_fx_rate, но бросает ошибке, если курс не найден.
     """
     rate = await get_fx_rate(session, from_currency, to_currency, target_date)
     if rate is None:
