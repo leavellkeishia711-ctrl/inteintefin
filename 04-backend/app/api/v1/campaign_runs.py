@@ -21,7 +21,7 @@ async def create_campaign_run(
     from app.services.validation import validate_fk
     from app.db.models.campaigns import Campaign
     from app.db.models.campaigns import AdAccount
-    from app.db.models.system import User as UserModel
+    from app.db.models.users import User as UserModel
 
     company_uuid = uuid.UUID(user.company_id)
     await validate_fk(db, Campaign, run_in.campaign_id, company_uuid, "campaign_id")
@@ -72,7 +72,7 @@ async def update_campaign_run(
     from app.services.validation import validate_fk
     from app.db.models.campaigns import Campaign
     from app.db.models.campaigns import AdAccount
-    from app.db.models.system import User as UserModel
+    from app.db.models.users import User as UserModel
 
     company_uuid = uuid.UUID(user.company_id)
     if run_in.campaign_id is not None:
