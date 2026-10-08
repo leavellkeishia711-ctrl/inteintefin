@@ -15,13 +15,13 @@ async def test_validate_fk_logic():
     async with system_session() as db_session:
         company_id_1 = uuid.uuid4()
         company_id_2 = uuid.uuid4()
-        
+
         c1 = Company(id=company_id_1, name='C1', base_currency='USD')
         c2 = Company(id=company_id_2, name='C2', base_currency='USD')
         db_session.add(c1)
         db_session.add(c2)
         await db_session.flush()
-        
+
         team_c1 = Team(id=uuid.uuid4(), company_id=company_id_1, name='T1')
         ad_acc_c1 = AdAccount(id=uuid.uuid4(), company_id=company_id_1, platform='fb', external_account_id='FB1', status='active')
         campaign_c1 = Campaign(id=uuid.uuid4(), company_id=company_id_1)
@@ -31,7 +31,7 @@ async def test_validate_fk_logic():
 
         run_c1 = CampaignRun(id=uuid.uuid4(), company_id=company_id_1, campaign_id=campaign_c1.id, buyer_id=user_c1.id, started_at=datetime.now(timezone.utc), status='active')
         db_session.add(run_c1)
-        
+
         tx_c1 = Transaction(id=uuid.uuid4(), company_id=company_id_1, type='expense', category='ad_spend', amount=Decimal('100'), currency='USD', fx_rate_to_base=Decimal('1'), occurred_on=date.today(), created_by=user_c1.id, source='manual')
         db_session.add(tx_c1)
 

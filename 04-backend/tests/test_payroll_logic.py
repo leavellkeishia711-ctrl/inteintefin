@@ -15,12 +15,12 @@ async def test_payroll_fixed_base_salary():
         from app.db.models.companies import Company
         c1 = Company(id=company_id, name='PayrollCo', base_currency='EUR')
         db_session.add(c1)
-        
+
         user_id = uuid.uuid4()
         user = User(id=user_id, company_id=company_id, email=f'{uuid.uuid4()}@x.com', password_hash='x', name='P1', role='buyer')
         db_session.add(user)
         await db_session.flush()
-        
+
         comp = CompensationPlan(
             company_id=company_id,
             user_id=user_id,
@@ -33,8 +33,8 @@ async def test_payroll_fixed_base_salary():
         )
         db_session.add(comp)
         await db_session.commit()
-        
+
         run = await calculate_payroll_run(db_session, company_id, date(2023, 1, 1), date(2023, 1, 31))
-        
+
         assert run.currency == 'EUR'
         assert run.total_amount == Decimal('4500.0000')

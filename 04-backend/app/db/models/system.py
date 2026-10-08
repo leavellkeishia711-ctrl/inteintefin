@@ -131,8 +131,8 @@ class PayrollRun(Base, TimestampMixin, SoftDeleteMixin, CompanyScoped):
     )
 
     items = sa.orm.relationship(
-        "PayrollLineItem", 
-        back_populates="run", 
+        "PayrollLineItem",
+        back_populates="run",
         cascade="all, delete-orphan",
         primaryjoin="and_(PayrollRun.id==PayrollLineItem.payroll_run_id, PayrollLineItem.deleted_at.is_(None))"
     )

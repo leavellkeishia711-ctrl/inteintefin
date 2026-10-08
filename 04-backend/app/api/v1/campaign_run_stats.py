@@ -19,12 +19,12 @@ async def upsert_campaign_run_stat(
 ):
     from app.services.validation import validate_fk
     from app.db.models.campaigns import CampaignRun
-    
+
     company_uuid = uuid.UUID(company_id)
     await validate_fk(db, CampaignRun, stat_in.campaign_run_id, company_uuid, "campaign_run_id")
 
     from app.services.campaigns import upsert_campaign_run_stat as svc_upsert
-    
+
     try:
         upserted_stat = await svc_upsert(
             db=db,
@@ -55,6 +55,6 @@ async def list_campaign_run_stats(
     query = select(CampaignRunStat).where(CampaignRunStat.deleted_at.is_(None))
     if campaign_run_id:
         query = query.where(CampaignRunStat.campaign_run_id == campaign_run_id)
-        
+
     result = await db.execute(query)
     return result.scalars().all()

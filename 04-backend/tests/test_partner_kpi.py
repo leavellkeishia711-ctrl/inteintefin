@@ -13,11 +13,11 @@ async def test_partner_kpi_fx_conversion():
         company_id = uuid.uuid4()
         c1 = Company(id=company_id, name='Test Company KPI', base_currency='USD')
         db_session.add(c1)
-        
+
         net1 = AffiliateNetwork(id=uuid.uuid4(), company_id=company_id, name='Net1', payment_terms='net30', payout_model='cpa')
         db_session.add(net1)
         await db_session.flush()
-        
+
         # 100 EUR * 1.1 = 110 USD
         p1 = PartnerPayout(
             id=uuid.uuid4(),
@@ -50,11 +50,11 @@ async def test_partner_kpi_fx_conversion():
             status='paid',
             booked_on=date.today()
         )
-        
+
         db_session.add(p1)
         db_session.add(p2)
         await db_session.commit()
-        
+
         overview = await get_partners_overview(db_session, company_id)
         assert overview.kpi_total_booked == Decimal('210.0000')
         assert overview.kpi_net_confirmed == Decimal('210.0000')
