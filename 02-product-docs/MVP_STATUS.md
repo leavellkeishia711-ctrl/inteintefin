@@ -4,31 +4,13 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 
 ## Stage 1: COMPLETED
 
-**Post-Merge Verification (Historical Reference):**
-- **Target SHA:** `d07c8174f8fd18f545d7f08298f4da99a020e803`
-- **CI Runs:**
-  - Backend CI: Passed (Run ID: `31249721497`)
-  - Frontend CI: Passed (Run ID: `31249721778`)
-  - Production Gate: Passed (Run ID: `31249721501`)
+**Post-Merge Verification:**
+- **Current Main SHA:** `924d48482e1db8b6a590e906c3d0f41c77630359`
+- **CI Runs (on current main):** НЕ ПРОВЕРЕНО
 
 ## Phase 2 (Frontend Debt): COMPLETED
 
-**Post-Merge Verification (Historical Reference):**
-- **Target SHA:** `976b4795a94dd1288f5a01b10f46ac328b7cc4dc`
-- **CI Runs:**
-  - Backend CI: Passed (Run ID: `33736109606`)
-  - Frontend CI: Passed (Run ID: `33736109521`)
-  - Production Gate: Passed (Run ID: `33736109479`)
-
 ## Stage 2 Foundational Slice (Data Connectors): MERGED
-
-**Post-Merge Verification:**
-- **Main SHA:** `8505645fb49a4e8b3a239f91de3ee01c8abda587`
-- **PR #3:** Merged
-- **CI Runs (on main `8505645fb49a4e8b3a239f91de3ee01c8abda587`):**
-  - Backend CI: Passed (Run ID: `33855813988`)
-  - Frontend CI: Passed (Run ID: `33855813989`)
-  - Production Gate: Passed (Run ID: `33855813997`)
 
 ---
 
@@ -63,4 +45,4 @@ This document tracks the readiness of the Stage 1 MVP against the requirements d
 | P&L & Cashflow calculation | Done | `pnl.py`, `cashflow.py` |
 | Telegram Bot Integration (`/status`, `/link`) | Done | `telegram_bot.py`, `webhooks.py` |
 | AI Analyst Tool Use (Anthropic) | Done | `ai/client.py`, SQL tool use only |
-| Background Payroll & Alerts | Done | Celery `tasks.py` |
+| Alerts | Done | Celery `tasks.py` (Payroll task is missing, Implemented but not wired) |

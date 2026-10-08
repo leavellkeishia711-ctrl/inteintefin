@@ -18,7 +18,6 @@ SaaS финансового учёта для медиабаинговых ко�
 ## Структура проекта
 
 - `02-product-docs/`: Источник правды по требованиям (PRD, MVP, ROADMAP, DB_SCHEMA, OPEN_QUESTIONS)
-- `03-database/`: Инициализационные скрипты БД (пусто)
 - `04-backend/`: Бэкенд на FastAPI, SQLAlchemy 2.0, Alembic, Celery
 - `05-frontend/`: Фронтенд на Next.js 16 (App Router), React 19, Tailwind v4, next-intl
 - `08-devops/`: Конфигурации для развертывания, docker-compose
