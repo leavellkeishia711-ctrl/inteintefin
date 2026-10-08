@@ -14,9 +14,9 @@ Stage 2 foundational slice: **MERGED AND VERIFIED**
 Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 
 ### CI/CD Baseline
-- Current main SHA: `d56e80e8a3f548b9b5e8d20b25b0010e31c2a766` (last code change on main)
-- PR #32 squash merge
-- Backend CI: 37280619697, Frontend CI: 37280619642, Production Gate: 37280619568
+- Current main SHA: `924d48482e1db8b6a590e906c3d0f41c77630359` (last code change on main)
+- PR #37 merged
+- Backend CI: НЕ ПРОВЕРЕНО, Frontend CI: НЕ ПРОВЕРЕНО, Production Gate: НЕ ПРОВЕРЕНО
 
 ## Verified Implementation (Post-Merge)
 
@@ -41,7 +41,7 @@ Full Stage 2 roadmap: **PARTIAL / IN PROGRESS**
 | Idempotency tests | Done | `test_meta_upsert_idempotency`, `test_binom_upsert_idempotency` |
 | Production smoke | Done | `.github/workflows/prod-gate.yml` |
 | `CampaignRunStat` soft delete (`deleted_at`) | Done | `SoftDeleteMixin`, API read query filters |
-| `CampaignRunStat` uniqueness | Done | Partial unique indexes `uq_campaign_run_stats_not_null_ext` and `uq_campaign_run_stats_null_ext`, checking `deleted_at IS NULL` (`app/db/models/campaigns.py`) |
+| `CampaignRunStat` uniqueness | Done | Partial unique indexes `uq_campaign_run_stats` and `uq_campaign_run_stats_null_ext`, checking `deleted_at IS NULL` (`app/db/models/campaigns.py`) |
 | Atomic upsert (ON CONFLICT) | Done | `campaigns.py:upsert_campaign_run_stat_atomic` |
 | Cross-source conflict resolution / reconciliation | **Implemented, not wired** | `CampaignRunReconciliation` model and `reconcile_company_data_task` exist (`app/workers/tasks.py:75`), but no trigger: not in beat, no API caller |
 | Stale-source Data Quality (DQ) alerts | Done | Runs daily via beat (`app/workers/tasks.py:60`), calls `monitor_stalled_data`, tested in `test_stale_source_dq.py`; alert latency up to 24h |
@@ -74,8 +74,8 @@ The following requirements remain OPEN and must be implemented before full Stage
 - Ad accounts mapping for Binom, Voluum, Affise: N/A for current ad_accounts model. (These are tracker/workspace or affiliate-network entities, not advertising source accounts; such unification requires a separate product scope).
 
 ### Known gaps after PR-A
-- `settings` column is missing in `ConnectorConfig`, so Binom/Google settings (`base_url`, `customer_id`) and Meta `lookback_days` are not accessible to the scheduler.
-- **SECURITY / SSRF Risk:** Currently, users cannot set a custom `base_url` because `settings` is missing from `ConnectorConfig` and the API schema. However, `MetaAdsConnector` code already calls `settings.get("base_url")`. Once `settings` is exposed via the API, allowing arbitrary `base_url` without an allowlist/strict validation will introduce an SSRF and token leak vulnerability (sending the Bearer token to a malicious host). Note: configuring `lookback_days` via `settings` does not pose an SSRF risk.
+- `settings` column exists and is migrated, but Binom/Google schemas lack `base_url``base_url`, `customer_id`) and Meta `lookback_days` are not accessible to the scheduler.
+- **SECURITY / SSRF Risk:** SSRF risk is currently mitigated. The `settings` column exists and is exposed via the API, but `validate_connector_settings` strictly uses Pydantic schemas with `extra = "forbid"`. `base_url` is not allowed by any of these schemas, preventing users from saving arbitrary URLs.
 - Unmapped rows (without `ExternalCampaignMapping`) are silently skipped in upsert.
 - ECB FX auto-fetch not implemented (`fetch_ecb_rates` is a stub); multi-currency sync raises ValueError when `fx_rates` has no rate within 7 days.
 

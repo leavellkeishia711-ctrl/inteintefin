@@ -43,7 +43,7 @@ async def test_ad_account_crud(auth_client: AsyncClient):
     import asyncio
     # Create
     resp = await auth_client.post("/api/v1/ad-accounts/", json={
-        "platform": "Facebook",
+        "platform": "meta",
         "name": "Test Act 1",
         "external_account_id": "act_12345",
         "status": "active"
@@ -52,7 +52,7 @@ async def test_ad_account_crud(auth_client: AsyncClient):
 
     assert resp.status_code == 200
     account = resp.json()
-    assert account["platform"] == "Facebook"
+    assert account["platform"] == "meta"
     assert account["id"] is not None
     
     # Get
