@@ -17,8 +17,14 @@ async def upsert_campaign_run_stat(
     db: AsyncSession = Depends(get_tenant_session),
     company_id: str = Depends(get_current_user_company_id)
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.campaigns import CampaignRun
+
+    company_uuid = uuid.UUID(company_id)
+    await validate_fk(db, CampaignRun, stat_in.campaign_run_id, company_uuid, "campaign_run_id")
+
     from app.services.campaigns import upsert_campaign_run_stat as svc_upsert
-    
+
     try:
         upserted_stat = await svc_upsert(
             db=db,
@@ -36,7 +42,9 @@ async def upsert_campaign_run_stat(
         return upserted_stat
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to upsert CampaignRunStat: {str(e)}")
+        import logging
+        logging.error(f"Failed to upsert CampaignRunStat: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/", response_model=List[CampaignRunStatOut])
 async def list_campaign_run_stats(
@@ -47,6 +55,6 @@ async def list_campaign_run_stats(
     query = select(CampaignRunStat).where(CampaignRunStat.deleted_at.is_(None))
     if campaign_run_id:
         query = query.where(CampaignRunStat.campaign_run_id == campaign_run_id)
-        
+
     result = await db.execute(query)
     return result.scalars().all()

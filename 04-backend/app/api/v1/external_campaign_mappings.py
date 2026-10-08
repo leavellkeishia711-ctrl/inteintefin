@@ -24,7 +24,7 @@ class ExternalCampaignMappingResponse(BaseModel):
     external_id: str
     campaign_run_id: uuid.UUID
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 @router.post("/", response_model=ExternalCampaignMappingResponse, status_code=201)
@@ -33,6 +33,12 @@ async def create_mapping(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_roles("owner"))
 ):
+    from app.services.validation import validate_fk
+    from app.db.models.campaigns import CampaignRun
+
+    company_uuid = uuid.UUID(user.company_id) if isinstance(user.company_id, str) else user.company_id
+    await validate_fk(db, CampaignRun, mapping_in.campaign_run_id, company_uuid, "campaign_run_id")
+
     new_mapping = ExternalCampaignMapping(
         company_id=user.company_id,
         platform=mapping_in.platform,
@@ -64,7 +70,7 @@ async def get_mappings(
         conditions.append(ExternalCampaignMapping.platform == platform)
     if campaign_run_id:
         conditions.append(ExternalCampaignMapping.campaign_run_id == campaign_run_id)
-        
+
     stmt = select(ExternalCampaignMapping).where(and_(*conditions))
     res = await db.execute(stmt)
     return res.scalars().all()
@@ -84,10 +90,10 @@ async def delete_mapping(
     )
     res = await db.execute(stmt)
     mapping = res.scalars().first()
-    
+
     if not mapping:
         raise HTTPException(status_code=404, detail="Mapping not found")
-        
+
     mapping.deleted_at = datetime.now(timezone.utc)
     await db.flush()
     return None

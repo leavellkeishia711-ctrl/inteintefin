@@ -8,7 +8,7 @@ from app.schemas.payroll import PayrollResponse, EmployeePayroll
 async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> PayrollResponse:
     # Get active employees
     users_result = await db.execute(
-        select(User).where(User.company_id == company_id)
+        select(User).where(User.company_id == company_id, User.deleted_at.is_(None))
     )
     users = users_result.scalars().all()
     active_employees = len(users)
@@ -21,7 +21,7 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
     # Get latest payroll run
     latest_run_result = await db.execute(
         select(PayrollRun)
-        .where(PayrollRun.company_id == company_id)
+        .where(PayrollRun.company_id == company_id, PayrollRun.deleted_at.is_(None))
         .order_by(PayrollRun.period_end.desc())
         .limit(1)
     )
@@ -38,7 +38,8 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
             .join(User, PayrollLineItem.user_id == User.id)
             .where(
                 PayrollLineItem.payroll_run_id == latest_run.id,
-                PayrollLineItem.deleted_at.is_(None)
+                PayrollLineItem.deleted_at.is_(None),
+                User.deleted_at.is_(None)
             )
         )
         for item, user in line_items_result:
@@ -57,7 +58,7 @@ async def get_payroll_overview(db: AsyncSession, company_id: uuid.UUID) -> Payro
         from app.db.models.system import CompensationPlan
         for user in users:
             comp_result = await db.execute(
-                select(CompensationPlan).where(CompensationPlan.user_id == user.id)
+                select(CompensationPlan).where(CompensationPlan.user_id == user.id, CompensationPlan.deleted_at.is_(None))
                 .order_by(CompensationPlan.effective_from.desc()).limit(1)
             )
             comp = comp_result.scalars().first()
@@ -87,6 +88,9 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
     from app.db.models.system import CompensationPlan
     from app.db.models.campaigns import CampaignRunStat, CampaignRun
     
+    company = (await db.execute(select(Company).where(Company.id == company_id))).scalars().first()
+    base_currency = company.base_currency if company else 'USD'
+
     # 1. Check if run exists
     existing = await db.execute(
         select(PayrollRun).where(
@@ -114,7 +118,8 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
             period_end=period_end,
             status='draft',
             total_amount=Decimal('0'),
-            currency='USD' # Assuming base currency
+            currency=base_currency,
+            fx_rate_to_base=Decimal('1.00000000')
         )
         db.add(run)
         await db.flush()
@@ -129,6 +134,7 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
     users = users_result.scalars().all()
     
     total_run_amount = Decimal('0')
+    from app.core.money import q as quantize_money
     
     for user in users:
         # Get active comp plan for the period (simplified: getting most recent one valid in this period)
@@ -136,7 +142,8 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
             select(CompensationPlan).where(
                 CompensationPlan.user_id == user.id,
                 CompensationPlan.effective_from <= period_end,
-                sa.or_(CompensationPlan.effective_to.is_(None), CompensationPlan.effective_to >= period_start)
+                sa.or_(CompensationPlan.effective_to.is_(None), CompensationPlan.effective_to >= period_start),
+                CompensationPlan.deleted_at.is_(None)
             ).order_by(CompensationPlan.effective_from.desc()).limit(1)
         )
         comp = comp_result.scalars().first()
@@ -186,22 +193,24 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
                 bonus_amount = revenue * (comp.bonus_percent / Decimal('100'))
         
         # Round correctly
-        base_salary = base_salary.quantize(Decimal("0.0001"))
-        bonus_amount = bonus_amount.quantize(Decimal("0.0001"))
-        total_amount = base_salary + bonus_amount
+        base_salary = quantize_money(base_salary)
+        bonus_amount = quantize_money(bonus_amount)
+        total_amount = quantize_money(base_salary + bonus_amount)
         total_run_amount += total_amount
         
         item = PayrollLineItem(
+            company_id=company_id,
             payroll_run_id=run.id,
             user_id=user.id,
             base_amount=base_salary,
             bonus_amount=bonus_amount,
             total_amount=total_amount,
-            currency='USD',
+            currency=base_currency,
+            fx_rate_to_base=Decimal('1.00000000'),
             status='draft'
         )
         db.add(item)
         
-    run.total_amount = total_run_amount
+    run.total_amount = quantize_money(total_run_amount)
     await db.flush()
     return run

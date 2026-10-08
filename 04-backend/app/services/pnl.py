@@ -66,7 +66,7 @@ async def calculate_pnl(
     
     data = {row.category: Decimal(str(row.total or 0)) for row in rows}
     
-    raw_rev = data.get('payout_incoming', Decimal(0)) + data.get('sales', Decimal(0))
+    raw_rev = data.get('payout_incoming', Decimal(0))
     revenue = round_money(raw_rev)
     raw_ad = data.get('ad_spend', Decimal(0))
     ad_spend = round_money(raw_ad)

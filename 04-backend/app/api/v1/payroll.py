@@ -47,7 +47,8 @@ async def get_payroll_run(
     run = await db.scalar(
         select(PayrollRun).options(selectinload(PayrollRun.items)).where(
             PayrollRun.id == run_id, 
-            PayrollRun.company_id == company_id
+            PayrollRun.company_id == company_id,
+            PayrollRun.deleted_at.is_(None)
         )
     )
     if not run:

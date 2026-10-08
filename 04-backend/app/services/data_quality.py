@@ -30,7 +30,7 @@ async def monitor_stalled_data(db: AsyncSession, company_id: uuid.UUID):
     
     # Check latest campaign run stat
     result = await db.execute(
-        select(func.max(CampaignRunStat.created_at)).where(CampaignRunStat.company_id == company_id)
+        select(func.max(CampaignRunStat.created_at)).where(CampaignRunStat.company_id == company_id, CampaignRunStat.deleted_at.is_(None))
     )
     last_stat_date = result.scalar()
     

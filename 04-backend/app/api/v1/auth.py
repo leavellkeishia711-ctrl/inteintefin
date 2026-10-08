@@ -34,7 +34,7 @@ async def register(user_in: UserCreate):
     
     # Check if user exists using system_session (bypasses RLS)
     async with system_session() as sys_db:
-        result = await sys_db.execute(select(User).where(User.email == user_in.email))
+        result = await sys_db.execute(select(User).where(User.email == user_in.email, User.deleted_at.is_(None)))
         if result.scalars().first():
             raise HTTPException(status_code=400, detail="Email already registered")
             
@@ -72,7 +72,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     
     # Lookup user using system_session to bypass RLS since company_id is unknown
     async with system_session() as sys_db:
-        result = await sys_db.execute(select(User).where(User.email == form_data.username))
+        result = await sys_db.execute(select(User).where(User.email == form_data.username, User.deleted_at.is_(None)))
         user = result.scalars().first()
         
         if not user or not verify_password(form_data.password, user.password_hash):
@@ -180,7 +180,7 @@ async def logout(request: Request, response: Response):
 async def read_users_me(current_user: dict = Depends(get_current_user)): # it's UserCtx
     from app.db.session import tenant_session
     async with tenant_session(current_user.company_id) as db:
-        result = await db.execute(select(User).where(User.id == current_user.user_id))
+        result = await db.execute(select(User).where(User.id == current_user.user_id, User.deleted_at.is_(None)))
         user = result.scalars().first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")

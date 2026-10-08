@@ -29,3 +29,9 @@ FINAL_REPORT*.md
 .env.local
 .env.*.local
 !.env.example
+pytest-results*.xml
+pytest-results*.zip
+pytest_out*.txt
+pytest_results*/
+04-backend/artifact*/
+job_logs.txt

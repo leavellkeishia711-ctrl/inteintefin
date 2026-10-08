@@ -102,7 +102,7 @@ async def company_b_fixtures():
             from app.core.money import q
             from datetime import date
             tx = Transaction(
-                id=tx_b_id, company_id=company_b_id, type="expense", category="software",
+                id=tx_b_id, company_id=company_b_id, type="expense", category="other",
                 amount=q(100), currency="USD", fx_rate_to_base=q(1), occurred_on=date.today(),
                 source="manual", created_by=user_b_id
             )

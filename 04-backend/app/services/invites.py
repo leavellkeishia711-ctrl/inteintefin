@@ -13,7 +13,7 @@ def hash_token(token: str) -> str:
 
 async def create_invite(db: AsyncSession, company_id: uuid.UUID, email: str, role: str, invited_by: uuid.UUID) -> tuple[Invite, str]:
     # Check if user already exists in this company
-    stmt = select(User).where(User.company_id == company_id, User.email == email)
+    stmt = select(User).where(User.company_id == company_id, User.email == email, User.deleted_at.is_(None))
     existing_user = (await db.execute(stmt)).scalar_one_or_none()
     if existing_user:
         raise HTTPException(status_code=400, detail="User with this email already exists in the company")
@@ -75,7 +75,7 @@ async def accept_invite(sys_db: AsyncSession, token: str, name: str, password: s
         raise HTTPException(status_code=400, detail="Invite expired")
         
     # Check if user already exists
-    user_stmt = select(User).where(User.company_id == invite.company_id, User.email == invite.email)
+    user_stmt = select(User).where(User.company_id == invite.company_id, User.email == invite.email, User.deleted_at.is_(None))
     existing_user = (await sys_db.execute(user_stmt)).scalar_one_or_none()
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")

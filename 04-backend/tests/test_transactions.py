@@ -42,7 +42,7 @@ async def auth_client(app):
 async def test_create_transaction(auth_client: AsyncClient):
     payload = {
         "type": "expense",
-        "category": "software",
+        "category": "other",
         "amount": "99.99",
         "currency": "USD",
         "occurred_on": "2026-07-01",
@@ -65,7 +65,7 @@ async def test_list_and_get_transaction(auth_client: AsyncClient):
     # Create one first
     payload = {
         "type": "income",
-        "category": "sales",
+        "category": "payout_incoming",
         "amount": "500",
         "currency": "USD",
         "occurred_on": "2026-07-02"
@@ -86,13 +86,13 @@ async def test_list_and_get_transaction(auth_client: AsyncClient):
     assert get_resp.status_code == 200
     get_data = get_resp.json()
     assert get_data["id"] == tx_id
-    assert get_data["category"] == "sales"
+    assert get_data["category"] == "payout_incoming"
 
 @pytest.mark.asyncio
 async def test_update_transaction(auth_client: AsyncClient):
     payload = {
         "type": "expense",
-        "category": "office",
+        "category": "other",
         "amount": "10",
         "currency": "USD",
         "occurred_on": "2026-07-03"
@@ -101,20 +101,20 @@ async def test_update_transaction(auth_client: AsyncClient):
     tx_id = resp.json()["id"]
     
     # Update
-    update_payload = {"category": "hardware", "description": "Mouse"}
+    update_payload = {"category": "infra", "description": "Mouse"}
     upd_resp = await auth_client.patch(f"/api/v1/transactions/{tx_id}", json=update_payload)
     assert upd_resp.status_code == 200
     
     get_resp = await auth_client.get(f"/api/v1/transactions/{tx_id}")
     get_data = get_resp.json()
-    assert get_data["category"] == "hardware"
+    assert get_data["category"] == "infra"
     assert get_data["description"] == "Mouse"
 
 @pytest.mark.asyncio
 async def test_delete_transaction(auth_client: AsyncClient):
     payload = {
         "type": "expense",
-        "category": "misc",
+        "category": "other",
         "amount": "5",
         "currency": "USD",
         "occurred_on": "2026-07-04"
