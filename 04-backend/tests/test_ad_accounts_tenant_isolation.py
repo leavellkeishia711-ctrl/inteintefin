@@ -12,7 +12,7 @@ async def test_tenant_isolation(client_a: AsyncClient, company_b_fixtures):
     async with system_session() as db:
         db.add(AdAccount(
             company_id=comp_b_id,
-            platform="google_ads",
+            platform="google",
             external_account_id="G123",
             name="Other Corp Google",
             status="active"
@@ -26,4 +26,4 @@ async def test_tenant_isolation(client_a: AsyncClient, company_b_fixtures):
     # Should not see other corp's google account
     data = resp.json()
     for acc in data:
-        assert not (acc.get("platform") == "google_ads" and acc.get("external_account_id") == "G123")
+        assert not (acc.get("platform") == "google" and acc.get("external_account_id") == "G123")

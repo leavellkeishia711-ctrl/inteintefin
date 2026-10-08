@@ -20,7 +20,7 @@ async def test_get_ad_account_cost(app, client_a):
             db.add(company)
             await db.flush()
             
-            acc = AdAccount(id=ad_account_id, company_id=company_id, platform="meta", status="active")
+            acc = AdAccount(id=ad_account_id, company_id=company_id, platform="facebook", status="active")
             db.add(acc)
             await db.flush()
             
@@ -54,14 +54,14 @@ async def test_upsert_campaign_run_stat(app):
 
     async with tenant_session(str(company_id)) as db:
         stat1 = await upsert_campaign_run_stat(
-            db, company_id, run_id, date.today(), "meta", "ext1",
+            db, company_id, run_id, date.today(), "facebook", "ext1",
             spend=Decimal("100"), revenue=Decimal("150"), currency="USD", fx_rate_to_base=Decimal("1")
         )
         assert stat1.spend == Decimal("100")
         
         # Upsert with new spend
         stat2 = await upsert_campaign_run_stat(
-            db, company_id, run_id, date.today(), "meta", "ext1",
+            db, company_id, run_id, date.today(), "facebook", "ext1",
             spend=Decimal("120"), revenue=Decimal("150"), currency="USD", fx_rate_to_base=Decimal("1")
         )
         assert stat2.id == stat1.id

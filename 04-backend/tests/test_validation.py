@@ -1,7 +1,7 @@
 import pytest
 import uuid
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from fastapi import HTTPException
 from app.services.validation import validate_fk
 from app.db.models.users import User, Team
@@ -28,7 +28,7 @@ async def test_validate_fk_logic():
         db_session.add_all([team_c1, ad_acc_c1, campaign_c1, user_c1])
         await db_session.flush()
 
-        run_c1 = CampaignRun(id=uuid.uuid4(), company_id=company_id_1, campaign_id=campaign_c1.id, buyer_id=user_c1.id, started_at=datetime.utcnow(), status='active')
+        run_c1 = CampaignRun(id=uuid.uuid4(), company_id=company_id_1, campaign_id=campaign_c1.id, buyer_id=user_c1.id, started_at=datetime.now(timezone.utc), status='active')
         db_session.add(run_c1)
         
         tx_c1 = Transaction(id=uuid.uuid4(), company_id=company_id_1, type='expense', category='ad_spend', amount=Decimal('100'), currency='USD', fx_rate_to_base=Decimal('1'), occurred_on=date.today(), created_by=user_c1.id, source='manual')
@@ -38,7 +38,7 @@ async def test_validate_fk_logic():
         db_session.add(team_c2)
 
         team_c1_del = Team(id=uuid.uuid4(), company_id=company_id_1, name='T1_del')
-        team_c1_del.deleted_at = datetime.utcnow()
+        team_c1_del.deleted_at = datetime.now(timezone.utc)
         db_session.add(team_c1_del)
 
         await db_session.commit()
