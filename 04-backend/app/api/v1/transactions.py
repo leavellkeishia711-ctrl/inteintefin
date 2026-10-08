@@ -19,7 +19,7 @@ async def create_tx(
     user: UserCtx = Depends(get_current_user)
 ):
     from app.services.validation import validate_fk
-    from app.db.models.system import Team
+    from app.db.models.users import Team
     company_uuid = uuid.UUID(user.company_id)
     await validate_fk(db, Team, data.team_id, company_uuid, "team_id")
 
@@ -96,7 +96,7 @@ async def update_tx(
     user: UserCtx = Depends(get_current_user)
 ):
     from app.services.validation import validate_fk
-    from app.db.models.system import Team
+    from app.db.models.users import Team
     company_uuid = uuid.UUID(user.company_id)
     if data.team_id is not None:
         await validate_fk(db, Team, data.team_id, company_uuid, "team_id")

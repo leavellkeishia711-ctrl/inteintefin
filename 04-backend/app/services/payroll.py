@@ -134,7 +134,7 @@ async def calculate_payroll_run(db: AsyncSession, company_id: uuid.UUID, period_
     users = users_result.scalars().all()
     
     total_run_amount = Decimal('0')
-    from app.core.money import quantize_money
+    from app.core.money import q as quantize_money
     
     for user in users:
         # Get active comp plan for the period (simplified: getting most recent one valid in this period)

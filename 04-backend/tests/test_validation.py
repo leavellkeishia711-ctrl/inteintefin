@@ -20,6 +20,7 @@ async def test_validate_fk_logic():
         c2 = Company(id=company_id_2, name='C2', base_currency='USD')
         db_session.add(c1)
         db_session.add(c2)
+        await db_session.flush()
         
         team_c1 = Team(id=uuid.uuid4(), company_id=company_id_1, name='T1')
         ad_acc_c1 = AdAccount(id=uuid.uuid4(), company_id=company_id_1, platform='fb', external_account_id='FB1', status='active')

@@ -20,7 +20,7 @@ async def create_campaign_run(
 ):
     from app.services.validation import validate_fk
     from app.db.models.campaigns import Campaign
-    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.campaigns import AdAccount
     from app.db.models.system import User as UserModel
 
     company_uuid = uuid.UUID(user.company_id)
@@ -71,7 +71,7 @@ async def update_campaign_run(
 ):
     from app.services.validation import validate_fk
     from app.db.models.campaigns import Campaign
-    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.campaigns import AdAccount
     from app.db.models.system import User as UserModel
 
     company_uuid = uuid.UUID(user.company_id)

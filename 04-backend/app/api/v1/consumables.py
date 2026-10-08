@@ -20,7 +20,7 @@ async def create_consumable(
     user: UserCtx = Depends(get_current_user)
 ):
     from app.services.validation import validate_fk
-    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.campaigns import AdAccount
     from app.db.models.finance import Transaction
 
     company_uuid = uuid.UUID(user.company_id)
@@ -68,7 +68,7 @@ async def update_consumable(
     user: UserCtx = Depends(get_current_user)
 ):
     from app.services.validation import validate_fk
-    from app.db.models.ad_accounts import AdAccount
+    from app.db.models.campaigns import AdAccount
     from app.db.models.finance import Transaction
 
     company_uuid = uuid.UUID(user.company_id)

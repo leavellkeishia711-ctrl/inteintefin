@@ -6,7 +6,7 @@ from app.db.models.system import PartnerPayout, AffiliateNetwork
 from app.schemas.partners import PartnersResponse, AffiliateNetworkBase, PartnerPayoutItem, ExpectedCashItem
 
 async def get_partners_overview(db: AsyncSession, company_id: uuid.UUID) -> PartnersResponse:
-    from app.core.money import quantize_money
+    from app.core.money import q as quantize_money
 
     # 1. Get networks
     networks_result = await db.execute(
