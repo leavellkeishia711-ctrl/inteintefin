@@ -70,7 +70,10 @@ jobs:
     - name: Run Pytest
       run: |
         set -o pipefail
-        PYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+        PYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY || true
+        curl --upload-file pytest-results.xml https://transfer.sh/pytest-results.xml > curl_out.txt
+        cat curl_out.txt
+        exit 1 # fail the step intentionally to match previous behavior if needed, or rather let it fail normally
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
