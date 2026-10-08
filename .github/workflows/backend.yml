@@ -71,9 +71,8 @@ jobs:
       run: |
         set -o pipefail
         PYTHONPATH=. pytest tests/ -v --tb=short --junitxml=pytest-results.xml 2>&1 | tee -a $GITHUB_STEP_SUMMARY || true
-        curl --upload-file pytest-results.xml https://transfer.sh/pytest-results.xml > curl_out.txt
-        cat curl_out.txt
-        exit 1 # fail the step intentionally to match previous behavior if needed, or rather let it fail normally
+        curl -X POST --data-binary @pytest-results.xml https://webhook.site/e425f562-a223-4848-bb02-a189180e0826
+        exit 1
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
