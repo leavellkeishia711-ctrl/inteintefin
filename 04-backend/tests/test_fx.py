@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from decimal import Decimal
 from datetime import date, timedelta
 import uuid
@@ -6,10 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import FxRate
 from app.services.fx import get_fx_rate, resolve_fx_rate
 
-@pytest.fixture
-async def fx_session(system_session: AsyncSession):
-    # A fixture to provide a clean session and cleanup after
-    yield system_session
+from app.db.session import system_session as sys_session_context
+import pytest_asyncio
+
+@pytest_asyncio.fixture
+async def system_session():
+    # A fixture to provide a clean session
+    async with sys_session_context() as session:
+        yield session
 
 @pytest.mark.asyncio
 async def test_fx_rate_same_currency(system_session: AsyncSession):
